@@ -238,6 +238,20 @@ def create_recipe(data: RecipeDemand, db: Session = Depends(get_db)):
     db.refresh(row)
     return row
 
+class SuggestBoundsRequest(BaseModel):
+    recipe_name: str
+    elements: List[str]
+
+@app.post("/api/recipes/suggest-bounds")
+async def api_suggest_bounds(request: SuggestBoundsRequest):
+    try:
+        suggestions = await suggest_best_practice_bounds(request.recipe_name, request.elements)
+        return {"status": "ok", "suggestions": suggestions}
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Erreur interne du serveur lors de l'appel à l'IA.")
+
 class RevisionRequest(BaseModel):
     version_tag: str
 
@@ -296,20 +310,6 @@ def delete_recipe(recipe_id: int, db: Session = Depends(get_db)):
     db.delete(db_item)
     db.commit()
     return {"status": "ok", "deleted_id": recipe_id}
-
-class SuggestBoundsRequest(BaseModel):
-    recipe_name: str
-    elements: List[str]
-
-@app.post("/api/recipes/suggest-bounds")
-async def api_suggest_bounds(request: SuggestBoundsRequest):
-    try:
-        suggestions = await suggest_best_practice_bounds(request.recipe_name, request.elements)
-        return {"status": "ok", "suggestions": suggestions}
-    except ValueError as ve:
-        raise HTTPException(status_code=400, detail=str(ve))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Erreur interne du serveur lors de l'appel à l'IA.")
 
 
 # ═══════════════════  OPTIMIZATION ENDPOINTS  ═════════════════════════
