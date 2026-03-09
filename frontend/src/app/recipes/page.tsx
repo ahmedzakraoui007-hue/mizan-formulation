@@ -424,9 +424,9 @@ export default function RecipesPage() {
                   const activeIngredientCols = nutrientColumns.filter(c => globalIngredientNames.includes(c));
 
                   return (
-                    <div className="space-y-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                       {/* CARD 1: Cibles Nutritionnelles */}
-                      <div className="border border-blue-100 bg-blue-50/10 rounded-xl overflow-hidden shadow-sm">
+                      <div className="border border-blue-100 bg-blue-50/10 rounded-xl overflow-hidden shadow-sm flex flex-col">
                         <div className="bg-blue-50/50 border-b border-blue-100 px-4 py-3 flex items-center justify-between">
                             <h3 className="text-blue-900 font-bold text-sm tracking-tight flex items-center gap-2">
                                 <span>🧬</span> Cibles Nutritionnelles
@@ -466,7 +466,7 @@ export default function RecipesPage() {
                       </div>
 
                       {/* CARD 2: Matières Premières */}
-                      <div className="border border-emerald-100 bg-emerald-50/10 rounded-xl overflow-hidden shadow-sm">
+                      <div className="border border-emerald-100 bg-emerald-50/10 rounded-xl overflow-hidden shadow-sm flex flex-col">
                         <div className="bg-emerald-50/50 border-b border-emerald-100 px-4 py-3 flex items-center justify-between">
                             <h3 className="text-emerald-900 font-bold text-sm tracking-tight flex items-center gap-2">
                                 <span>🌾</span> Matières Premières (Limites)
