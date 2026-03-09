@@ -32,6 +32,7 @@ export default function RecipesPage() {
   const [activeVersions, setActiveVersions] = useState<Record<number, number>>({});
   const [nutrientColumns, setNutrientCols] = useState<string[]>(["Protéine %", "Fibre %", "Énergie", "Calcium %", "Phosphore %"]);
   const [availableKeys, setAvailableKeys] = useState<string[]>([]);
+  const [globalIngredientNames, setGlobalIngredientNames] = useState<string[]>([]);
   const [fetching, setFetching] = useState(true);
   const [aiLoadingFor, setAiLoadingFor] = useState<number | null>(null);
 
@@ -63,11 +64,14 @@ export default function RecipesPage() {
       if (ingRes.ok) {
         const ings = await ingRes.json();
         const keys = new Set<string>();
+        const itemNames = new Set<string>();
         ings.forEach((ing: any) => {
+          itemNames.add(ing.name);
           keys.add(ing.name);
           Object.keys(ing.nutrients || {}).forEach(k => keys.add(k));
         });
         setAvailableKeys(Array.from(keys).sort());
+        setGlobalIngredientNames(Array.from(itemNames));
       }
 
     } catch { /* ignored */ }
@@ -268,8 +272,8 @@ export default function RecipesPage() {
        setNutrientCols(prev => {
           const newCols = [...prev];
           Object.keys(suggestions).forEach(k => {
-             if (!newCols.includes(k) && !k.endsWith("Grains") && !k.endsWith("Meal") && !k.includes(" BP") && !k.includes("EXTR")) {
-                 // Roughly guessing if it's a nutrient to show in the table. (Ideally controlled via schema)
+             // If the suggested key isn't currently tracked, track it.
+             if (!newCols.includes(k) && !globalIngredientNames.includes(k)) {
                  newCols.push(k);
              }
           });
@@ -414,35 +418,113 @@ export default function RecipesPage() {
                 </div>
               </div>
 
-              {/* Dynamic Constraints (BOUND TO activeItem) */}
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                  <thead>
-                    <tr className="text-gray-500 text-[10px] uppercase tracking-wider font-bold border-b border-gray-200">
-                      <th className="pb-3 text-gray-700">Nutriment</th>
-                      <th className="pb-3 w-24 text-right pr-2">Min</th>
-                      <th className="pb-3 w-24 text-right pr-2">Max</th>
-                      <th className="pb-3 w-28 text-right text-orange-600">Exact</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {nutrientColumns.map(nc => (
-                      <tr key={nc} className="group/row hover:bg-gray-50">
-                        <td className="py-2.5 text-gray-700 font-semibold">{nc}</td>
-                        <td className="py-2.5 pr-2">
-                          <input type="number" step="0.1" placeholder="—" value={activeItem.constraints?.[nc]?.min ?? ""} onChange={e => editRecConstraint(masterRec.id, activeItem.id, nc, "min", e.target.value)} className={`${cell} w-full text-right bg-transparent group-hover/row:bg-white`} />
-                        </td>
-                        <td className="py-2.5 pr-2">
-                          <input type="number" step="0.1" placeholder="—" value={activeItem.constraints?.[nc]?.max ?? ""} onChange={e => editRecConstraint(masterRec.id, activeItem.id, nc, "max", e.target.value)} className={`${cell} w-full text-right bg-transparent group-hover/row:bg-white`} />
-                        </td>
-                        <td className="py-2.5">
-                          <input type="number" step="0.1" placeholder="—" value={activeItem.constraints?.[nc]?.exact ?? ""} onChange={e => editRecConstraint(masterRec.id, activeItem.id, nc, "exact", e.target.value)} className={`${cell} w-full text-right bg-transparent group-hover/row:bg-white ${activeItem.constraints?.[nc]?.exact !== undefined ? "font-bold text-orange-700 !bg-orange-50 border-orange-300" : ""}`} />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              {/* UI Segregation logic */}
+              {(() => {
+                  const activeNutritionalCols = nutrientColumns.filter(c => !globalIngredientNames.includes(c));
+                  const activeIngredientCols = nutrientColumns.filter(c => globalIngredientNames.includes(c));
+
+                  return (
+                    <div className="space-y-6">
+                      {/* CARD 1: Cibles Nutritionnelles */}
+                      <div className="border border-blue-100 bg-blue-50/10 rounded-xl overflow-hidden shadow-sm">
+                        <div className="bg-blue-50/50 border-b border-blue-100 px-4 py-3 flex items-center justify-between">
+                            <h3 className="text-blue-900 font-bold text-sm tracking-tight flex items-center gap-2">
+                                <span>🧬</span> Cibles Nutritionnelles
+                            </h3>
+                        </div>
+                        <div className="overflow-x-auto p-4">
+                          <table className="w-full text-left text-sm">
+                            <thead>
+                              <tr className="text-blue-800 text-[10px] uppercase tracking-wider font-extrabold border-b border-blue-100 pb-2 block w-full table-row">
+                                <th className="pb-3 w-1/3">Nutriment</th>
+                                <th className="pb-3 w-20 text-right pr-2">Min</th>
+                                <th className="pb-3 w-20 text-right pr-2">Max</th>
+                                <th className="pb-3 w-24 text-right text-orange-600">Exact</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-blue-50/50">
+                              {activeNutritionalCols.length === 0 && (
+                                  <tr><td colSpan={4} className="text-center py-4 text-xs text-blue-400 font-medium italic">Aucune cible définie...</td></tr>
+                              )}
+                              {activeNutritionalCols.map(nc => (
+                                <tr key={nc} className="group/row hover:bg-white rounded-md transition-colors">
+                                  <td className="py-2.5 text-blue-950 font-semibold">{nc}</td>
+                                  <td className="py-2.5 pr-2">
+                                    <input type="number" step="0.1" placeholder="—" value={activeItem.constraints?.[nc]?.min ?? ""} onChange={e => editRecConstraint(masterRec.id, activeItem.id, nc, "min", e.target.value)} className={`${cell} w-full text-right bg-transparent group-hover/row:bg-white border-blue-100 focus:border-blue-400`} />
+                                  </td>
+                                  <td className="py-2.5 pr-2">
+                                    <input type="number" step="0.1" placeholder="—" value={activeItem.constraints?.[nc]?.max ?? ""} onChange={e => editRecConstraint(masterRec.id, activeItem.id, nc, "max", e.target.value)} className={`${cell} w-full text-right bg-transparent group-hover/row:bg-white border-blue-100 focus:border-blue-400`} />
+                                  </td>
+                                  <td className="py-2.5">
+                                    <input type="number" step="0.1" placeholder="—" value={activeItem.constraints?.[nc]?.exact ?? ""} onChange={e => editRecConstraint(masterRec.id, activeItem.id, nc, "exact", e.target.value)} className={`${cell} w-full text-right bg-transparent group-hover/row:bg-white border-blue-100 ${activeItem.constraints?.[nc]?.exact !== undefined ? "font-bold text-orange-700 !bg-orange-50 border-orange-300" : ""}`} />
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                      {/* CARD 2: Matières Premières */}
+                      <div className="border border-emerald-100 bg-emerald-50/10 rounded-xl overflow-hidden shadow-sm">
+                        <div className="bg-emerald-50/50 border-b border-emerald-100 px-4 py-3 flex items-center justify-between">
+                            <h3 className="text-emerald-900 font-bold text-sm tracking-tight flex items-center gap-2">
+                                <span>🌾</span> Matières Premières (Limites)
+                            </h3>
+                        </div>
+                        <div className="overflow-x-auto p-4 flex flex-col pt-2">
+                          <table className="w-full text-left text-sm mb-3">
+                            <thead>
+                              <tr className="text-emerald-800 text-[10px] uppercase tracking-wider font-extrabold border-b border-emerald-100 pb-2 block w-full table-row">
+                                <th className="pb-3 w-1/3">Ingrédient</th>
+                                <th className="pb-3 w-20 text-right pr-2">Min %</th>
+                                <th className="pb-3 w-20 text-right pr-2">Max %</th>
+                                <th className="pb-3 w-24 text-right text-emerald-700">Exact %</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-emerald-50/50">
+                              {activeIngredientCols.length === 0 && (
+                                  <tr><td colSpan={4} className="text-center py-4 text-xs text-emerald-600/60 font-medium italic">Aucune limite d'incorporation...</td></tr>
+                              )}
+                              {activeIngredientCols.map(nc => (
+                                <tr key={nc} className="group/row hover:bg-white rounded-md transition-colors">
+                                  <td className="py-2.5 text-emerald-950 font-semibold">{nc}</td>
+                                  <td className="py-2.5 pr-2">
+                                    <input type="number" step="0.1" placeholder="—" value={activeItem.constraints?.[nc]?.min ?? ""} onChange={e => editRecConstraint(masterRec.id, activeItem.id, nc, "min", e.target.value)} className={`${cell} w-full text-right bg-transparent group-hover/row:bg-white border-emerald-100 focus:border-emerald-400`} />
+                                  </td>
+                                  <td className="py-2.5 pr-2">
+                                    <input type="number" step="0.1" placeholder="—" value={activeItem.constraints?.[nc]?.max ?? ""} onChange={e => editRecConstraint(masterRec.id, activeItem.id, nc, "max", e.target.value)} className={`${cell} w-full text-right bg-transparent group-hover/row:bg-white border-emerald-100 focus:border-emerald-400`} />
+                                  </td>
+                                  <td className="py-2.5">
+                                    <input type="number" step="0.1" placeholder="—" value={activeItem.constraints?.[nc]?.exact ?? ""} onChange={e => editRecConstraint(masterRec.id, activeItem.id, nc, "exact", e.target.value)} className={`${cell} w-full text-right bg-transparent group-hover/row:bg-white border-emerald-100 ${activeItem.constraints?.[nc]?.exact !== undefined ? "font-bold text-emerald-800 !bg-emerald-100 border-emerald-400" : ""}`} />
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                          
+                          {/* Add Ingredient Constraint Dropdown */}
+                          <div className="mt-2 text-right">
+                              <select 
+                                value="" 
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  if (val && !nutrientColumns.includes(val)) setNutrientCols(prev => [...prev, val]);
+                                }}
+                                className="bg-emerald-50 border border-emerald-200 text-emerald-800 hover:bg-emerald-100 px-3 py-1.5 rounded-lg text-xs font-bold transition-all outline-none cursor-pointer max-w-[200px]"
+                              >
+                                <option value="" disabled>+ Limiter Ingrédient...</option>
+                                {globalIngredientNames.filter(k => !nutrientColumns.includes(k)).map(k => (
+                                  <option key={k} value={k}>{k}</option>
+                                ))}
+                              </select>
+                          </div>
+                        </div>
+                      </div>
+                      
+                    </div>
+                  );
+              })()}
             </div>
           );
         })}
