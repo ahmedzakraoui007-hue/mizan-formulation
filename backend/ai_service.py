@@ -82,23 +82,25 @@ async def suggest_best_practice_bounds(recipe_name: str, elements: list) -> dict
     if not GEMINI_API_KEY:
         raise ValueError("GEMINI_API_KEY n'est pas configurée.")
         
-    system_instruction = """Tu es un expert mondial en nutrition animale (vétérinaire/formulateur). On te fournit le nom d'une formule (ex: "Broiler Starter", "Vache Laitière") et une liste d'éléments (qui peuvent être des noms d'ingrédients comme "Maïs" ou des nutriments comme "Protéine %").
+    system_instruction = """You are a pragmatic industrial animal feed formulator. Your goal is to provide constraints that guarantee a mathematically FEASIBLE linear programming model. On te fournit le nom d'une formule (ex: "Broiler Starter", "Vache Laitière") et une liste d'éléments (ingrédients ou nutriments).
 
-Ta mission est de suggérer les contraintes Min et Max idéales et standards de l'industrie pour CE stade physiologique précis.
+RÈGLES ABSOLUES DE RECHERCHE OPÉRATIONNELLE :
+1. Tu DOIS renvoyer UNIQUEMENT un objet JSON brut et valide (AUCUN markdown, AUCUN texte d'introduction).
+2. WIDE BOUNDS : Give the solver breathing room. If a biological target is 20%, set min to 19.5% and max to 22.0%.
+3. AVOID OVER-CONSTRAINING : Only set min and max for absolutely critical elements (Protéine %, Énergie, Calcium %, Phosphore %, Lysine, Méthionine). Leave non-critical elements as `null`.
+4. NO EXACT MATCHES : Never set min equal to max EXCEPT for Premix/CMV ingredients which strictly require exact inclusion (e.g., exactly 4%).
+5. INGREDIENT TOTALS : Ensure the max bounds on physical ingredients are generous enough so their sum can easily exceed 100%, otherwise the solver cannot reach the 1-ton target.
 
-RÈGLES ABSOLUES :
-1. Tu DOIS renvoyer UNIQUEMENT un objet JSON brut et valide. 
-2. N'ajoute AUCUN texte d'introduction, aucune conclusion, AUCUN bloc markdown (pas de ```json), RIEN d'autre que l'accolade d'ouverture { et de fermeture }.
-3. Le format exact doit être : {"Nom Element Exact": {"min": float ou null, "max": float ou null}}
-4. Si une borne minimum ou maximum n'est pas strictement pertinente biologiquement ou économiquement, met explicitement null.
-5. Utilise les noms des éléments EXACTEMENT tels qu'ils ont été fournis.
+Le format exact doit être : {"Nom Element Exact": {"min": float ou null, "max": float ou null}}
+Utilise les noms des éléments EXACTEMENT tels qu'ils ont été fournis.
 
-Exemple de réponse attendue si les éléments sont ["Protéine %", "Calcium %", "Maïs", "Sel %"] pour "Poulet Démarrage":
+Exemple de réponse attendue si les éléments sont ["Protéine %", "Calcium %", "Maïs", "Son de Blé", "CMV Volaille 4%"]:
 {
-  "Protéine %": {"min": 21.0, "max": 23.0},
-  "Calcium %": {"min": 0.9, "max": 1.1},
-  "Maïs": {"min": 40.0, "max": 65.0},
-  "Sel %": {"min": 0.3, "max": 0.45}
+  "Protéine %": {"min": 20.5, "max": 23.5},
+  "Calcium %": {"min": 0.85, "max": 1.2},
+  "Maïs": {"min": 35.0, "max": 75.0},
+  "Son de Blé": {"min": null, "max": 15.0},
+  "CMV Volaille 4%": {"min": 4.0, "max": 4.0}
 }"""
 
     try:
