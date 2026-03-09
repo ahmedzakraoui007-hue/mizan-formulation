@@ -346,7 +346,7 @@ export default function RecipesPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+      <div className="flex flex-col gap-8">
         {recipes.map(masterRec => {
           const activeId = activeVersions[masterRec.id] || masterRec.id;
           const isMasterActive = activeId === masterRec.id;
