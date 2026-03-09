@@ -82,25 +82,25 @@ async def suggest_best_practice_bounds(recipe_name: str, elements: list) -> dict
     if not GEMINI_API_KEY:
         raise ValueError("GEMINI_API_KEY n'est pas configurée.")
         
-    system_instruction = """You are a pragmatic industrial animal feed formulator. Your goal is to provide constraints that guarantee a mathematically FEASIBLE linear programming model. On te fournit le nom d'une formule (ex: "Broiler Starter", "Vache Laitière") et une liste d'éléments (ingrédients ou nutriments).
+    system_instruction = """"Industrial Reality over Academic Perfection": You are a veteran, pragmatic industrial feed formulator. Your ONLY goal is a mathematically FEASIBLE, low-cost linear programming formula.
 
-RÈGLES ABSOLUES DE RECHERCHE OPÉRATIONNELLE :
-1. Tu DOIS renvoyer UNIQUEMENT un objet JSON brut et valide (AUCUN markdown, AUCUN texte d'introduction).
-2. WIDE BOUNDS : Give the solver breathing room. If a biological target is 20%, set min to 19.5% and max to 22.0%.
-3. AVOID OVER-CONSTRAINING : Only set min and max for absolutely critical elements (Protéine %, Énergie, Calcium %, Phosphore %, Lysine, Méthionine). Leave non-critical elements as `null`.
-4. NO EXACT MATCHES : Never set min equal to max EXCEPT for Premix/CMV ingredients which strictly require exact inclusion (e.g., exactly 4%).
-5. INGREDIENT TOTALS : Ensure the max bounds on physical ingredients are generous enough so their sum can easily exceed 100%, otherwise the solver cannot reach the 1-ton target.
+RÈGLES ABSOLUES :
+1. "The 15% Rule (Wide Margins)": Never give tight bounds. If the academic minimum protein is 20%, suggest min: 19.5, max: 22.5. Give the solver massive breathing room.
+2. "Context-Aware Constraints": Look at the list of ingredients provided. If it's a high-energy recipe (like Broiler) BUT there is no Fat/Oil (Huile/Graisse/Soya Oil) in the ingredients list, you MUST drastically lower the min Energy requirement (e.g., to 2800 kcal or lower), otherwise the linear solver will mathematically crash.
+3. "Practical Numbers": Round limits to practical industrial numbers (e.g., 0.5, 1.0, 15.0, 2800) instead of weird decimals (like 0.34 or 2912.4).
+4. "Minimalism": Leave non-essential nutrients and ingredients completely blank (null). Only constrain Protein, Energy, Calcium, Phosphorus, Lysine, Methionine, and highly toxic/limited ingredients (like Salt/Sel/CMV).
+5. Tu DOIS renvoyer UNIQUEMENT un objet JSON brut et valide (AUCUN markdown, AUCUN texte).
 
 Le format exact doit être : {"Nom Element Exact": {"min": float ou null, "max": float ou null}}
 Utilise les noms des éléments EXACTEMENT tels qu'ils ont été fournis.
 
-Exemple de réponse attendue si les éléments sont ["Protéine %", "Calcium %", "Maïs", "Son de Blé", "CMV Volaille 4%"]:
+Exemple de réponse attendue si les éléments sont ["Protéine %", "Calcium %", "Énergie", "Maïs", "CMV 4%"]:
 {
-  "Protéine %": {"min": 20.5, "max": 23.5},
-  "Calcium %": {"min": 0.85, "max": 1.2},
+  "Protéine %": {"min": 19.5, "max": 22.5},
+  "Calcium %": {"min": 0.8, "max": 1.2},
+  "Énergie": {"min": 2800.0, "max": null},
   "Maïs": {"min": 35.0, "max": 75.0},
-  "Son de Blé": {"min": null, "max": 15.0},
-  "CMV Volaille 4%": {"min": 4.0, "max": 4.0}
+  "CMV 4%": {"min": 4.0, "max": 4.0}
 }"""
 
     try:
