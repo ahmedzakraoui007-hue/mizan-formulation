@@ -1,0 +1,13 @@
+{
+  "ingredients": [
+    {"name":"Maïs","cost":1.05,"dm":88,"protein":8.5,"fiber":2.2,"energy":3300,"inventory_limit_tons":50},
+    {"name":"Soja 46%","cost":1.95,"dm":89,"protein":46,"fiber":6,"energy":2240,"inventory_limit_tons":20},
+    {"name":"Son de Blé","cost":0.45,"dm":88,"protein":15,"fiber":11,"energy":1300,"inventory_limit_tons":30},
+    {"name":"Orge","cost":0.90,"dm":89,"protein":11,"fiber":5,"energy":2900,"inventory_limit_tons":40},
+    {"name":"Olive Cake","cost":0.15,"dm":85,"protein":7,"fiber":38,"energy":1100,"inventory_limit_tons":10}
+  ],
+  "recipes": [
+    {"name":"Poultry Grower","demand_tons":25,"min_protein":17,"max_protein":22,"min_fiber":3,"max_fiber":7,"min_energy":2600},
+    {"name":"Dairy Cow","demand_tons":30,"min_protein":14,"max_protein":18,"min_fiber":5,"max_fiber":10,"min_energy":2200}
+  ]
+}
