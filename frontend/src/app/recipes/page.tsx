@@ -30,9 +30,10 @@ export default function RecipesPage() {
   // activeVersionId maps a Master Recipe ID to the ID of the version currently selected in the dropdown
   // If activeVersionId[masterId] === masterId, the Master is selected.
   const [activeVersions, setActiveVersions] = useState<Record<number, number>>({});
-  const [nutrientColumns, setNutrientCols] = useState<string[]>(["Protéine %", "Fibre %", "Énergie"]);
+  const [nutrientColumns, setNutrientCols] = useState<string[]>(["Protéine %", "Fibre %", "Énergie", "Calcium %", "Phosphore %"]);
   const [availableKeys, setAvailableKeys] = useState<string[]>([]);
   const [fetching, setFetching] = useState(true);
+  const [aiLoadingFor, setAiLoadingFor] = useState<number | null>(null);
 
   const fetchRecipes = useCallback(async () => {
     setFetching(true);
@@ -202,6 +203,88 @@ export default function RecipesPage() {
     } catch { /* ignore */ }
   };
 
+  const askAIForBounds = async (masterId: number, targetId: number, recipeName: string) => {
+    setAiLoadingFor(targetId);
+    try {
+      // 1. Gather all elements currently active in the form (nutrients + manually added ingredient constraints)
+      const elementsToAsk = [...nutrientColumns];
+      const activeRecipe = recipes.find(r => r.id === masterId)?.versions.find(v => v.id === targetId) 
+        || recipes.find(r => r.id === masterId);
+        
+      if (activeRecipe?.constraints) {
+         Object.keys(activeRecipe.constraints).forEach(k => {
+             if (!elementsToAsk.includes(k)) elementsToAsk.push(k);
+         });
+      }
+
+      const res = await fetch(`${API}/api/recipes/suggest-bounds`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ recipe_name: recipeName, elements: elementsToAsk })
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err.detail || "Erreur de l'IA.");
+        return;
+      }
+
+      const data = await res.json();
+      const suggestions = data.suggestions; // The raw JSON from Gemini
+      
+      // 2. Patch the constraints deeply
+      setRecipes(prev => prev.map(master => {
+        if (master.id !== masterId) return master;
+        
+        const applySuggestions = (rec: Recipe) => {
+          const updatedConstraints = { ...rec.constraints };
+          
+          Object.entries(suggestions).forEach(([elementKey, bounds]: [string, any]) => {
+            if (bounds.min !== null || bounds.max !== null) {
+              if (!updatedConstraints[elementKey]) updatedConstraints[elementKey] = {};
+              if (bounds.min !== null) updatedConstraints[elementKey].min = bounds.min;
+              if (bounds.max !== null) updatedConstraints[elementKey].max = bounds.max;
+            }
+          });
+          
+          return updatedConstraints;
+        };
+
+        if (targetId === master.id) {
+          const updated = { ...master, constraints: applySuggestions(master) };
+          scheduleSave(updated);
+          return updated;
+        } else {
+          const updatedVersions = master.versions.map(ver => 
+            ver.id === targetId ? { ...ver, constraints: applySuggestions(ver) } : ver
+          );
+          const updatedVersion = updatedVersions.find(v => v.id === targetId)!;
+          scheduleSave(updatedVersion);
+          return { ...master, versions: updatedVersions };
+        }
+      }));
+      
+      // Force any suggested elements that are not in nutrientColumns to be visible
+       setNutrientCols(prev => {
+          const newCols = [...prev];
+          Object.keys(suggestions).forEach(k => {
+             if (!newCols.includes(k) && !k.endsWith("Grains") && !k.endsWith("Meal") && !k.includes(" BP") && !k.includes("EXTR")) {
+                 // Roughly guessing if it's a nutrient to show in the table. (Ideally controlled via schema)
+                 newCols.push(k);
+             }
+          });
+          return newCols;
+       });
+
+      alert(`✅ L'IA a suggéré des limites pour: ${Object.keys(suggestions).join(', ')}`);
+
+    } catch (e) {
+      alert("Impossible de joindre le service IA.");
+    } finally {
+      setAiLoadingFor(null);
+    }
+  };
+
   const createRevision = async (masterId: number, sourceId: number) => {
     const tagName = prompt("Nom de la version (ex: Hiver 2026, Sans Plume, V2...) ?");
     if (!tagName) return;
@@ -288,6 +371,12 @@ export default function RecipesPage() {
                   
                   {/* Actions Row */}
                   <div className="flex items-center gap-2 opacity-50 group-hover:opacity-100 transition-opacity">
+                    
+                    <button onClick={() => askAIForBounds(masterRec.id, activeItem.id, activeItem.name)} disabled={aiLoadingFor === activeItem.id}
+                      className="text-amber-700 hover:text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold flex items-center shadow-sm disabled:opacity-50">
+                      {aiLoadingFor === activeItem.id ? "⏳ Analyse IA..." : "✨ Suggérer Best Practices"}
+                    </button>
+
                     <button onClick={() => createRevision(masterRec.id, activeItem.id)} title="Nouvelle Version"
                       className="text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold flex items-center gap-1 shadow-sm">
                       💾 Sauvegarder une Révision

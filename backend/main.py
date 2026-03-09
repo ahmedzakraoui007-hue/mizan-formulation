@@ -7,7 +7,8 @@ from sqlalchemy.orm import Session
 from database import engine, get_db, Base
 from db_models import IngredientDB, RecipeDB
 from solver import solve_least_cost_formulation, solve_multi_blend
-from ai_service import generate_financial_insights, generate_formulator_audit
+from solver import solve_least_cost_formulation, solve_multi_blend
+from ai_service import generate_financial_insights, generate_formulator_audit, suggest_best_practice_bounds
 
 # ─── Create tables on startup ────────────────────────────────────────
 Base.metadata.create_all(bind=engine)
@@ -283,12 +284,32 @@ def update_recipe(recipe_id: int, data: RecipeDemand, db: Session = Depends(get_
 
 @app.delete("/api/recipes/{recipe_id}")
 def delete_recipe(recipe_id: int, db: Session = Depends(get_db)):
-    row = db.query(RecipeDB).filter(RecipeDB.id == recipe_id).first()
-    if not row:
+    db_item = db.query(RecipeDB).filter(RecipeDB.id == recipe_id).first()
+    if not db_item:
         raise HTTPException(status_code=404, detail="Recipe not found")
-    db.delete(row)
+    
+    # Check if it has child revisions
+    children = db.query(RecipeDB).filter(RecipeDB.parent_id == recipe_id).all()
+    for child in children:
+        db.delete(child)
+
+    db.delete(db_item)
     db.commit()
-    return {"ok": True}
+    return {"status": "ok", "deleted_id": recipe_id}
+
+class SuggestBoundsRequest(BaseModel):
+    recipe_name: str
+    elements: List[str]
+
+@app.post("/api/recipes/suggest-bounds")
+async def api_suggest_bounds(request: SuggestBoundsRequest):
+    try:
+        suggestions = await suggest_best_practice_bounds(request.recipe_name, request.elements)
+        return {"status": "ok", "suggestions": suggestions}
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Erreur interne du serveur lors de l'appel à l'IA.")
 
 
 # ═══════════════════  OPTIMIZATION ENDPOINTS  ═════════════════════════

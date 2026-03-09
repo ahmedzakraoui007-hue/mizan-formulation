@@ -75,3 +75,49 @@ RÈGLES ABSOLUES :
     except Exception as e:
         print(f"Gemini Audit API Error: {e}")
         return f"❌ Impossible de joindre l'IA Mizan. Vérifiez votre connexion ou la validité de votre clé API Gemini."
+
+
+async def suggest_best_practice_bounds(recipe_name: str, elements: list) -> dict:
+    import json
+    if not GEMINI_API_KEY:
+        raise ValueError("GEMINI_API_KEY n'est pas configurée.")
+        
+    system_instruction = """Tu es un expert mondial en nutrition animale (vétérinaire/formulateur). On te fournit le nom d'une formule (ex: "Broiler Starter", "Vache Laitière") et une liste d'éléments (qui peuvent être des noms d'ingrédients comme "Maïs" ou des nutriments comme "Protéine %").
+
+Ta mission est de suggérer les contraintes Min et Max idéales et standards de l'industrie pour CE stade physiologique précis.
+
+RÈGLES ABSOLUES :
+1. Tu DOIS renvoyer UNIQUEMENT un objet JSON brut et valide. 
+2. N'ajoute AUCUN texte d'introduction, aucune conclusion, AUCUN bloc markdown (pas de ```json), RIEN d'autre que l'accolade d'ouverture { et de fermeture }.
+3. Le format exact doit être : {"Nom Element Exact": {"min": float ou null, "max": float ou null}}
+4. Si une borne minimum ou maximum n'est pas strictement pertinente biologiquement ou économiquement, met explicitement null.
+5. Utilise les noms des éléments EXACTEMENT tels qu'ils ont été fournis.
+
+Exemple de réponse attendue si les éléments sont ["Protéine %", "Calcium %", "Maïs", "Sel %"] pour "Poulet Démarrage":
+{
+  "Protéine %": {"min": 21.0, "max": 23.0},
+  "Calcium %": {"min": 0.9, "max": 1.1},
+  "Maïs": {"min": 40.0, "max": 65.0},
+  "Sel %": {"min": 0.3, "max": 0.45}
+}"""
+
+    try:
+        model = genai.GenerativeModel('gemini-2.5-flash')
+        prompt = f"{system_instruction}\n\nRecette cible : {recipe_name}\n\nÉléments à évaluer : {json.dumps(elements)}"
+        response = model.generate_content(prompt)
+        
+        # Gemini sometimes still wraps in markdown despite strict instructions, so we cleanly strip it
+        raw_text = response.text.strip()
+        if raw_text.startswith("```json"):
+            raw_text = raw_text[7:]
+        if raw_text.endswith("```"):
+            raw_text = raw_text[:-3]
+        
+        return json.loads(raw_text.strip())
+        
+    except json.JSONDecodeError as e:
+        print(f"Gemini returned invalid JSON for constraints: {response.text}")
+        raise ValueError("L'IA n'a pas renvoyé un format JSON valide.")
+    except Exception as e:
+        print(f"Gemini Bound Suggestion API Error: {e}")
+        raise ValueError("Impossible de joindre l'IA Mizan pour les suggestions.")
