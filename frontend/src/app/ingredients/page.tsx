@@ -26,10 +26,21 @@ export default function IngredientsPage() {
       if (res.ok) {
         const ings = await res.json();
         setIngredients(ings);
+        
+        // Define fields to strictly exclude from the dynamic nutrients array 
+        // because they already have dedicated hardcoded columns
+        const excludeKeys = ["MS %", "Matière Sèche %", "M.S %", "Énergie", "énergie", "Energie", "Energie KCal/Kg"];
+        
         if (ings.length > 0) {
           const allKeys = new Set([...nutrientColumns]);
           ings.forEach((ing: Ingredient) => {
-            if (ing.nutrients) Object.keys(ing.nutrients).forEach(k => allKeys.add(k));
+            if (ing.nutrients) {
+               Object.keys(ing.nutrients).forEach(k => {
+                   if (!excludeKeys.some(ex => k.toLowerCase() === ex.toLowerCase())) {
+                       allKeys.add(k);
+                   }
+               });
+            }
           });
           setNutrientCols(Array.from(allKeys));
         }
@@ -149,40 +160,42 @@ export default function IngredientsPage() {
         </div>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm whitespace-nowrap">
+          <table className="w-full text-left text-sm whitespace-nowrap border-collapse">
             <thead className="bg-gray-50">
               <tr className="text-gray-500 border-b border-gray-200 text-xs font-bold tracking-wider uppercase">
                 {["Nom", "TND/kg", "Frais Logistiques (TND)", "MS %", ...nutrientColumns, "Stock (t)", ""].map((h, i) => (
-                  <th key={i} className={`py-4 px-5 ${h !== "Nom" && h !== "" ? "text-right" : ""} ${h === "Nom" ? "min-w-[250px]" : ""}`}>{h}</th>
+                  <th key={i} className={`py-4 px-5 align-middle ${h !== "Nom" && h !== "" ? "text-right" : ""} ${
+                    h === "Nom" ? "min-w-[250px] sticky left-0 z-20 bg-gray-50 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]" : ""
+                  }`}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {ingredients.map(ing => (
                 <tr key={ing.id} className="hover:bg-blue-50/50 transition-colors group">
-                  <td className="py-3 px-5">
+                  <td className="py-3 px-5 sticky left-0 z-10 bg-white group-hover:bg-blue-50/50 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] align-middle">
                     <input type="text" value={ing.name} onChange={e => editIng(ing.id,"name",e.target.value)}
-                      className="w-full bg-transparent outline-none text-gray-900 font-bold focus:ring-2 focus:ring-blue-500 rounded px-2 py-1.5" />
+                      className="w-full min-w-[150px] bg-transparent outline-none text-gray-900 font-bold focus:ring-2 focus:ring-blue-500 rounded px-2 py-1.5 transition-shadow" />
                   </td>
-                  <td className="py-3 px-5 text-right">
-                    <input type="number" step="0.01" value={ing.cost} onChange={e => editIng(ing.id, "cost", e.target.value)} className={`${cell} w-20 text-right`} />
+                  <td className="py-3 px-5 text-right align-middle">
+                    <input type="number" step="0.01" value={ing.cost} onChange={e => editIng(ing.id, "cost", e.target.value)} className={`${cell} w-24 min-w-[80px] text-right`} />
                   </td>
-                  <td className="py-3 px-5 text-right">
-                    <input type="number" step="0.01" value={ing.transport_cost} onChange={e => editIng(ing.id, "transport_cost", e.target.value)} className={`${cell} w-24 text-right bg-orange-50/50 border-orange-200`} />
+                  <td className="py-3 px-5 text-right align-middle">
+                    <input type="number" step="0.01" value={ing.transport_cost} onChange={e => editIng(ing.id, "transport_cost", e.target.value)} className={`${cell} w-28 min-w-[100px] text-right bg-orange-50/50 border-orange-200`} />
                   </td>
-                  <td className="py-3 px-5 text-right">
-                    <input type="number" step="0.01" value={ing.dm} onChange={e => editIng(ing.id, "dm", e.target.value)} className={`${cell} w-20 text-right`} />
+                  <td className="py-3 px-5 text-right align-middle">
+                    <input type="number" step="0.01" value={ing.dm} onChange={e => editIng(ing.id, "dm", e.target.value)} className={`${cell} w-24 min-w-[80px] text-right font-semibold text-gray-700`} />
                   </td>
                   {nutrientColumns.map(nc => (
-                    <td key={nc} className="py-3 px-5 text-right">
-                      <input type="number" step="0.1" value={ing.nutrients?.[nc] ?? 0} onChange={e => editIng(ing.id, "nutrient", e.target.value, nc)} className={`${cell} w-24 text-right`} />
+                    <td key={nc} className="py-3 px-5 text-right align-middle">
+                      <input type="number" step="0.1" value={ing.nutrients?.[nc] ?? 0} onChange={e => editIng(ing.id, "nutrient", e.target.value, nc)} className={`${cell} w-24 min-w-[80px] text-right`} />
                     </td>
                   ))}
-                  <td className="py-3 px-5 text-right">
+                  <td className="py-3 px-5 text-right align-middle">
                     <input type="number" step="1" value={ing.inventory_limit_tons} onChange={e => editIng(ing.id, "inventory_limit_tons", e.target.value)}
-                      className={`${cell} w-24 font-bold text-blue-700 bg-blue-50 border-blue-200 text-right`} />
+                      className={`${cell} w-28 min-w-[100px] font-bold text-blue-700 bg-blue-50 border-blue-200 text-right`} />
                   </td>
                   <td className="py-3 px-5 text-center">
                     <button onClick={() => rmIng(ing.id)} className="text-red-500 hover:text-white hover:bg-red-500 border border-transparent hover:border-red-600 px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all cursor-pointer text-xs font-bold shadow-sm">
