@@ -90,15 +90,31 @@ RÈGLES ABSOLUES :
 3. "Practical Numbers": Round limits to practical industrial numbers (e.g., 0.5, 1.0, 15.0, 2800) instead of weird decimals (like 0.34 or 2912.4).
 4. "Minimalism": Leave non-essential nutrients and ingredients completely blank (null). Only constrain Protein, Energy, Calcium, Phosphorus, Lysine, Methionine, and highly toxic/limited ingredients (like Salt/Sel/CMV).
 5. Tu DOIS renvoyer UNIQUEMENT un objet JSON brut et valide (AUCUN markdown, AUCUN texte).
+6. STRICT NOMENCLATURE: When generating constraints for nutrients, you MUST use the exact following string keys. Do not deviate, do not translate, do not omit the '%' or 'KCal/Kg'. If you use a different key, the system will crash.
+   Allowed Nutrient Keys:
+   - "Protéine %"
+   - "Énergie KCal/Kg"
+   - "Fibre %"
+   - "Calcium %"
+   - "Phosphore %"
+   - "Lysine %"
+   - "Méthionine %"
+   - "M+C %"
+   - "Thréonine %"
+   - "Valine %"
+   - "Leucine %"
+   - "Arginine %"
+   - "Na g/kg"
+   For example, NEVER output 'Énergie', you MUST output 'Énergie KCal/Kg'.
 
 Le format exact doit être : {"Nom Element Exact": {"min": float ou null, "max": float ou null}}
 Utilise les noms des éléments EXACTEMENT tels qu'ils ont été fournis.
 
-Exemple de réponse attendue si les éléments sont ["Protéine %", "Calcium %", "Énergie", "Maïs", "CMV 4%"]:
+Exemple de réponse attendue si les éléments sont ["Protéine %", "Calcium %", "Énergie KCal/Kg", "Maïs", "CMV 4%"]:
 {
   "Protéine %": {"min": 19.5, "max": 22.5},
   "Calcium %": {"min": 0.8, "max": 1.2},
-  "Énergie": {"min": 2800.0, "max": null},
+  "Énergie KCal/Kg": {"min": 2800.0, "max": null},
   "Maïs": {"min": 35.0, "max": 75.0},
   "CMV 4%": {"min": 4.0, "max": 4.0}
 }"""
@@ -115,7 +131,33 @@ Exemple de réponse attendue si les éléments sont ["Protéine %", "Calcium %",
         if raw_text.endswith("```"):
             raw_text = raw_text[:-3]
         
-        return json.loads(raw_text.strip())
+        parsed_json = json.loads(raw_text.strip())
+        
+        # Fallback Key Normalization
+        key_mapping = {
+            "Énergie": "Énergie KCal/Kg",
+            "Energie": "Énergie KCal/Kg",
+            "Energie KCal/Kg": "Énergie KCal/Kg",
+            "Energie Kcal/Kg": "Énergie KCal/Kg",
+            "Énergie Kcal/Kg": "Énergie KCal/Kg",
+            "Proteine %": "Protéine %",
+            "Proteine": "Protéine %",
+            "Calcium": "Calcium %",
+            "Phosphore": "Phosphore %",
+            "Lysine": "Lysine %",
+            "Methionine": "Méthionine %",
+            "Méthionine": "Méthionine %",
+            "Methionine %": "Méthionine %",
+            "Na": "Na g/kg",
+            "Fibre": "Fibre %",
+        }
+        
+        normalized_json = {}
+        for key, bounds in parsed_json.items():
+            normalized_key = key_mapping.get(key, key)
+            normalized_json[normalized_key] = bounds
+            
+        return normalized_json
         
     except json.JSONDecodeError as e:
         print(f"Gemini returned invalid JSON for constraints: {response.text}")
