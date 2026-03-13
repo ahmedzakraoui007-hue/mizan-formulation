@@ -166,8 +166,8 @@ export default function IngredientsPage() {
             <thead className="bg-gray-50">
               <tr className="text-gray-500 border-b border-gray-200 text-xs font-bold tracking-wider uppercase">
                 {["Nom", "TND/kg", "Frais Logistiques (TND)", "MS %", ...nutrientColumns, "Stock (t)", ""].map((h, i) => (
-                  <th key={i} className={`py-4 px-5 align-middle ${h !== "Nom" && h !== "" ? "text-right" : ""} ${
-                    h === "Nom" ? "min-w-[250px] sticky left-0 z-20 bg-gray-50 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]" : ""
+                  <th key={i} className={`py-4 px-5 align-middle sticky top-0 z-20 bg-gray-50 ${h !== "Nom" && h !== "" ? "text-right" : ""} ${
+                    h === "Nom" ? "min-w-[250px] left-0 z-30 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]" : ""
                   }`}>{h}</th>
                 ))}
               </tr>

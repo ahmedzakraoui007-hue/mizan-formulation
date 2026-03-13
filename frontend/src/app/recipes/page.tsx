@@ -169,6 +169,35 @@ export default function RecipesPage() {
     });
   };
 
+  const removeIngredientFromRecipe = (masterId: number, targetId: number, ingredientKey: string) => {
+    // Remove from nutrientColumns so the row disappears from the table
+    setNutrientCols(prev => prev.filter(c => c !== ingredientKey));
+    // Also deep-remove from constraints state and schedule a save
+    setRecipes(prev => {
+      const newRecs = prev.map(master => {
+        if (master.id !== masterId) return master;
+        const removeFromConstraints = (rec: Recipe) => {
+          const updated = { ...rec.constraints };
+          delete updated[ingredientKey];
+          return updated;
+        };
+        if (targetId === master.id) {
+          const updated = { ...master, constraints: removeFromConstraints(master) };
+          scheduleSave(updated);
+          return updated;
+        } else {
+          const updatedVersions = master.versions.map(ver =>
+            ver.id === targetId ? { ...ver, constraints: removeFromConstraints(ver) } : ver
+          );
+          const updatedVersion = updatedVersions.find(v => v.id === targetId)!;
+          scheduleSave(updatedVersion);
+          return { ...master, versions: updatedVersions };
+        }
+      });
+      return newRecs;
+    });
+  };
+
   const addRec = async () => {
     try {
       const res = await fetch(`${API}/api/recipes`, {
@@ -480,11 +509,12 @@ export default function RecipesPage() {
                                 <th className="pb-3 w-20 text-right pr-2">Min %</th>
                                 <th className="pb-3 w-20 text-right pr-2">Max %</th>
                                 <th className="pb-3 w-24 text-right text-emerald-700">Exact %</th>
+                                <th className="pb-3 w-8"></th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-emerald-50/50">
                               {activeIngredientCols.length === 0 && (
-                                  <tr><td colSpan={4} className="text-center py-4 text-xs text-emerald-600/60 font-medium italic">Aucune limite d'incorporation...</td></tr>
+                                  <tr><td colSpan={5} className="text-center py-4 text-xs text-emerald-600/60 font-medium italic">Aucune limite d'incorporation...</td></tr>
                               )}
                               {activeIngredientCols.map(nc => (
                                 <tr key={nc} className="group/row hover:bg-white rounded-md transition-colors">
@@ -498,26 +528,61 @@ export default function RecipesPage() {
                                   <td className="py-2.5">
                                     <input type="number" step="0.1" placeholder="—" value={activeItem.constraints?.[nc]?.exact ?? ""} onChange={e => editRecConstraint(masterRec.id, activeItem.id, nc, "exact", e.target.value)} className={`${cell} w-full text-right bg-transparent group-hover/row:bg-white border-emerald-100 ${activeItem.constraints?.[nc]?.exact !== undefined ? "font-bold text-emerald-800 !bg-emerald-100 border-emerald-400" : ""}`} />
                                   </td>
+                                  <td className="py-2.5 pl-1">
+                                    <button
+                                      onClick={() => removeIngredientFromRecipe(masterRec.id, activeItem.id, nc)}
+                                      title="Retirer cet ingrédient"
+                                      className="opacity-0 group-hover/row:opacity-100 transition-all text-red-400 hover:text-white hover:bg-red-500 w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold cursor-pointer border border-transparent hover:border-red-600"
+                                    >
+                                      ✕
+                                    </button>
+                                  </td>
                                 </tr>
                               ))}
                             </tbody>
                           </table>
                           
-                          {/* Add Ingredient Constraint Dropdown */}
-                          <div className="mt-2 text-right">
-                              <select 
-                                value="" 
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  if (val && !nutrientColumns.includes(val)) setNutrientCols(prev => [...prev, val]);
-                                }}
-                                className="bg-emerald-50 border border-emerald-200 text-emerald-800 hover:bg-emerald-100 px-3 py-1.5 rounded-lg text-xs font-bold transition-all outline-none cursor-pointer max-w-[200px]"
-                              >
-                                <option value="" disabled>+ Limiter Ingrédient...</option>
-                                {globalIngredientNames.filter(k => !nutrientColumns.includes(k)).map(k => (
+                          {/* Smart Add Ingredient Dropdown — filtered per recipe */}
+                          <div className="mt-2">
+                            <select
+                              value=""
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                if (!val) return;
+                                // Add to nutrientColumns so the row renders
+                                if (!nutrientColumns.includes(val)) setNutrientCols(prev => [...prev, val]);
+                                // Immediately inject empty constraint so the row appears even without column
+                                setRecipes(prev => prev.map(master => {
+                                  if (master.id !== masterRec.id) return master;
+                                  const inject = (rec: Recipe): Recipe => ({
+                                    ...rec,
+                                    constraints: rec.constraints[val]
+                                      ? rec.constraints
+                                      : { ...rec.constraints, [val]: {} }
+                                  });
+                                  if (activeItem.id === master.id) {
+                                    const updated = inject(master) as RecipeGrouped;
+                                    scheduleSave(updated);
+                                    return updated;
+                                  } else {
+                                    const updatedVersions = master.versions.map(ver =>
+                                      ver.id === activeItem.id ? inject(ver) : ver
+                                    );
+                                    const updatedVersion = updatedVersions.find(v => v.id === activeItem.id)!;
+                                    scheduleSave(updatedVersion);
+                                    return { ...master, versions: updatedVersions };
+                                  }
+                                }));
+                              }}
+                              className="w-full bg-white border-2 border-dashed border-emerald-200 text-emerald-700 hover:border-emerald-400 hover:bg-emerald-50 px-3 py-2 rounded-lg text-xs font-bold transition-all outline-none cursor-pointer"
+                            >
+                              <option value="" disabled>＋ Ajouter une matière première...</option>
+                              {globalIngredientNames
+                                .filter(k => !activeIngredientCols.includes(k))
+                                .map(k => (
                                   <option key={k} value={k}>{k}</option>
                                 ))}
-                              </select>
+                            </select>
                           </div>
                         </div>
                       </div>
