@@ -160,8 +160,8 @@ export default function IngredientsPage() {
         </div>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
-        <div className="overflow-x-auto">
+      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm flex flex-col">
+        <div className="overflow-auto max-h-[70vh]">
           <table className="w-full text-left text-sm whitespace-nowrap border-collapse">
             <thead className="bg-gray-50">
               <tr className="text-gray-500 border-b border-gray-200 text-xs font-bold tracking-wider uppercase">
