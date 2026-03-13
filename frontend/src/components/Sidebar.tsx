@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { UserButton, useUser } from "@clerk/nextjs";
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { user } = useUser();
 
   const links = [
     { href: "/ingredients", label: "🌾 Matières Premières" },
@@ -41,7 +43,27 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <div className="p-4 mt-auto">
+      <div className="p-4 mt-auto space-y-3">
+        {/* User profile section */}
+        <div className="flex items-center gap-3 bg-gray-800 rounded-xl px-3 py-3">
+          <UserButton
+            appearance={{
+              elements: {
+                avatarBox: "w-9 h-9 ring-2 ring-emerald-500/40",
+              },
+            }}
+          />
+          <div className="flex flex-col min-w-0">
+            <span className="text-white text-xs font-bold truncate">
+              {user?.fullName ?? user?.firstName ?? "Chargement..."}
+            </span>
+            <span className="text-gray-400 text-[10px] truncate">
+              {user?.primaryEmailAddress?.emailAddress ?? ""}
+            </span>
+          </div>
+        </div>
+
+        {/* Version tag */}
         <div className="bg-gray-800 rounded-xl p-4 text-xs text-gray-400 font-medium">
           Mizan ERP v2.0 <br />
           <span className="text-gray-500">Multi-Blend Optimization Engine</span>
