@@ -415,7 +415,22 @@ def run_parametric_analysis(request: ParametricRequest, db: Session = Depends(ge
 
     return {"nutrient_key": request.nutrient_key, "data": results}
 
+
+# ═══════════════════  DASHBOARD STATS  ════════════════════════════════
+
+@app.get("/api/dashboard/stats")
+def get_dashboard_stats(db: Session = Depends(get_db)):
+    """Return high-level factory KPIs for the home dashboard."""
+    total_ingredients = db.query(IngredientDB).count()
+    total_recipes = db.query(RecipeDB).filter(RecipeDB.parent_id == None).count()
+    return {
+        "total_ingredients": total_ingredients,
+        "total_recipes": total_recipes,
+    }
+
+
 if __name__ == "__main__":
+
     import uvicorn
     # Render.com dynamically assigns a port via the PORT environment variable
     port = int(os.environ.get("PORT", 8000))

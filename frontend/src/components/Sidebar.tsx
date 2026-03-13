@@ -9,6 +9,7 @@ export default function Sidebar() {
   const { user } = useUser();
 
   const links = [
+    { href: "/", label: "📊 Tableau de Bord" },
     { href: "/ingredients", label: "🌾 Matières Premières" },
     { href: "/recipes", label: "📋 Formules" },
     { href: "/optimization", label: "⚡ Optimisation" },
