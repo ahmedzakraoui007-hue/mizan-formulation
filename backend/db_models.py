@@ -25,3 +25,4 @@ class RecipeDB(Base):
     bag_size_kg           = Column(Float,   nullable=False, default=50.0)
     parent_id             = Column(Integer, nullable=True) # If null, this is the master recipe
     version_tag           = Column(String,  nullable=False, default="V1")
+    species               = Column(String,  nullable=False, default="General")

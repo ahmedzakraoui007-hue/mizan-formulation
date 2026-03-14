@@ -79,6 +79,7 @@ class RecipeDemand(BaseModel):
     constraints: Dict[str, ConstraintConfig] = Field(default_factory=dict)
     parent_id: Optional[int] = None
     version_tag: str = "V1"
+    species: str = "General"
     process_yield_percent: float = 100.0
     bag_size_kg: float = 50.0
     constraints: Dict[str, ConstraintConfig] = Field(default_factory=dict)
@@ -133,6 +134,8 @@ def seed_database():
                 conn.execute(text("ALTER TABLE recipes ADD COLUMN parent_id INTEGER"))
             if "version_tag" not in existing_cols:
                 conn.execute(text("ALTER TABLE recipes ADD COLUMN version_tag VARCHAR NOT NULL DEFAULT 'V1'"))
+            if "species" not in existing_cols:
+                conn.execute(text("ALTER TABLE recipes ADD COLUMN species VARCHAR NOT NULL DEFAULT 'General'"))
             conn.commit()
         except Exception as e:
             print(f"Migration error: {e}")

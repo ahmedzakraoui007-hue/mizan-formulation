@@ -19,6 +19,7 @@ interface Recipe {
   constraints: Record<string, ConstraintConfig>;
   parent_id?: number | null;
   version_tag: string;
+  species: string;
 }
 
 interface RecipeGrouped extends Recipe {
@@ -93,6 +94,7 @@ export default function RecipesPage() {
           process_yield_percent: rec.process_yield_percent,
           bag_size_kg: rec.bag_size_kg,
           constraints: rec.constraints,
+          species: rec.species ?? "General",
         }),
       });
     } catch (e) { console.error("Could not save recipe", e); }
@@ -339,6 +341,27 @@ export default function RecipesPage() {
   const cell = "bg-white border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm transition-shadow";
   const label = "text-gray-600 text-[10px] font-bold uppercase tracking-wider mb-1 block";
 
+  // ── Species-aware nutrient key filter ──────────────────────────────────
+  const SPECIES_OPTIONS = [
+    { value: "Volaille",  label: "🐔 Volaille" },
+    { value: "Porc",     label: "🐷 Porc" },
+    { value: "Ruminant", label: "🐄 Ruminant" },
+    { value: "General",  label: "♾️ Standard" },
+  ];
+
+  const SPECIES_HIDE: Record<string, string[]> = {
+    Volaille:  ["Porc", "Ruminant", "UFL", "UFV"],
+    Porc:      ["Volaille", "Ruminant", "UFL", "UFV"],
+    Ruminant:  ["Volaille", "Porc"],
+    General:   [],
+  };
+
+  const filterKeysBySpecies = (keys: string[], species: string): string[] => {
+    const blocked = SPECIES_HIDE[species] ?? [];
+    if (blocked.length === 0) return keys;
+    return keys.filter(k => !blocked.some(b => k.toLowerCase().includes(b.toLowerCase())));
+  };
+
   if (fetching) {
     return (
       <div className="flex items-center justify-center py-20 min-h-screen">
@@ -390,8 +413,27 @@ export default function RecipesPage() {
                   <div className="flex items-center justify-between mb-3">
                     <input type="text" value={masterRec.name} onChange={e => editRec(masterRec.id, masterRec.id, "name", e.target.value)}
                       className="text-gray-900 font-black text-2xl bg-transparent border-b-2 border-transparent hover:border-gray-200 outline-none w-2/3 focus:border-blue-500 rounded-none px-1 pb-1 transition-colors" />
-                    
+
                     <div className="flex items-center gap-2">
+                      {/* Espèce Cible segmented control */}
+                      <div className="flex items-center bg-gray-100 rounded-lg p-0.5 gap-0.5">
+                        {SPECIES_OPTIONS.map(opt => {
+                          const isActive = (activeItem.species ?? "General") === opt.value;
+                          return (
+                            <button
+                              key={opt.value}
+                              onClick={() => editRec(masterRec.id, activeItem.id, "species", opt.value)}
+                              className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all ${
+                                isActive
+                                  ? "bg-white text-gray-900 shadow-sm"
+                                  : "text-gray-400 hover:text-gray-700"
+                              }`}
+                            >
+                              {opt.label}
+                            </button>
+                          );
+                        })}
+                      </div>
                        <select value={activeId} onChange={e => setActiveVersions(prev => ({ ...prev, [masterRec.id]: parseInt(e.target.value) }))}
                          className="bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-bold px-3 py-1.5 rounded-lg outline-none cursor-pointer">
                          <option value={masterRec.id}>🗂️ {masterRec.version_tag} (Master)</option>
