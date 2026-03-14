@@ -1,0 +1,65 @@
+[
+    {
+        "name": "Alfalfa protein concentrate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 92.2,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 92.2,
+            "Protéine %": 52.2,
+            "Fibre %": 1.9,
+            "Calcium %": 3.38,
+            "Phosphore %": 0.85,
+            "Énergie Volaille KCal/Kg": 2730,
+            "Lysine Dig. Volaille %": 2.82,
+            "Méthionine Dig. Volaille %": 0.92,
+            "Énergie Porc KCal/Kg": 2200,
+            "Lysine Dig. Porc %": 2.51,
+            "Énergie Ruminant UFL": 1.36,
+            "PDIA Ruminant g/kg": 347
+        }
+    },
+    {
+        "name": "Alfalfa, dehydrated, protein 16-18% dry matter",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 90.8,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 90.8,
+            "Protéine %": 15.4,
+            "Fibre %": 27.5,
+            "Calcium %": 2.03,
+            "Phosphore %": 0.23,
+            "Énergie Volaille KCal/Kg": 1060,
+            "Lysine Dig. Volaille %": 0.36,
+            "Méthionine Dig. Volaille %": 0.09,
+            "Énergie Porc KCal/Kg": 880,
+            "Lysine Dig. Porc %": 0.36,
+            "Énergie Ruminant UFL": 0.66,
+            "PDIA Ruminant g/kg": 46
+        }
+    },
+    {
+        "name": "Alfalfa, dehydrated, protein 17-19% dry matter",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 90.6,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 90.6,
+            "Protéine %": 16.2,
+            "Fibre %": 26.2,
+            "Calcium %": 2.12,
+            "Phosphore %": 0.24,
+            "Énergie Volaille KCal/Kg": 1070,
+            "Lysine Dig. Volaille %": 0.42,
+            "Méthionine Dig. Volaille %": 0.11,
+            "Énergie Porc KCal/Kg": 900,
+            "Lysine Dig. Porc %": 0.4,
+            "Énergie Ruminant UFL": 0.68,
+            "PDIA Ruminant g/kg": 48
+        }
+    }
+]
