@@ -166,18 +166,20 @@ export default function IngredientsPage() {
             <thead className="bg-gray-50">
               <tr className="text-gray-500 border-b border-gray-200 text-xs font-bold tracking-wider uppercase">
                 {["Nom", "TND/kg", "Frais Logistiques (TND)", "MS %", ...nutrientColumns, "Stock (t)", ""].map((h, i) => (
-                  <th key={i} className={`py-4 px-5 align-middle sticky top-0 z-20 bg-gray-50 ${h !== "Nom" && h !== "" ? "text-right" : ""} ${
-                    h === "Nom" ? "min-w-[250px] left-0 z-30 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]" : ""
-                  }`}>{h}</th>
+                  <th key={i} className={`py-4 px-5 align-middle sticky top-0 z-20 ${
+                    h === "Nom"
+                      ? "min-w-[250px] left-0 z-30 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] bg-gray-100 font-extrabold text-gray-800"
+                      : "bg-gray-50 text-gray-500 font-bold tracking-wider uppercase text-xs"
+                  } ${h !== "Nom" && h !== "" ? "text-right" : ""}`}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {ingredients.map(ing => (
                 <tr key={ing.id} className="hover:bg-blue-50/50 transition-colors group">
-                  <td className="py-3 px-5 sticky left-0 z-10 bg-white group-hover:bg-blue-50/50 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] align-middle">
+                  <td className="py-3 px-5 sticky left-0 z-10 bg-gray-100 group-hover:bg-gray-200/70 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] align-middle">
                     <input type="text" value={ing.name} onChange={e => editIng(ing.id,"name",e.target.value)}
-                      className="w-full min-w-[150px] bg-transparent outline-none text-gray-900 font-bold focus:ring-2 focus:ring-blue-500 rounded px-2 py-1.5 transition-shadow" />
+                      className="w-full min-w-[150px] bg-transparent outline-none text-gray-900 font-extrabold focus:ring-2 focus:ring-blue-500 rounded px-2 py-1.5 transition-shadow" />
                   </td>
                   <td className="py-3 px-5 text-right align-middle">
                     <input type="number" step="0.01" value={ing.cost} onChange={e => editIng(ing.id, "cost", e.target.value)} className={`${cell} w-24 min-w-[80px] text-right`} />

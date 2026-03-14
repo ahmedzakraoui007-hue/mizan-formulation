@@ -381,7 +381,7 @@ export default function OptimizationPage() {
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 text-center">Coût Total Usine (TND) en fonction de {paramLabel}</p>
                 <div className="w-full h-72">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={paramData.filter(d => d.cost !== null)} margin={{ top: 10, right: 30, left: 20, bottom: 10 }}>
+                    <LineChart data={paramData} margin={{ top: 10, right: 30, left: 20, bottom: 10 }}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
                       <XAxis dataKey="nutrient_value" tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false}
                         label={{ value: paramLabel, position: 'insideBottom', offset: -5, style: { fontSize: 11, fill: '#9ca3af', fontWeight: 700 } }} />
@@ -389,10 +389,10 @@ export default function OptimizationPage() {
                         label={{ value: 'Coût (TND)', angle: -90, position: 'insideLeft', offset: -5, style: { fontSize: 11, fill: '#9ca3af', fontWeight: 700 } }} />
                       <RechartsTooltip 
                         contentStyle={{ borderRadius: '12px', fontSize: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', background: 'white' }}
-                        formatter={(val: any) => [`${Number(val).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} TND`, 'Coût']}
+                        formatter={(val: any) => val === null ? ['Infaisable', 'Coût'] : [`${Number(val).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} TND`, 'Coût']}
                         labelFormatter={(label: any) => `${paramLabel}: ${label}`}
                       />
-                      <Line type="monotone" dataKey="cost" stroke="#4f46e5" strokeWidth={3} dot={{ r: 5, fill: '#4f46e5', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 7 }} />
+                      <Line type="monotone" dataKey="cost" stroke="#4f46e5" strokeWidth={3} connectNulls={false} dot={{ r: 5, fill: '#4f46e5', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 7 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>

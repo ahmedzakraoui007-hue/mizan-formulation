@@ -503,19 +503,20 @@ export default function RecipesPage() {
                                 <span>🧬</span> Cibles Nutritionnelles
                             </h3>
                         </div>
-                        <div className="overflow-x-auto p-4">
-                          <table className="w-full text-left text-sm">
+                        <div className="overflow-x-auto p-4 flex flex-col">
+                          <table className="w-full text-left text-sm mb-3">
                             <thead>
                               <tr className="text-blue-800 text-[10px] uppercase tracking-wider font-extrabold border-b border-blue-100 pb-2 block w-full table-row">
                                 <th className="pb-3 w-1/3">Nutriment</th>
                                 <th className="pb-3 w-20 text-right pr-2">Min</th>
                                 <th className="pb-3 w-20 text-right pr-2">Max</th>
                                 <th className="pb-3 w-24 text-right text-orange-600">Exact</th>
+                                <th className="pb-3 w-8"></th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-blue-50/50">
                               {activeNutritionalCols.length === 0 && (
-                                  <tr><td colSpan={4} className="text-center py-4 text-xs text-blue-400 font-medium italic">Aucune cible définie...</td></tr>
+                                  <tr><td colSpan={5} className="text-center py-4 text-xs text-blue-400 font-medium italic">Aucune cible définie...</td></tr>
                               )}
                               {activeNutritionalCols.map(nc => (
                                 <tr key={nc} className="group/row hover:bg-white rounded-md transition-colors">
@@ -529,10 +530,66 @@ export default function RecipesPage() {
                                   <td className="py-2.5">
                                     <input type="number" step="0.1" placeholder="—" value={activeItem.constraints?.[nc]?.exact ?? ""} onChange={e => editRecConstraint(masterRec.id, activeItem.id, nc, "exact", e.target.value)} className={`${cell} w-full text-right bg-transparent group-hover/row:bg-white border-blue-100 ${activeItem.constraints?.[nc]?.exact !== undefined ? "font-bold text-orange-700 !bg-orange-50 border-orange-300" : ""}`} />
                                   </td>
+                                  <td className="py-2.5 pl-1">
+                                    <button
+                                      onClick={() => removeIngredientFromRecipe(masterRec.id, activeItem.id, nc)}
+                                      title="Retirer cette cible"
+                                      className="opacity-0 group-hover/row:opacity-100 transition-all text-red-400 hover:text-white hover:bg-red-500 w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold cursor-pointer border border-transparent hover:border-red-600"
+                                    >
+                                      ✕
+                                    </button>
+                                  </td>
                                 </tr>
                               ))}
                             </tbody>
                           </table>
+
+                          {/* Smart Add Nutritional Target Dropdown */}
+                          <div className="mt-2">
+                            <select
+                              value=""
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                if (!val) return;
+                                // Add to global nutrientColumns so the row renders
+                                if (!nutrientColumns.includes(val)) setNutrientCols(prev => [...prev, val]);
+                                // Inject empty constraint into the active recipe
+                                setRecipes(prev => prev.map(master => {
+                                  if (master.id !== masterRec.id) return master;
+                                  const inject = (rec: Recipe): Recipe => ({
+                                    ...rec,
+                                    constraints: rec.constraints[val]
+                                      ? rec.constraints
+                                      : { ...rec.constraints, [val]: {} }
+                                  });
+                                  if (activeItem.id === master.id) {
+                                    const updated = inject(master) as RecipeGrouped;
+                                    scheduleSave(updated);
+                                    return updated;
+                                  } else {
+                                    const updatedVersions = master.versions.map(ver =>
+                                      ver.id === activeItem.id ? inject(ver) : ver
+                                    );
+                                    const updatedVersion = updatedVersions.find(v => v.id === activeItem.id)!;
+                                    scheduleSave(updatedVersion);
+                                    return { ...master, versions: updatedVersions };
+                                  }
+                                }));
+                              }}
+                              className="w-full bg-white border-2 border-dashed border-blue-200 text-blue-700 hover:border-blue-400 hover:bg-blue-50 px-3 py-2 rounded-lg text-xs font-bold transition-all outline-none cursor-pointer"
+                            >
+                              <option value="" disabled>🧬 Ajouter une cible nutritionnelle...</option>
+                              {filterKeysBySpecies(
+                                availableKeys.filter(k =>
+                                  !globalIngredientNames.includes(k) &&
+                                  !activeNutritionalCols.includes(k)
+                                ),
+                                activeItem.species ?? "General"
+                              ).map(k => (
+                                <option key={k} value={k}>{k}</option>
+                              ))}
+                            </select>
+                          </div>
                         </div>
                       </div>
 
