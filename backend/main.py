@@ -224,6 +224,7 @@ def list_recipes(db: Session = Depends(get_db)):
             "id": m.id, "name": m.name, "demand_tons": m.demand_tons,
             "process_yield_percent": m.process_yield_percent, "bag_size_kg": m.bag_size_kg,
             "constraints": m.constraints, "parent_id": m.parent_id, "version_tag": m.version_tag,
+            "species": m.species or "General",
             "versions": []
         }
         if m.id in versions_map:
