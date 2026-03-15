@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, JSON
+from sqlalchemy import Column, Integer, String, Float, JSON, Boolean
 from database import Base
 
 
@@ -12,6 +12,7 @@ class IngredientDB(Base):
     dm                   = Column(Float,   nullable=False)
     nutrients            = Column(JSON,    default=dict)
     inventory_limit_tons = Column(Float,   nullable=False)
+    is_active            = Column(Boolean, nullable=False, default=True)
 
 
 class RecipeDB(Base):

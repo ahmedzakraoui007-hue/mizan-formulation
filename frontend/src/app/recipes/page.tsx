@@ -67,12 +67,14 @@ export default function RecipesPage() {
         const keys = new Set<string>();
         const itemNames = new Set<string>();
         ings.forEach((ing: any) => {
-          itemNames.add(ing.name);
+          if (ing.is_active !== false) {
+            itemNames.add(ing.name);
+          }
           keys.add(ing.name);
           Object.keys(ing.nutrients || {}).forEach(k => keys.add(k));
         });
         setAvailableKeys(Array.from(keys).sort());
-        setGlobalIngredientNames(Array.from(itemNames));
+        setGlobalIngredientNames(Array.from(itemNames).sort());
       }
 
     } catch { /* ignored */ }

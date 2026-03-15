@@ -12,6 +12,7 @@ interface Ingredient {
   dm: number;
   inventory_limit_tons: number;
   nutrients: Record<string, number>;
+  is_active: boolean;
 }
 
 export default function IngredientsPage() {
@@ -66,7 +67,8 @@ export default function IngredientsPage() {
             transport_cost: ing.transport_cost,
             dm: ing.dm,
             inventory_limit_tons: ing.inventory_limit_tons,
-            nutrients: ing.nutrients
+            nutrients: ing.nutrients,
+            is_active: ing.is_active
           }),
         })
       ));
@@ -96,6 +98,11 @@ export default function IngredientsPage() {
     }));
   };
 
+  const toggleActive = (id: number) => {
+    setHasUnsavedChanges(true);
+    setIngredients(prev => prev.map(i => i.id === id ? { ...i, is_active: !i.is_active } : i));
+  };
+
   const addNutrientColumn = () => {
     const colName = prompt("Nom du nouveau nutriment (ex: Calcium %):");
     if (colName && !nutrientColumns.includes(colName)) {
@@ -111,7 +118,7 @@ export default function IngredientsPage() {
       const res = await fetch(`${API}/api/ingredients`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: "Nouvelle Matière", cost: 0, transport_cost: 0, dm: 0, inventory_limit_tons: 0, nutrients: initNutrients }),
+        body: JSON.stringify({ name: "Nouvelle Matière", cost: 0, transport_cost: 0, dm: 0, inventory_limit_tons: 0, nutrients: initNutrients, is_active: true }),
       });
       if (res.ok) {
         const row: Ingredient = await res.json();
@@ -165,21 +172,27 @@ export default function IngredientsPage() {
           <table className="w-full text-left text-sm whitespace-nowrap border-collapse">
             <thead className="bg-gray-50">
               <tr className="text-gray-500 border-b border-gray-200 text-xs font-bold tracking-wider uppercase">
-                {["Nom", "TND/kg", "Frais Logistiques (TND)", "MS %", ...nutrientColumns, "Stock (t)", ""].map((h, i) => (
+                {["Nom", "Statut", "TND/kg", "Frais Logistiques (TND)", "MS %", ...nutrientColumns, "Stock (t)", ""].map((h, i) => (
                   <th key={i} className={`py-4 px-5 align-middle sticky top-0 z-20 ${
                     h === "Nom"
                       ? "min-w-[250px] left-0 z-30 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] bg-gray-100 font-extrabold text-gray-800"
                       : "bg-gray-50 text-gray-500 font-bold tracking-wider uppercase text-xs"
-                  } ${h !== "Nom" && h !== "" ? "text-right" : ""}`}>{h}</th>
+                  } ${h !== "Nom" && h !== "Statut" && h !== "" ? "text-right" : ""}`}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {ingredients.map(ing => (
-                <tr key={ing.id} className="hover:bg-blue-50/50 transition-colors group">
+                <tr key={ing.id} className={`hover:bg-blue-50/50 transition-all group ${!ing.is_active ? 'opacity-40 grayscale' : ''}`}>
                   <td className="py-3 px-5 sticky left-0 z-10 bg-gray-100 group-hover:bg-gray-200/70 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] align-middle">
                     <input type="text" value={ing.name} onChange={e => editIng(ing.id,"name",e.target.value)}
                       className="w-full min-w-[150px] bg-transparent outline-none text-gray-900 font-extrabold focus:ring-2 focus:ring-blue-500 rounded px-2 py-1.5 transition-shadow" />
+                  </td>
+                  <td className="py-3 px-5 align-middle text-center">
+                    <button onClick={() => toggleActive(ing.id)} 
+                      className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all shadow-sm ${ing.is_active ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-200' : 'bg-gray-200 text-gray-600 hover:bg-gray-300 border border-gray-300'}`}>
+                      {ing.is_active ? "🟢 Actif" : "⚪ Inactif"}
+                    </button>
                   </td>
                   <td className="py-3 px-5 text-right align-middle">
                     <input type="number" step="0.01" value={ing.cost} onChange={e => editIng(ing.id, "cost", e.target.value)} className={`${cell} w-24 min-w-[80px] text-right`} />

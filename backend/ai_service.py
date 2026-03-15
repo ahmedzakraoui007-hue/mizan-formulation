@@ -73,7 +73,9 @@ RÈGLES ABSOLUES :
         return response.text
         
     except Exception as e:
-        print(f"Gemini Audit
+        print(f"Gemini Audit API Error: {e}")
+        return "❌ Impossible de joindre l'IA Mizan. Vérifiez votre connexion ou la validité de votre clé API Gemini."
+
 # ── Species → canonical nutrient key sets ────────────────────────────────────
 SPECIES_KEYS: dict[str, list[str]] = {
     "base": [

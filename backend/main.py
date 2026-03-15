@@ -65,6 +65,7 @@ class MultiBlendIngredient(BaseModel):
     dm: float
     nutrients: Dict[str, float] = Field(default_factory=dict)
     inventory_limit_tons: float
+    is_active: bool = True
 
 class ConstraintConfig(BaseModel):
     min: Optional[float] = None
@@ -145,6 +146,14 @@ def seed_database():
                     print("⚙️  Migrating: adding 'species' to recipes…")
                     with engine.begin() as conn:
                         conn.execute(text("ALTER TABLE recipes ADD COLUMN species VARCHAR DEFAULT 'General'"))
+
+            if inspector.has_table("ingredients"):
+                existing_ing_cols = [col["name"] for col in inspector.get_columns("ingredients")]
+                if "is_active" not in existing_ing_cols:
+                    print("⚙️  Migrating: adding 'is_active' to ingredients…")
+                    with engine.begin() as conn:
+                        conn.execute(text("ALTER TABLE ingredients ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT 1"))
+
         except Exception as e:
             print(f"Migration warning: {e}")
         # ------------------------------------------------------------
