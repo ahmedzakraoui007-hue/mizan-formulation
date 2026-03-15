@@ -255,7 +255,8 @@ export default function RecipesPage() {
       const res = await fetch(`${API}/api/recipes/suggest-bounds`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recipe_name: recipeName, elements: elementsToAsk })
+        body: JSON.stringify({ recipe_name: recipeName, elements: elementsToAsk, species: activeRecipe?.species ?? "Standard" })
+
       });
 
       if (!res.ok) {
