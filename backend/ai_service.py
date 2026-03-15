@@ -73,16 +73,60 @@ RÈGLES ABSOLUES :
         return response.text
         
     except Exception as e:
-        print(f"Gemini Audit API Error: {e}")
-        return f"❌ Impossible de joindre l'IA Mizan. Vérifiez votre connexion ou la validité de votre clé API Gemini."
+        print(f"Gemini Audit
+# ── Species → canonical nutrient key sets ────────────────────────────────────
+SPECIES_KEYS: dict[str, list[str]] = {
+    "base": [
+        "Protéine %",
+        "Fibre %",
+        "Calcium %",
+        "Phosphore %",
+        "Matière Sèche %",
+    ],
+    "Volaille": [
+        "Énergie Volaille KCal/Kg",
+        "Lysine Dig. Volaille %",
+        "Méthionine Dig. Volaille %",
+    ],
+    "Porc": [
+        "Énergie Porc KCal/Kg",
+        "Lysine Dig. Porc %",
+    ],
+    "Ruminant": [
+        "Énergie Ruminant UFL",
+        "PDIA Ruminant g/kg",
+    ],
+    "Standard": [  # legacy fallback for generic recipes
+        "Énergie KCal/Kg",
+        "Lysine %",
+        "Méthionine %",
+        "M+C %",
+        "Thréonine %",
+        "Na g/kg",
+    ],
+}
+
+def _build_allowed_keys(species: str) -> list[str]:
+    """Return the canonical nutrient keys for a given species."""
+    keys = list(SPECIES_KEYS["base"])
+    for variant in ("Volaille", "Porc", "Ruminant", "Standard"):
+        if variant in species:
+            keys.extend(SPECIES_KEYS[variant])
+            break
+    else:
+        keys.extend(SPECIES_KEYS["Standard"])
+    return keys
 
 
-async def suggest_best_practice_bounds(recipe_name: str, elements: list) -> dict:
+async def suggest_best_practice_bounds(recipe_name: str, elements: list, species: str = "Standard") -> dict:
     import json
     if not GEMINI_API_KEY:
         raise ValueError("GEMINI_API_KEY n'est pas configurée.")
-        
-    system_instruction = """"Industrial Reality over Academic Perfection": You are a veteran, pragmatic industrial feed formulator. Your ONLY goal is a mathematically FEASIBLE, low-cost linear programming formula.
+
+    allowed_keys = _build_allowed_keys(species)
+    allowed_keys_str = "\n".join(f'   - "{k}"' for k in allowed_keys)
+
+    system_instruction = f""""Industrial Reality over Academic Perfection": You are a veteran, pragmatic industrial feed formulator. Your ONLY goal is a mathematically FEASIBLE, low-cost linear programming formula.
 
 RÈGLES ABSOLUES :
 1. "The 15% Rule (Wide Margins)": Never give tight bounds. If the academic minimum protein is 20%, suggest min: 19.5, max: 22.5. Give the solver massive breathing room.
@@ -90,76 +134,88 @@ RÈGLES ABSOLUES :
 3. "Practical Numbers": Round limits to practical industrial numbers (e.g., 0.5, 1.0, 15.0, 2800) instead of weird decimals (like 0.34 or 2912.4).
 4. "Minimalism": Leave non-essential nutrients and ingredients completely blank (null). Only constrain Protein, Energy, Calcium, Phosphorus, Lysine, Methionine, and highly toxic/limited ingredients (like Salt/Sel/CMV).
 5. Tu DOIS renvoyer UNIQUEMENT un objet JSON brut et valide (AUCUN markdown, AUCUN texte).
-6. STRICT NOMENCLATURE: When generating constraints for nutrients, you MUST use the exact following string keys. Do not deviate, do not translate, do not omit the '%' or 'KCal/Kg'. If you use a different key, the system will crash.
-   Allowed Nutrient Keys:
-   - "Protéine %"
-   - "Énergie KCal/Kg"
-   - "Fibre %"
-   - "Calcium %"
-   - "Phosphore %"
-   - "Lysine %"
-   - "Méthionine %"
-   - "M+C %"
-   - "Thréonine %"
-   - "Valine %"
-   - "Leucine %"
-   - "Arginine %"
-   - "Na g/kg"
-   For example, NEVER output 'Énergie', you MUST output 'Énergie KCal/Kg'.
+6. STRICT NOMENCLATURE: The target species is "{species}". You MUST strictly use ONLY the following keys for this species. Any other key will cause a solver crash — do NOT deviate, do NOT translate, do NOT omit the '%', 'KCal/Kg', 'UFL', or 'g/kg' suffixes.
+   Allowed Nutrient Keys for species "{species}":
+{allowed_keys_str}
 
-Le format exact doit être : {"Nom Element Exact": {"min": float ou null, "max": float ou null}}
+Le format exact doit être : {{"Nom Element Exact": {{"min": float ou null, "max": float ou null}}}}
 Utilise les noms des éléments EXACTEMENT tels qu'ils ont été fournis.
 
-Exemple de réponse attendue si les éléments sont ["Protéine %", "Calcium %", "Énergie KCal/Kg", "Maïs", "CMV 4%"]:
-{
-  "Protéine %": {"min": 19.5, "max": 22.5},
-  "Calcium %": {"min": 0.8, "max": 1.2},
-  "Énergie KCal/Kg": {"min": 2800.0, "max": null},
-  "Maïs": {"min": 35.0, "max": 75.0},
-  "CMV 4%": {"min": 4.0, "max": 4.0}
-}"""
+Exemple de réponse attendue si les éléments sont ["Protéine %", "Calcium %", "Maïs", "CMV 4%"] pour espèce Volaille:
+{{
+  "Protéine %": {{"min": 19.5, "max": 22.5}},
+  "Calcium %": {{"min": 0.8, "max": 1.2}},
+  "Énergie Volaille KCal/Kg": {{"min": 2800.0, "max": null}},
+  "Maïs": {{"min": 35.0, "max": 75.0}},
+  "CMV 4%": {{"min": 4.0, "max": 4.0}}
+}}"""
 
     try:
         model = genai.GenerativeModel('gemini-2.5-flash')
-        prompt = f"{system_instruction}\n\nRecette cible : {recipe_name}\n\nÉléments à évaluer : {json.dumps(elements)}"
+        prompt = f"{system_instruction}\n\nRecette cible : {recipe_name}\nEspèce : {species}\n\nÉléments à évaluer : {json.dumps(elements, ensure_ascii=False)}"
         response = model.generate_content(prompt)
-        
-        # Gemini sometimes still wraps in markdown despite strict instructions, so we cleanly strip it
+
+        # Strip markdown wrapper if Gemini adds it despite instructions
         raw_text = response.text.strip()
         if raw_text.startswith("```json"):
             raw_text = raw_text[7:]
         if raw_text.endswith("```"):
             raw_text = raw_text[:-3]
-        
+
         parsed_json = json.loads(raw_text.strip())
-        
-        # Fallback Key Normalization
+
+        # ── Fallback key normaliser (handles LLM drift) ──────────────────────
+        # Maps any plausible wrong key → correct species-aware canonical key
+        energy_key = next(
+            (k for k in allowed_keys if "nergie" in k or "UFL" in k), "Énergie KCal/Kg"
+        )
+        lysine_key  = next((k for k in allowed_keys if "Lysine"     in k), "Lysine %")
+        met_key     = next((k for k in allowed_keys if "thionine"   in k), "Méthionine %")
+
         key_mapping = {
-            "Énergie": "Énergie KCal/Kg",
-            "Energie": "Énergie KCal/Kg",
-            "Energie KCal/Kg": "Énergie KCal/Kg",
-            "Energie Kcal/Kg": "Énergie KCal/Kg",
-            "Énergie Kcal/Kg": "Énergie KCal/Kg",
-            "Proteine %": "Protéine %",
-            "Proteine": "Protéine %",
-            "Calcium": "Calcium %",
-            "Phosphore": "Phosphore %",
-            "Lysine": "Lysine %",
-            "Methionine": "Méthionine %",
-            "Méthionine": "Méthionine %",
-            "Methionine %": "Méthionine %",
-            "Na": "Na g/kg",
-            "Fibre": "Fibre %",
+            # Energy variants
+            "Énergie":                          energy_key,
+            "Energie":                          energy_key,
+            "Énergie KCal/Kg":                  energy_key,
+            "Energie KCal/Kg":                  energy_key,
+            "Énergie Kcal/Kg":                  energy_key,
+            "Energie Kcal/Kg":                  energy_key,
+            "Énergie Volaille KCal/Kg":         "Énergie Volaille KCal/Kg",
+            "Energie Volaille KCal/Kg":         "Énergie Volaille KCal/Kg",
+            "Énergie Porc KCal/Kg":             "Énergie Porc KCal/Kg",
+            "Energie Porc KCal/Kg":             "Énergie Porc KCal/Kg",
+            "Énergie Ruminant UFL":             "Énergie Ruminant UFL",
+            "UFL":                              "Énergie Ruminant UFL",
+            "UFL INRA 2018":                    "Énergie Ruminant UFL",
+            # Amino acid variants
+            "Lysine":                           lysine_key,
+            "Lysine %":                         lysine_key,
+            "Lysine Dig. Volaille %":           "Lysine Dig. Volaille %",
+            "Lysine Dig. Porc %":               "Lysine Dig. Porc %",
+            "Methionine":                       met_key,
+            "Méthionine":                       met_key,
+            "Methionine %":                     met_key,
+            "Méthionine %":                     met_key,
+            "Méthionine Dig. Volaille %":       "Méthionine Dig. Volaille %",
+            "Methionine Dig. Volaille %":       "Méthionine Dig. Volaille %",
+            # Base nutrient short-forms
+            "Proteine %":                       "Protéine %",
+            "Proteine":                         "Protéine %",
+            "Calcium":                          "Calcium %",
+            "Phosphore":                        "Phosphore %",
+            "Fibre":                            "Fibre %",
+            "Na":                               "Na g/kg",
+            "PDIA":                             "PDIA Ruminant g/kg",
+            "PDIA INRA 2018":                   "PDIA Ruminant g/kg",
         }
-        
-        normalized_json = {}
+
+        normalized = {}
         for key, bounds in parsed_json.items():
-            normalized_key = key_mapping.get(key, key)
-            normalized_json[normalized_key] = bounds
-            
-        return normalized_json
-        
-    except json.JSONDecodeError as e:
+            normalized[key_mapping.get(key, key)] = bounds
+
+        return normalized
+
+    except json.JSONDecodeError:
         print(f"Gemini returned invalid JSON for constraints: {response.text}")
         raise ValueError("L'IA n'a pas renvoyé un format JSON valide.")
     except Exception as e:

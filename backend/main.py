@@ -252,11 +252,12 @@ def create_recipe(data: RecipeDemand, db: Session = Depends(get_db)):
 class SuggestBoundsRequest(BaseModel):
     recipe_name: str
     elements: List[str]
+    species: str = "Standard"
 
 @app.post("/api/recipes/suggest-bounds")
 async def api_suggest_bounds(request: SuggestBoundsRequest):
     try:
-        suggestions = await suggest_best_practice_bounds(request.recipe_name, request.elements)
+        suggestions = await suggest_best_practice_bounds(request.recipe_name, request.elements, request.species)
         return {"status": "ok", "suggestions": suggestions}
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))
