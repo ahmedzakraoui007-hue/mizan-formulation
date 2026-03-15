@@ -18,6 +18,7 @@ interface Ingredient {
 export default function IngredientsPage() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState("Tous");
   const [nutrientColumns, setNutrientCols] = useState<string[]>(["Protéine %", "Fibre %", "Énergie"]);
   const [fetching, setFetching] = useState(true);
 
@@ -146,9 +147,14 @@ export default function IngredientsPage() {
     );
   }
 
-  const filteredIngredients = ingredients.filter(ing => 
-    ing.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredIngredients = ingredients.filter(ing => {
+    const matchesSearch = ing.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = 
+      filterStatus === "Tous" ? true :
+      filterStatus === "Stock Actif" ? ing.is_active === true :
+      filterStatus === "Base Inactive" ? ing.is_active === false : true;
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <div className="p-10 max-w-7xl mx-auto animate-in fade-in duration-500 pb-24">
@@ -168,6 +174,15 @@ export default function IngredientsPage() {
               className="pl-9 pr-4 py-2.5 w-72 bg-white border border-gray-300 rounded-xl text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all"
             />
           </div>
+          <select 
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="bg-white border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm transition-all cursor-pointer"
+          >
+            <option value="Tous">Tous les ingrédients</option>
+            <option value="Stock Actif">Stock Actif</option>
+            <option value="Base Inactive">Base Inactive</option>
+          </select>
           <div className="flex gap-3 border-l border-gray-200 pl-4">
             {hasUnsavedChanges && (
             <button onClick={saveToBackendList} className="bg-emerald-600 text-white hover:bg-emerald-700 px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md shadow-emerald-600/20 flex items-center gap-2 animate-pulse">
