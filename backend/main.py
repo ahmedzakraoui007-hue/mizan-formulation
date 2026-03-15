@@ -152,7 +152,7 @@ def seed_database():
                 if "is_active" not in existing_ing_cols:
                     print("⚙️  Migrating: adding 'is_active' to ingredients…")
                     with engine.begin() as conn:
-                        conn.execute(text("ALTER TABLE ingredients ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT 1"))
+                        conn.execute(text("ALTER TABLE ingredients ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT TRUE"))
 
         except Exception as e:
             print(f"Migration warning: {e}")
