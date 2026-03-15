@@ -550,6 +550,7 @@ export default function RecipesPage() {
                           {/* Smart Add Nutritional Target Dropdown */}
                           <div className="mt-2">
                             <select
+                              key={`nutrient-dropdown-${masterRec.id}-${activeItem.species}`}
                               value=""
                               onChange={(e) => {
                                 const val = e.target.value;

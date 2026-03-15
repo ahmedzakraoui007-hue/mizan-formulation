@@ -17,6 +17,7 @@ interface Ingredient {
 
 export default function IngredientsPage() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [nutrientColumns, setNutrientCols] = useState<string[]>(["Protéine %", "Fibre %", "Énergie"]);
   const [fetching, setFetching] = useState(true);
 
@@ -145,6 +146,10 @@ export default function IngredientsPage() {
     );
   }
 
+  const filteredIngredients = ingredients.filter(ing => 
+    ing.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="p-10 max-w-7xl mx-auto animate-in fade-in duration-500 pb-24">
       <div className="flex items-center justify-between mb-8">
@@ -152,8 +157,19 @@ export default function IngredientsPage() {
           <h1 className="text-3xl font-black text-gray-900 tracking-tight">Gestion des Stocks</h1>
           <p className="text-gray-500 mt-1">Silos de matières premières — coût, valeurs nutritives et stock disponible</p>
         </div>
-        <div className="flex gap-3">
-          {hasUnsavedChanges && (
+        <div className="flex gap-4 items-center">
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+            <input 
+              type="text" 
+              placeholder="Rechercher une matière première..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9 pr-4 py-2.5 w-72 bg-white border border-gray-300 rounded-xl text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all"
+            />
+          </div>
+          <div className="flex gap-3 border-l border-gray-200 pl-4">
+            {hasUnsavedChanges && (
             <button onClick={saveToBackendList} className="bg-emerald-600 text-white hover:bg-emerald-700 px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md shadow-emerald-600/20 flex items-center gap-2 animate-pulse">
               💾 Sauvegarder
             </button>
@@ -166,6 +182,7 @@ export default function IngredientsPage() {
           </button>
         </div>
       </div>
+    </div>
 
       <div className="bg-white border border-gray-200 rounded-2xl shadow-sm flex flex-col">
         <div className="overflow-auto max-h-[70vh]">
@@ -182,7 +199,14 @@ export default function IngredientsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {ingredients.map(ing => (
+              {filteredIngredients.length === 0 && (
+                <tr>
+                  <td colSpan={100} className="py-12 text-center text-gray-500 italic">
+                    Aucune matière première ne correspond à la recherche "{searchTerm}"
+                  </td>
+                </tr>
+              )}
+              {filteredIngredients.map(ing => (
                 <tr key={ing.id} className={`hover:bg-blue-50/50 transition-all group ${!ing.is_active ? 'opacity-40 grayscale' : ''}`}>
                   <td className="py-3 px-5 sticky left-0 z-10 bg-gray-100 group-hover:bg-gray-200/70 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] align-middle">
                     <input type="text" value={ing.name} onChange={e => editIng(ing.id,"name",e.target.value)}
