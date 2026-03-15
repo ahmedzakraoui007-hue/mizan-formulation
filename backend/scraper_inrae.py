@@ -14,6 +14,12 @@ Output: backend/inrae_scraped_data.json
 import json
 import time
 import sys
+import io
+
+# Force UTF-8 output so emoji in print() don't crash on Windows cp1252 terminals
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -51,7 +57,7 @@ COLUMN_MAP: dict[str, tuple[str, float]] = {
 TARGET_URL = "https://www.feedtables.com/content/table-feed-profile"
 
 # Number of dropdown options to process (set to None to process all)
-MAX_INGREDIENTS = 3
+MAX_INGREDIENTS = None
 
 
 def build_driver() -> webdriver.Chrome:
@@ -121,34 +127,43 @@ def scrape(max_items: int | None = MAX_INGREDIENTS) -> list[dict]:
     results: list[dict] = []
 
     try:
-        print(f"🌐 Opening {TARGET_URL} …")
+        print(f"Opening {TARGET_URL} ...")
         driver.get(TARGET_URL)
 
-        # Wait for the dropdown to be present
+        # Wait for the dropdown to be present — target by its known id
         wait = WebDriverWait(driver, 20)
-        select_el = wait.until(EC.presence_of_element_located((By.TAG_NAME, "select")))
+        select_el = wait.until(EC.presence_of_element_located((By.ID, "edit-feed-pr-id")))
 
         dropdown = Select(select_el)
-        options = [
-            opt for opt in dropdown.options
-            if opt.get_attribute("value") not in ("", "0", None)
+
+        # ── Extract (value, name) as plain strings BEFORE the loop ──────────────
+        # This is critical: after the first select_by_value() the DOM refreshes
+        # via AJAX and all WebElement references become stale immediately.
+        option_pairs: list[tuple[str, str]] = [
+            (opt.get_attribute("value"), opt.text.strip())
+            for opt in dropdown.options
+            if opt.get_attribute("value") not in ("All", "", "0", None)
             and opt.text.strip() not in ("- Any -", "")
         ]
 
         if max_items is not None:
-            options = options[:max_items]
+            option_pairs = option_pairs[:max_items]
 
-        print(f"📋 Found {len(options)} option(s) to process.\n")
+        print(f"Found {len(option_pairs)} option(s) to process.\n")
 
-        for idx, opt in enumerate(options, start=1):
-            name = opt.text.strip()
-            value = opt.get_attribute("value")
-            print(f"[{idx}/{len(options)}] Scraping: {name!r}")
+        for idx, (value, name) in enumerate(option_pairs, start=1):
+            print(f"[{idx}/{len(option_pairs)}] Scraping: {name!r}")
 
-            # Re-locate the select element each iteration (DOM may have refreshed)
-            select_el = driver.find_element(By.TAG_NAME, "select")
-            dropdown = Select(select_el)
-            dropdown.select_by_value(value)
+            try:
+                # Re-locate the ingredient dropdown each iteration (DOM refreshes on each select)
+                select_el = WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.ID, "edit-feed-pr-id"))
+                )
+                dropdown = Select(select_el)
+                dropdown.select_by_value(value)
+            except Exception as e:
+                print(f"           Could not select {name!r}: {e} — skipping.\n")
+                continue
 
             # Wait for AJAX table to render
             time.sleep(3)
@@ -156,7 +171,7 @@ def scrape(max_items: int | None = MAX_INGREDIENTS) -> list[dict]:
             nutrients = parse_nutrient_table(driver.page_source)
 
             if not nutrients:
-                print(f"           ⚠️  No mapped nutrients found — skipping {name!r}.\n")
+                print(f"           No mapped nutrients found — skipping {name!r}.\n")
                 continue
 
             record = {
@@ -169,10 +184,10 @@ def scrape(max_items: int | None = MAX_INGREDIENTS) -> list[dict]:
             }
             results.append(record)
 
-            print(f"           ✅ Extracted {len(nutrients)} nutrient(s): {list(nutrients.keys())}\n")
+            print(f"           OK: extracted {len(nutrients)} nutrient(s): {list(nutrients.keys())}\n")
 
     except Exception as exc:
-        print(f"\n❌ Scraper error: {exc}", file=sys.stderr)
+        print(f"\nScraper error: {exc}", file=sys.stderr)
         raise
     finally:
         driver.quit()

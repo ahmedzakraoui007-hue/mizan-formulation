@@ -11,13 +11,11 @@
             "Fibre %": 1.9,
             "Calcium %": 3.38,
             "Phosphore %": 0.85,
-            "Énergie Volaille KCal/Kg": 2730,
-            "Lysine Dig. Volaille %": 2.82,
-            "Méthionine Dig. Volaille %": 0.92,
-            "Énergie Porc KCal/Kg": 2200,
-            "Lysine Dig. Porc %": 2.51,
             "Énergie Ruminant UFL": 1.36,
-            "PDIA Ruminant g/kg": 347
+            "PDIA Ruminant g/kg": 347.0,
+            "Lysine Dig. Porc %": 2.51,
+            "Lysine Dig. Volaille %": 2.82,
+            "Méthionine Dig. Volaille %": 0.92
         }
     },
     {
@@ -32,13 +30,11 @@
             "Fibre %": 27.5,
             "Calcium %": 2.03,
             "Phosphore %": 0.23,
-            "Énergie Volaille KCal/Kg": 1060,
-            "Lysine Dig. Volaille %": 0.36,
-            "Méthionine Dig. Volaille %": 0.09,
-            "Énergie Porc KCal/Kg": 880,
-            "Lysine Dig. Porc %": 0.36,
             "Énergie Ruminant UFL": 0.66,
-            "PDIA Ruminant g/kg": 46
+            "PDIA Ruminant g/kg": 46.0,
+            "Lysine Dig. Porc %": 0.36,
+            "Lysine Dig. Volaille %": 0.36,
+            "Méthionine Dig. Volaille %": 0.09
         }
     },
     {
@@ -53,13 +49,6110 @@
             "Fibre %": 26.2,
             "Calcium %": 2.12,
             "Phosphore %": 0.24,
-            "Énergie Volaille KCal/Kg": 1070,
-            "Lysine Dig. Volaille %": 0.42,
-            "Méthionine Dig. Volaille %": 0.11,
-            "Énergie Porc KCal/Kg": 900,
-            "Lysine Dig. Porc %": 0.4,
             "Énergie Ruminant UFL": 0.68,
-            "PDIA Ruminant g/kg": 48
+            "PDIA Ruminant g/kg": 48.0,
+            "Lysine Dig. Porc %": 0.4,
+            "Lysine Dig. Volaille %": 0.42,
+            "Méthionine Dig. Volaille %": 0.11
+        }
+    },
+    {
+        "name": "Alfalfa, dehydrated, protein 19-22% dry matter",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 90.8,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 90.8,
+            "Protéine %": 18.3,
+            "Fibre %": 23.0,
+            "Calcium %": 2.28,
+            "Phosphore %": 0.25,
+            "Énergie Ruminant UFL": 0.72,
+            "PDIA Ruminant g/kg": 54.0,
+            "Lysine Dig. Porc %": 0.52,
+            "Lysine Dig. Volaille %": 0.57,
+            "Méthionine Dig. Volaille %": 0.16
+        }
+    },
+    {
+        "name": "Alfalfa, dehydrated, protein 22-25% dry matter",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 90.4,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 90.4,
+            "Protéine %": 20.8,
+            "Fibre %": 20.5,
+            "Calcium %": 2.11,
+            "Phosphore %": 0.28,
+            "Énergie Ruminant UFL": 0.76,
+            "PDIA Ruminant g/kg": 66.0,
+            "Lysine Dig. Porc %": 0.68,
+            "Lysine Dig. Volaille %": 0.8,
+            "Méthionine Dig. Volaille %": 0.23
+        }
+    },
+    {
+        "name": "Alfalfa, dehydrated, protein < 16% dry matter",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 91.3,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 91.3,
+            "Protéine %": 14.1,
+            "Fibre %": 28.0,
+            "Calcium %": 2.01,
+            "Phosphore %": 0.24,
+            "Énergie Ruminant UFL": 0.66,
+            "PDIA Ruminant g/kg": 42.0,
+            "Lysine Dig. Porc %": 0.29,
+            "Lysine Dig. Volaille %": 0.28,
+            "Méthionine Dig. Volaille %": 0.06
+        }
+    },
+    {
+        "name": "Alfalfa, dehydrated, protein > 25% dry matter",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 90.4,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 90.4,
+            "Protéine %": 23.8,
+            "Fibre %": 21.9,
+            "Calcium %": 2.26,
+            "Phosphore %": 0.29,
+            "Énergie Ruminant UFL": 0.74,
+            "PDIA Ruminant g/kg": 75.0,
+            "Lysine Dig. Porc %": 0.89,
+            "Lysine Dig. Volaille %": 1.11,
+            "Méthionine Dig. Volaille %": 0.34
+        }
+    },
+    {
+        "name": "Ammonium ferric citrate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Ammonium molybdate tetrahydrate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Apple pomace, dried",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 91.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 91.0,
+            "Protéine %": 7.3,
+            "Fibre %": 26.4,
+            "Calcium %": 0.09,
+            "Phosphore %": 0.12,
+            "Énergie Ruminant UFL": 0.68,
+            "PDIA Ruminant g/kg": 22.0,
+            "Lysine Dig. Porc %": 0.18,
+            "Lysine Dig. Volaille %": 0.21,
+            "Méthionine Dig. Volaille %": 0.08
+        }
+    },
+    {
+        "name": "Bakery byproduct",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 88.2,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 88.2,
+            "Protéine %": 11.3,
+            "Fibre %": 0.7,
+            "Calcium %": 0.12,
+            "Phosphore %": 0.17,
+            "Énergie Ruminant UFL": 1.14,
+            "PDIA Ruminant g/kg": 25.0,
+            "Lysine Dig. Porc %": 0.24,
+            "Lysine Dig. Volaille %": 0.27,
+            "Méthionine Dig. Volaille %": 0.13
+        }
+    },
+    {
+        "name": "Bananas, immature, dried",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 90.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 90.0,
+            "Protéine %": 4.2,
+            "Fibre %": 3.2,
+            "Calcium %": 0.09,
+            "Phosphore %": 0.09,
+            "Énergie Ruminant UFL": 0.96,
+            "PDIA Ruminant g/kg": 12.0,
+            "Lysine Dig. Porc %": 0.13,
+            "Lysine Dig. Volaille %": 0.13,
+            "Méthionine Dig. Volaille %": 0.02
+        }
+    },
+    {
+        "name": "Barley",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 87.2,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 87.2,
+            "Protéine %": 9.9,
+            "Fibre %": 4.7,
+            "Calcium %": 0.07,
+            "Phosphore %": 0.34,
+            "Énergie Ruminant UFL": 0.97,
+            "PDIA Ruminant g/kg": 26.0,
+            "Lysine Dig. Porc %": 0.28,
+            "Lysine Dig. Volaille %": 0.3,
+            "Méthionine Dig. Volaille %": 0.15
+        }
+    },
+    {
+        "name": "Barley distillers grains, dried",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 91.3,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 91.3,
+            "Protéine %": 25.7,
+            "Fibre %": 10.1,
+            "Calcium %": 0.16,
+            "Phosphore %": 0.78,
+            "Énergie Ruminant UFL": 0.97,
+            "PDIA Ruminant g/kg": 108.0,
+            "Lysine Dig. Porc %": 0.6,
+            "Lysine Dig. Volaille %": 0.59,
+            "Méthionine Dig. Volaille %": 0.29
+        }
+    },
+    {
+        "name": "Barley distillers grains, whisky production, fresh",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 24.6,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 24.6,
+            "Protéine %": 5.0,
+            "Fibre %": 4.4,
+            "Calcium %": 0.03,
+            "Phosphore %": 0.09,
+            "Énergie Ruminant UFL": 0.22,
+            "PDIA Ruminant g/kg": 18.0,
+            "Lysine Dig. Porc %": 0.12,
+            "Lysine Dig. Volaille %": 0.1,
+            "Méthionine Dig. Volaille %": 0.05
+        }
+    },
+    {
+        "name": "Barley rootlets, dried",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 89.8,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 89.8,
+            "Protéine %": 20.3,
+            "Fibre %": 12.4,
+            "Calcium %": 0.2,
+            "Phosphore %": 0.54,
+            "Énergie Ruminant UFL": 0.8,
+            "PDIA Ruminant g/kg": 43.0,
+            "Lysine Dig. Porc %": 0.56,
+            "Lysine Dig. Volaille %": 0.64,
+            "Méthionine Dig. Volaille %": 0.24
+        }
+    },
+    {
+        "name": "Beet pulp, dried",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 88.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 88.9,
+            "Protéine %": 7.9,
+            "Fibre %": 17.2,
+            "Calcium %": 1.29,
+            "Phosphore %": 0.09,
+            "Énergie Ruminant UFL": 0.92,
+            "PDIA Ruminant g/kg": 29.0,
+            "Lysine Dig. Porc %": 0.23,
+            "Lysine Dig. Volaille %": 0.32,
+            "Méthionine Dig. Volaille %": 0.1
+        }
+    },
+    {
+        "name": "Beet pulp, pressed",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 24.3,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 24.3,
+            "Protéine %": 2.1,
+            "Fibre %": 5.1,
+            "Calcium %": 0.35,
+            "Phosphore %": 0.02,
+            "Énergie Ruminant UFL": 0.25,
+            "PDIA Ruminant g/kg": 7.0,
+            "Lysine Dig. Porc %": 0.06,
+            "Lysine Dig. Volaille %": 0.08,
+            "Méthionine Dig. Volaille %": 0.03
+        }
+    },
+    {
+        "name": "Biscuit byproduct",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 91.1,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 91.1,
+            "Protéine %": 9.6,
+            "Fibre %": 0.8,
+            "Calcium %": 0.08,
+            "Phosphore %": 0.15,
+            "Énergie Ruminant UFL": 1.25,
+            "PDIA Ruminant g/kg": 22.0,
+            "Lysine Dig. Porc %": 0.18,
+            "Lysine Dig. Volaille %": 0.21,
+            "Méthionine Dig. Volaille %": 0.11
+        }
+    },
+    {
+        "name": "Black soldier fly larvae, fat < 20%, dried",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 91.7,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 91.7,
+            "Protéine %": 51.9,
+            "Fibre %": 14.8,
+            "Calcium %": 3.96,
+            "Phosphore %": 0.74,
+            "Énergie Ruminant UFL": 1.19,
+            "PDIA Ruminant g/kg": 164.0,
+            "Lysine Dig. Porc %": 2.55,
+            "Lysine Dig. Volaille %": 2.47,
+            "Méthionine Dig. Volaille %": 0.84
+        }
+    },
+    {
+        "name": "Black soldier fly larvae, fat > 20%, dried",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 91.7,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 91.7,
+            "Protéine %": 37.7,
+            "Fibre %": 8.7,
+            "Calcium %": 3.03,
+            "Phosphore %": 0.66,
+            "Énergie Ruminant UFL": 1.57,
+            "PDIA Ruminant g/kg": 119.0,
+            "Lysine Dig. Porc %": 1.89,
+            "Lysine Dig. Volaille %": 1.88,
+            "Méthionine Dig. Volaille %": 0.6
+        }
+    },
+    {
+        "name": "Blood meal",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 93.4,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 93.4,
+            "Protéine %": 87.7,
+            "Fibre %": 0.8,
+            "Calcium %": 0.31,
+            "Phosphore %": 0.21,
+            "Énergie Ruminant UFL": 1.23,
+            "PDIA Ruminant g/kg": 512.0,
+            "Lysine Dig. Porc %": 6.6,
+            "Lysine Dig. Volaille %": 6.57,
+            "Méthionine Dig. Volaille %": 0.92
+        }
+    },
+    {
+        "name": "Brewers grains, dried",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 90.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 90.9,
+            "Protéine %": 23.9,
+            "Fibre %": 14.2,
+            "Calcium %": 0.23,
+            "Phosphore %": 0.53,
+            "Énergie Ruminant UFL": 0.91,
+            "PDIA Ruminant g/kg": 110.0,
+            "Lysine Dig. Porc %": 0.67,
+            "Lysine Dig. Volaille %": 0.51,
+            "Méthionine Dig. Volaille %": 0.28
+        }
+    },
+    {
+        "name": "Brewers yeast, dried",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 92.8,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 92.8,
+            "Protéine %": 44.2,
+            "Fibre %": 1.8,
+            "Calcium %": 0.28,
+            "Phosphore %": 1.25,
+            "Énergie Ruminant UFL": 1.09,
+            "PDIA Ruminant g/kg": 81.0,
+            "Lysine Dig. Porc %": 2.01,
+            "Lysine Dig. Volaille %": 2.43,
+            "Méthionine Dig. Volaille %": 0.56
+        }
+    },
+    {
+        "name": "Buckwheat hulls",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 88.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 88.0,
+            "Protéine %": 6.2,
+            "Fibre %": 42.9,
+            "Calcium %": 0.19,
+            "Phosphore %": 0.19,
+            "Énergie Ruminant UFL": 0.46,
+            "PDIA Ruminant g/kg": 11.0,
+            "Lysine Dig. Porc %": 0.16,
+            "Lysine Dig. Volaille %": 0.22,
+            "Méthionine Dig. Volaille %": 0.12
+        }
+    },
+    {
+        "name": "Ca Al Fe phosphate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 7.79,
+            "Phosphore %": 12.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Calcium carbonate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 38.7,
+            "Phosphore %": 0.03,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Calcium chloride anhydrous",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 36.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Calcium chloride dihydrate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 27.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Calcium iodate anhydrous",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 10.3,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Calcium iodate hexahydrate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 8.04,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Calcium iodide",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 13.6,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Calcium magnesium phosphate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 98.6,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 98.6,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 15.0,
+            "Phosphore %": 19.1,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Calcium selenite",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 24.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Calcium sulfate anhydrous",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 29.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Calcium sulfate dihydrate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 23.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Camelina oil meal, oil > 5%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 91.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 91.0,
+            "Protéine %": 34.5,
+            "Fibre %": 11.1,
+            "Calcium %": 0.34,
+            "Phosphore %": 0.86,
+            "Énergie Ruminant UFL": 1.13,
+            "PDIA Ruminant g/kg": 90.0,
+            "Lysine Dig. Porc %": 0.85,
+            "Lysine Dig. Volaille %": 1.23,
+            "Méthionine Dig. Volaille %": 0.57
+        }
+    },
+    {
+        "name": "Canola meal, oil < 5%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 90.4,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 90.4,
+            "Protéine %": 37.0,
+            "Fibre %": 11.5,
+            "Calcium %": 0.66,
+            "Phosphore %": 1.07,
+            "Énergie Ruminant UFL": 0.94,
+            "PDIA Ruminant g/kg": 108.0,
+            "Lysine Dig. Porc %": 1.47,
+            "Lysine Dig. Volaille %": 1.53,
+            "Méthionine Dig. Volaille %": 0.65
+        }
+    },
+    {
+        "name": "Carob pod meal",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 85.2,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 85.2,
+            "Protéine %": 4.3,
+            "Fibre %": 8.7,
+            "Calcium %": 0.43,
+            "Phosphore %": 0.08,
+            "Énergie Ruminant UFL": 0.56,
+            "PDIA Ruminant g/kg": 11.0,
+            "Lysine Dig. Porc %": 0.11,
+            "Lysine Dig. Volaille %": 0.11,
+            "Méthionine Dig. Volaille %": 0.07
+        }
+    },
+    {
+        "name": "Cassava pulp, dried",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 89.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 89.0,
+            "Protéine %": 2.0,
+            "Fibre %": 15.4,
+            "Calcium %": 0.58,
+            "Phosphore %": 0.05,
+            "Énergie Ruminant UFL": 0.55,
+            "PDIA Ruminant g/kg": 6.0,
+            "Lysine Dig. Porc %": 0.05,
+            "Lysine Dig. Volaille %": 0.06,
+            "Méthionine Dig. Volaille %": 0.03
+        }
+    },
+    {
+        "name": "Cassava, starch 66-70%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 87.7,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 87.7,
+            "Protéine %": 2.5,
+            "Fibre %": 3.8,
+            "Calcium %": 0.16,
+            "Phosphore %": 0.09,
+            "Énergie Ruminant UFL": 0.94,
+            "PDIA Ruminant g/kg": 9.0,
+            "Lysine Dig. Porc %": 0.06,
+            "Lysine Dig. Volaille %": 0.05,
+            "Méthionine Dig. Volaille %": 0.02
+        }
+    },
+    {
+        "name": "Cassava, starch 70-74%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 87.5,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 87.5,
+            "Protéine %": 2.5,
+            "Fibre %": 3.0,
+            "Calcium %": 0.13,
+            "Phosphore %": 0.09,
+            "Énergie Ruminant UFL": 0.98,
+            "PDIA Ruminant g/kg": 9.0,
+            "Lysine Dig. Porc %": 0.06,
+            "Lysine Dig. Volaille %": 0.05,
+            "Méthionine Dig. Volaille %": 0.02
+        }
+    },
+    {
+        "name": "Cereal offal, crude fibre 5-14%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 88.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 88.9,
+            "Protéine %": 10.4,
+            "Fibre %": 11.8,
+            "Calcium %": 0.51,
+            "Phosphore %": 0.34,
+            "Énergie Ruminant UFL": 0.73,
+            "PDIA Ruminant g/kg": 24.0,
+            "Lysine Dig. Porc %": 0.23,
+            "Lysine Dig. Volaille %": 0.25,
+            "Méthionine Dig. Volaille %": 0.12
+        }
+    },
+    {
+        "name": "Cereal offal, crude fibre > 14%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 89.7,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 89.7,
+            "Protéine %": 10.0,
+            "Fibre %": 16.3,
+            "Calcium %": 0.77,
+            "Phosphore %": 0.27,
+            "Énergie Ruminant UFL": 0.62,
+            "PDIA Ruminant g/kg": 23.0,
+            "Lysine Dig. Porc %": 0.1,
+            "Lysine Dig. Volaille %": 0.23,
+            "Méthionine Dig. Volaille %": 0.1
+        }
+    },
+    {
+        "name": "Chickpea, kabuli type",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 87.3,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 87.3,
+            "Protéine %": 18.6,
+            "Fibre %": 3.4,
+            "Calcium %": 0.12,
+            "Phosphore %": 0.41,
+            "Énergie Ruminant UFL": 1.13,
+            "PDIA Ruminant g/kg": 36.0,
+            "Lysine Dig. Porc %": 1.18,
+            "Lysine Dig. Volaille %": 0.97,
+            "Méthionine Dig. Volaille %": 0.18
+        }
+    },
+    {
+        "name": "Chicory pulp, dehydrated",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 88.7,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 88.7,
+            "Protéine %": 7.7,
+            "Fibre %": 18.8,
+            "Calcium %": 0.84,
+            "Phosphore %": 0.14,
+            "Énergie Ruminant UFL": 0.92,
+            "PDIA Ruminant g/kg": 25.0,
+            "Lysine Dig. Porc %": 0.23,
+            "Lysine Dig. Volaille %": 0.24,
+            "Méthionine Dig. Volaille %": 0.07
+        }
+    },
+    {
+        "name": "Citrus pulp, dried",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 90.3,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 90.3,
+            "Protéine %": 6.3,
+            "Fibre %": 12.6,
+            "Calcium %": 1.54,
+            "Phosphore %": 0.09,
+            "Énergie Ruminant UFL": 1.0,
+            "PDIA Ruminant g/kg": 20.0,
+            "Lysine Dig. Porc %": 0.17,
+            "Lysine Dig. Volaille %": 0.17,
+            "Méthionine Dig. Volaille %": 0.06
+        }
+    },
+    {
+        "name": "Citrus pulp, fresh",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 17.5,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 17.5,
+            "Protéine %": 1.1,
+            "Fibre %": 2.1,
+            "Calcium %": 0.14,
+            "Phosphore %": 0.03,
+            "Énergie Ruminant UFL": 0.21,
+            "PDIA Ruminant g/kg": 4.0,
+            "Lysine Dig. Porc %": 0.03,
+            "Lysine Dig. Volaille %": 0.03,
+            "Méthionine Dig. Volaille %": 0.01
+        }
+    },
+    {
+        "name": "Cobalt carbonate FG",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Cobalt glucoheptonate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Cobalt oxide FG",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Cobalt selenite",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Cobalt sulfate heptahydrate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Cocoa hulls",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 88.8,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 88.8,
+            "Protéine %": 15.8,
+            "Fibre %": 18.4,
+            "Calcium %": 0.32,
+            "Phosphore %": 0.39,
+            "Énergie Ruminant UFL": 0.33,
+            "PDIA Ruminant g/kg": 40.0,
+            "Lysine Dig. Porc %": 0.43,
+            "Lysine Dig. Volaille %": 0.48,
+            "Méthionine Dig. Volaille %": 0.11
+        }
+    },
+    {
+        "name": "Cocoa meal, oil < 5%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 88.3,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 88.3,
+            "Protéine %": 24.3,
+            "Fibre %": 13.6,
+            "Calcium %": 0.21,
+            "Phosphore %": 0.65,
+            "Énergie Ruminant UFL": 0.39,
+            "PDIA Ruminant g/kg": 36.0,
+            "Lysine Dig. Porc %": 0.69,
+            "Lysine Dig. Volaille %": 0.75,
+            "Méthionine Dig. Volaille %": 0.17
+        }
+    },
+    {
+        "name": "Cod liver oil",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 100.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 100.0,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.01,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 3.61,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Common bean",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 88.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 88.9,
+            "Protéine %": 22.1,
+            "Fibre %": 4.6,
+            "Calcium %": 0.18,
+            "Phosphore %": 0.45,
+            "Énergie Ruminant UFL": 1.03,
+            "PDIA Ruminant g/kg": 52.0,
+            "Lysine Dig. Porc %": 1.24,
+            "Lysine Dig. Volaille %": 1.19,
+            "Méthionine Dig. Volaille %": 0.25
+        }
+    },
+    {
+        "name": "Common vetch",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 87.4,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 87.4,
+            "Protéine %": 24.7,
+            "Fibre %": 4.2,
+            "Calcium %": 0.48,
+            "Phosphore %": 0.43,
+            "Énergie Ruminant UFL": 1.04,
+            "PDIA Ruminant g/kg": 69.0,
+            "Lysine Dig. Porc %": 1.07,
+            "Lysine Dig. Volaille %": 1.09,
+            "Méthionine Dig. Volaille %": 0.22
+        }
+    },
+    {
+        "name": "Copper acetate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Copper carbonate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Copper chloride dihydrate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Copper chloride tribasic",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Copper citrate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Copper lysine",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Copper methionine",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Copper oxide",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Copper proteinate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Copper sulfate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 100.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 100.0,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Copra meal, oil 5-20%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 91.6,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 91.6,
+            "Protéine %": 20.5,
+            "Fibre %": 12.9,
+            "Calcium %": 0.12,
+            "Phosphore %": 0.52,
+            "Énergie Ruminant UFL": 1.01,
+            "PDIA Ruminant g/kg": 88.0,
+            "Lysine Dig. Porc %": 0.31,
+            "Lysine Dig. Volaille %": 0.33,
+            "Méthionine Dig. Volaille %": 0.19
+        }
+    },
+    {
+        "name": "Copra meal, oil < 5%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 90.5,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 90.5,
+            "Protéine %": 21.1,
+            "Fibre %": 12.3,
+            "Calcium %": 0.09,
+            "Phosphore %": 0.52,
+            "Énergie Ruminant UFL": 0.91,
+            "PDIA Ruminant g/kg": 90.0,
+            "Lysine Dig. Porc %": 0.31,
+            "Lysine Dig. Volaille %": 0.33,
+            "Méthionine Dig. Volaille %": 0.2
+        }
+    },
+    {
+        "name": "Copra oil",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 100.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 100.0,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 3.61,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Corn gluten feed",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 87.8,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 87.8,
+            "Protéine %": 18.9,
+            "Fibre %": 7.9,
+            "Calcium %": 0.14,
+            "Phosphore %": 0.86,
+            "Énergie Ruminant UFL": 0.98,
+            "PDIA Ruminant g/kg": 46.0,
+            "Lysine Dig. Porc %": 0.4,
+            "Lysine Dig. Volaille %": 0.44,
+            "Méthionine Dig. Volaille %": 0.26
+        }
+    },
+    {
+        "name": "Corn gluten meal",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 90.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 90.9,
+            "Protéine %": 61.6,
+            "Fibre %": 1.4,
+            "Calcium %": 0.03,
+            "Phosphore %": 0.37,
+            "Énergie Ruminant UFL": 1.58,
+            "PDIA Ruminant g/kg": 385.0,
+            "Lysine Dig. Porc %": 0.97,
+            "Lysine Dig. Volaille %": 0.86,
+            "Méthionine Dig. Volaille %": 1.29
+        }
+    },
+    {
+        "name": "Cottonseed hulls",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 90.8,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 90.8,
+            "Protéine %": 4.7,
+            "Fibre %": 47.8,
+            "Calcium %": 0.13,
+            "Phosphore %": 0.12,
+            "Énergie Ruminant UFL": 0.45,
+            "PDIA Ruminant g/kg": 20.0,
+            "Lysine Dig. Porc %": 0.09,
+            "Lysine Dig. Volaille %": 0.12,
+            "Méthionine Dig. Volaille %": 0.06
+        }
+    },
+    {
+        "name": "Cottonseed meal, oil 5-20%, crude fibre 15-20%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 92.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 92.9,
+            "Protéine %": 34.0,
+            "Fibre %": 17.9,
+            "Calcium %": 0.2,
+            "Phosphore %": 0.97,
+            "Énergie Ruminant UFL": 0.96,
+            "PDIA Ruminant g/kg": 116.0,
+            "Lysine Dig. Porc %": 0.98,
+            "Lysine Dig. Volaille %": 0.82,
+            "Méthionine Dig. Volaille %": 0.39
+        }
+    },
+    {
+        "name": "Cottonseed meal, oil 5-20%, crude fibre < 15%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 92.2,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 92.2,
+            "Protéine %": 42.0,
+            "Fibre %": 9.6,
+            "Calcium %": 0.2,
+            "Phosphore %": 1.17,
+            "Énergie Ruminant UFL": 1.12,
+            "PDIA Ruminant g/kg": 149.0,
+            "Lysine Dig. Porc %": 1.27,
+            "Lysine Dig. Volaille %": 0.97,
+            "Méthionine Dig. Volaille %": 0.46
+        }
+    },
+    {
+        "name": "Cottonseed meal, oil < 5%, crude fibre 15-20%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 90.2,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 90.2,
+            "Protéine %": 36.7,
+            "Fibre %": 17.1,
+            "Calcium %": 0.26,
+            "Phosphore %": 1.11,
+            "Énergie Ruminant UFL": 0.89,
+            "PDIA Ruminant g/kg": 125.0,
+            "Lysine Dig. Porc %": 1.06,
+            "Lysine Dig. Volaille %": 0.87,
+            "Méthionine Dig. Volaille %": 0.41
+        }
+    },
+    {
+        "name": "Cottonseed meal, oil < 5%, crude fibre < 15%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 90.7,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 90.7,
+            "Protéine %": 42.6,
+            "Fibre %": 11.7,
+            "Calcium %": 0.21,
+            "Phosphore %": 1.15,
+            "Énergie Ruminant UFL": 0.98,
+            "PDIA Ruminant g/kg": 152.0,
+            "Lysine Dig. Porc %": 1.2,
+            "Lysine Dig. Volaille %": 0.98,
+            "Méthionine Dig. Volaille %": 0.46
+        }
+    },
+    {
+        "name": "Cottonseed, whole",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 92.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 92.0,
+            "Protéine %": 20.2,
+            "Fibre %": 25.4,
+            "Calcium %": 0.14,
+            "Phosphore %": 0.53,
+            "Énergie Ruminant UFL": 0.96,
+            "PDIA Ruminant g/kg": 45.0,
+            "Lysine Dig. Porc %": 0.61,
+            "Lysine Dig. Volaille %": 0.67,
+            "Méthionine Dig. Volaille %": 0.27
+        }
+    },
+    {
+        "name": "Cottonseed, whole, extruded",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 92.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 92.0,
+            "Protéine %": 20.2,
+            "Fibre %": 25.4,
+            "Calcium %": 0.14,
+            "Phosphore %": 0.53,
+            "Énergie Ruminant UFL": 0.96,
+            "PDIA Ruminant g/kg": 87.0,
+            "Lysine Dig. Porc %": 0.61,
+            "Lysine Dig. Volaille %": 0.67,
+            "Méthionine Dig. Volaille %": 0.27
+        }
+    },
+    {
+        "name": "Cowpea seed",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 89.7,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 89.7,
+            "Protéine %": 22.4,
+            "Fibre %": 4.2,
+            "Calcium %": 0.11,
+            "Phosphore %": 0.33,
+            "Énergie Ruminant UFL": 1.05,
+            "PDIA Ruminant g/kg": 38.0,
+            "Lysine Dig. Porc %": 1.2,
+            "Lysine Dig. Volaille %": 1.19,
+            "Méthionine Dig. Volaille %": 0.28
+        }
+    },
+    {
+        "name": "Diammonium phosphate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 23.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Dicalcium phosphate anhydrous",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 97.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 97.0,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 27.2,
+            "Phosphore %": 20.4,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Dicalcium phosphate dihydrate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 97.4,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 97.4,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 23.9,
+            "Phosphore %": 17.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Diiodosalicylic acid",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.8,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.8,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Disodium phosphate anhydrous",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 21.8,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Disodium phosphate hydrate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 8.99,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "DL-methionine",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.5,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.5,
+            "Protéine %": 58.4,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 99.0
+        }
+    },
+    {
+        "name": "Dolomite limestone",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.5,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.5,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 21.9,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Ethylenediamine dihydroiodide",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Faba bean, coloured flowers",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 86.6,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 86.6,
+            "Protéine %": 25.5,
+            "Fibre %": 7.8,
+            "Calcium %": 0.13,
+            "Phosphore %": 0.48,
+            "Énergie Ruminant UFL": 1.05,
+            "PDIA Ruminant g/kg": 47.0,
+            "Lysine Dig. Porc %": 1.41,
+            "Lysine Dig. Volaille %": 1.43,
+            "Méthionine Dig. Volaille %": 0.16
+        }
+    },
+    {
+        "name": "Faba bean, coloured flowers, extruded",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 86.6,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 86.6,
+            "Protéine %": 25.5,
+            "Fibre %": 7.8,
+            "Calcium %": 0.13,
+            "Phosphore %": 0.48,
+            "Énergie Ruminant UFL": 1.05,
+            "PDIA Ruminant g/kg": 86.0,
+            "Lysine Dig. Porc %": 1.45,
+            "Lysine Dig. Volaille %": 1.46,
+            "Méthionine Dig. Volaille %": 0.16
+        }
+    },
+    {
+        "name": "Faba bean, white flowers",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 86.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 86.0,
+            "Protéine %": 26.7,
+            "Fibre %": 7.4,
+            "Calcium %": 0.13,
+            "Phosphore %": 0.48,
+            "Énergie Ruminant UFL": 1.03,
+            "PDIA Ruminant g/kg": 50.0,
+            "Lysine Dig. Porc %": 1.53,
+            "Lysine Dig. Volaille %": 1.48,
+            "Méthionine Dig. Volaille %": 0.16
+        }
+    },
+    {
+        "name": "Feather meal",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 92.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 92.0,
+            "Protéine %": 78.9,
+            "Fibre %": 1.3,
+            "Calcium %": 1.17,
+            "Phosphore %": 0.77,
+            "Énergie Ruminant UFL": 1.1,
+            "PDIA Ruminant g/kg": 419.0,
+            "Lysine Dig. Porc %": 1.17,
+            "Lysine Dig. Volaille %": 1.01,
+            "Méthionine Dig. Volaille %": 0.33
+        }
+    },
+    {
+        "name": "Ferric chloride",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Ferric citrate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Ferric phosphate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 20.5,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Ferric polyphosphate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Ferric pyrophosphate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 24.9,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Ferric sodium pyrophosphate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 22.6,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Ferrous carbonate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Ferrous chloride",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Ferrous sulfate monohydrate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Ferrous sulphate heptahydrate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Fish meal, protein 62%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 92.3,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 92.3,
+            "Protéine %": 62.6,
+            "Fibre %": 0.0,
+            "Calcium %": 4.48,
+            "Phosphore %": 2.76,
+            "Énergie Ruminant UFL": 1.26,
+            "PDIA Ruminant g/kg": 266.0,
+            "Lysine Dig. Porc %": 4.28,
+            "Lysine Dig. Volaille %": 4.17,
+            "Méthionine Dig. Volaille %": 1.47
+        }
+    },
+    {
+        "name": "Fish meal, protein 65%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 92.1,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 92.1,
+            "Protéine %": 65.2,
+            "Fibre %": 0.0,
+            "Calcium %": 4.13,
+            "Phosphore %": 2.64,
+            "Énergie Ruminant UFL": 1.28,
+            "PDIA Ruminant g/kg": 277.0,
+            "Lysine Dig. Porc %": 4.56,
+            "Lysine Dig. Volaille %": 4.33,
+            "Méthionine Dig. Volaille %": 1.57
+        }
+    },
+    {
+        "name": "Fish meal, protein 70%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 92.2,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 92.2,
+            "Protéine %": 69.0,
+            "Fibre %": 0.0,
+            "Calcium %": 3.11,
+            "Phosphore %": 2.29,
+            "Énergie Ruminant UFL": 1.34,
+            "PDIA Ruminant g/kg": 293.0,
+            "Lysine Dig. Porc %": 4.94,
+            "Lysine Dig. Volaille %": 4.55,
+            "Méthionine Dig. Volaille %": 1.69
+        }
+    },
+    {
+        "name": "Fish oil, anchovy",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 100.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 100.0,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 3.61,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Fish oil, capelin",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 100.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 100.0,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 3.61,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Fish oil, herring",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 100.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 100.0,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 3.61,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Fish oil, menhaden",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 100.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 100.0,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 3.61,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Fish oil, rockfish",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 100.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 100.0,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 3.61,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Fish oil, salmon",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 100.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 100.0,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 3.61,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Fish oil, sardine",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 100.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 100.0,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 3.61,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Fish solubles, condensed, defatted",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 96.3,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 96.3,
+            "Protéine %": 81.3,
+            "Fibre %": 0.1,
+            "Calcium %": 0.47,
+            "Phosphore %": 1.43,
+            "Énergie Ruminant UFL": 1.59,
+            "PDIA Ruminant g/kg": 345.0,
+            "Lysine Dig. Porc %": 4.76,
+            "Lysine Dig. Volaille %": 4.29,
+            "Méthionine Dig. Volaille %": 1.65
+        }
+    },
+    {
+        "name": "Fish solubles, condensed, fat",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 95.4,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 95.4,
+            "Protéine %": 74.4,
+            "Fibre %": 0.0,
+            "Calcium %": 0.26,
+            "Phosphore %": 1.35,
+            "Énergie Ruminant UFL": 1.79,
+            "PDIA Ruminant g/kg": 316.0,
+            "Lysine Dig. Porc %": 4.95,
+            "Lysine Dig. Volaille %": 4.46,
+            "Méthionine Dig. Volaille %": 1.79
+        }
+    },
+    {
+        "name": "Fodder beet, raw",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 16.1,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 16.1,
+            "Protéine %": 1.3,
+            "Fibre %": 1.0,
+            "Calcium %": 0.09,
+            "Phosphore %": 0.04,
+            "Énergie Ruminant UFL": 0.17,
+            "PDIA Ruminant g/kg": 5.0,
+            "Lysine Dig. Porc %": 0.06,
+            "Lysine Dig. Volaille %": 0.06,
+            "Méthionine Dig. Volaille %": 0.02
+        }
+    },
+    {
+        "name": "Grape pomace, dried",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 91.2,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 91.2,
+            "Protéine %": 12.4,
+            "Fibre %": 22.5,
+            "Calcium %": 0.9,
+            "Phosphore %": 0.25,
+            "Énergie Ruminant UFL": 0.36,
+            "PDIA Ruminant g/kg": 15.0,
+            "Lysine Dig. Porc %": 0.27,
+            "Lysine Dig. Volaille %": 0.32,
+            "Méthionine Dig. Volaille %": 0.1
+        }
+    },
+    {
+        "name": "Grape pulp, dried",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 90.1,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 90.1,
+            "Protéine %": 12.1,
+            "Fibre %": 18.7,
+            "Calcium %": 1.0,
+            "Phosphore %": 0.27,
+            "Énergie Ruminant UFL": 0.38,
+            "PDIA Ruminant g/kg": 14.0,
+            "Lysine Dig. Porc %": 0.29,
+            "Lysine Dig. Volaille %": 0.32,
+            "Méthionine Dig. Volaille %": 0.1
+        }
+    },
+    {
+        "name": "Grape seeds",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 91.5,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 91.5,
+            "Protéine %": 9.2,
+            "Fibre %": 38.8,
+            "Calcium %": 0.63,
+            "Phosphore %": 0.19,
+            "Énergie Ruminant UFL": 0.26,
+            "PDIA Ruminant g/kg": 7.0,
+            "Lysine Dig. Porc %": 0.18,
+            "Lysine Dig. Volaille %": 0.22,
+            "Méthionine Dig. Volaille %": 0.07
+        }
+    },
+    {
+        "name": "Grapeseed oil meal",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 88.3,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 88.3,
+            "Protéine %": 10.3,
+            "Fibre %": 42.9,
+            "Calcium %": 0.87,
+            "Phosphore %": 0.2,
+            "Énergie Ruminant UFL": 0.14,
+            "PDIA Ruminant g/kg": 8.0,
+            "Lysine Dig. Porc %": 0.19,
+            "Lysine Dig. Volaille %": 0.25,
+            "Méthionine Dig. Volaille %": 0.08
+        }
+    },
+    {
+        "name": "Grass, dehydrated",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 90.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 90.0,
+            "Protéine %": 14.6,
+            "Fibre %": 23.4,
+            "Calcium %": 0.53,
+            "Phosphore %": 0.28,
+            "Énergie Ruminant UFL": 0.83,
+            "PDIA Ruminant g/kg": 46.0,
+            "Lysine Dig. Porc %": 0.28,
+            "Lysine Dig. Volaille %": 0.27,
+            "Méthionine Dig. Volaille %": 0.1
+        }
+    },
+    {
+        "name": "Groundnut meal, oil 5-20%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 92.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 92.0,
+            "Protéine %": 44.6,
+            "Fibre %": 6.6,
+            "Calcium %": 0.12,
+            "Phosphore %": 0.59,
+            "Énergie Ruminant UFL": 1.15,
+            "PDIA Ruminant g/kg": 125.0,
+            "Lysine Dig. Porc %": 1.21,
+            "Lysine Dig. Volaille %": 1.23,
+            "Méthionine Dig. Volaille %": 0.42
+        }
+    },
+    {
+        "name": "Groundnut meal, oil < 5%, crude fibre < 9%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 89.2,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 89.2,
+            "Protéine %": 49.3,
+            "Fibre %": 6.8,
+            "Calcium %": 0.17,
+            "Phosphore %": 0.56,
+            "Énergie Ruminant UFL": 0.99,
+            "PDIA Ruminant g/kg": 144.0,
+            "Lysine Dig. Porc %": 1.42,
+            "Lysine Dig. Volaille %": 1.31,
+            "Méthionine Dig. Volaille %": 0.44
+        }
+    },
+    {
+        "name": "Groundnut meal, oil < 5%, crude fibre > 9%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 89.4,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 89.4,
+            "Protéine %": 48.1,
+            "Fibre %": 12.0,
+            "Calcium %": 0.15,
+            "Phosphore %": 0.56,
+            "Énergie Ruminant UFL": 0.88,
+            "PDIA Ruminant g/kg": 136.0,
+            "Lysine Dig. Porc %": 1.4,
+            "Lysine Dig. Volaille %": 1.29,
+            "Méthionine Dig. Volaille %": 0.43
+        }
+    },
+    {
+        "name": "Jatropha oil meal, oil < 5%, dehulled, detoxified",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 92.4,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 92.4,
+            "Protéine %": 63.4,
+            "Fibre %": 5.6,
+            "Calcium %": 0.86,
+            "Phosphore %": 1.95,
+            "Énergie Ruminant UFL": 1.1,
+            "PDIA Ruminant g/kg": 323.0,
+            "Lysine Dig. Porc %": 1.81,
+            "Lysine Dig. Volaille %": 1.79,
+            "Méthionine Dig. Volaille %": 0.85
+        }
+    },
+    {
+        "name": "L-arginine",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 92.3,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 92.3,
+            "Protéine %": 186.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "L-isoleucine",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.8,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.8,
+            "Protéine %": 66.6,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "L-lysine HCl",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.5,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.5,
+            "Protéine %": 95.4,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 79.8,
+            "Lysine Dig. Volaille %": 79.8,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "L-threonine",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.5,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.5,
+            "Protéine %": 73.1,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "L-tryptophan",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.7,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.7,
+            "Protéine %": 84.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "L-valine",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 98.5,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 98.5,
+            "Protéine %": 72.1,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Lard",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 100.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 100.0,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.01,
+            "Phosphore %": 0.03,
+            "Énergie Ruminant UFL": 3.61,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Lentils",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 88.4,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 88.4,
+            "Protéine %": 23.4,
+            "Fibre %": 4.3,
+            "Calcium %": 0.13,
+            "Phosphore %": 0.39,
+            "Énergie Ruminant UFL": 1.04,
+            "PDIA Ruminant g/kg": 39.0,
+            "Lysine Dig. Porc %": 1.18,
+            "Lysine Dig. Volaille %": 1.17,
+            "Méthionine Dig. Volaille %": 0.16
+        }
+    },
+    {
+        "name": "Limestone",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.5,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.5,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 35.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Linseed meal, oil < 5%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 87.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 87.9,
+            "Protéine %": 32.0,
+            "Fibre %": 10.0,
+            "Calcium %": 0.39,
+            "Phosphore %": 0.88,
+            "Énergie Ruminant UFL": 0.9,
+            "PDIA Ruminant g/kg": 118.0,
+            "Lysine Dig. Porc %": 0.97,
+            "Lysine Dig. Volaille %": 1.04,
+            "Méthionine Dig. Volaille %": 0.53
+        }
+    },
+    {
+        "name": "Linseed meal, oil > 5%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 91.2,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 91.2,
+            "Protéine %": 32.3,
+            "Fibre %": 8.8,
+            "Calcium %": 0.39,
+            "Phosphore %": 0.85,
+            "Énergie Ruminant UFL": 1.04,
+            "PDIA Ruminant g/kg": 119.0,
+            "Lysine Dig. Porc %": 0.98,
+            "Lysine Dig. Volaille %": 1.05,
+            "Méthionine Dig. Volaille %": 0.53
+        }
+    },
+    {
+        "name": "Linseed, whole",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 92.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 92.0,
+            "Protéine %": 20.7,
+            "Fibre %": 9.1,
+            "Calcium %": 0.27,
+            "Phosphore %": 0.58,
+            "Énergie Ruminant UFL": 1.57,
+            "PDIA Ruminant g/kg": 44.0,
+            "Lysine Dig. Porc %": 0.61,
+            "Lysine Dig. Volaille %": 0.56,
+            "Méthionine Dig. Volaille %": 0.28
+        }
+    },
+    {
+        "name": "Linseed, whole, extruded",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 92.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 92.0,
+            "Protéine %": 20.7,
+            "Fibre %": 9.1,
+            "Calcium %": 0.27,
+            "Phosphore %": 0.58,
+            "Énergie Ruminant UFL": 1.57,
+            "PDIA Ruminant g/kg": 91.0,
+            "Lysine Dig. Porc %": 0.61,
+            "Lysine Dig. Volaille %": 0.56,
+            "Méthionine Dig. Volaille %": 0.28
+        }
+    },
+    {
+        "name": "Liquid potato feed",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 17.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 17.0,
+            "Protéine %": 2.2,
+            "Fibre %": 0.8,
+            "Calcium %": 0.03,
+            "Phosphore %": 0.04,
+            "Énergie Ruminant UFL": 0.16,
+            "PDIA Ruminant g/kg": 6.0,
+            "Lysine Dig. Porc %": 0.09,
+            "Lysine Dig. Volaille %": 0.09,
+            "Méthionine Dig. Volaille %": 0.03
+        }
+    },
+    {
+        "name": "Lupin, blue",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 90.1,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 90.1,
+            "Protéine %": 30.0,
+            "Fibre %": 14.3,
+            "Calcium %": 0.25,
+            "Phosphore %": 0.34,
+            "Énergie Ruminant UFL": 1.18,
+            "PDIA Ruminant g/kg": 42.0,
+            "Lysine Dig. Porc %": 1.32,
+            "Lysine Dig. Volaille %": 1.32,
+            "Méthionine Dig. Volaille %": 0.22
+        }
+    },
+    {
+        "name": "Lupin, white",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 88.1,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 88.1,
+            "Protéine %": 33.5,
+            "Fibre %": 11.6,
+            "Calcium %": 0.27,
+            "Phosphore %": 0.38,
+            "Énergie Ruminant UFL": 1.26,
+            "PDIA Ruminant g/kg": 60.0,
+            "Lysine Dig. Porc %": 1.34,
+            "Lysine Dig. Volaille %": 1.42,
+            "Méthionine Dig. Volaille %": 0.22
+        }
+    },
+    {
+        "name": "Lupin, white, extruded",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 88.1,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 88.1,
+            "Protéine %": 33.5,
+            "Fibre %": 11.6,
+            "Calcium %": 0.27,
+            "Phosphore %": 0.38,
+            "Énergie Ruminant UFL": 1.26,
+            "PDIA Ruminant g/kg": 80.0,
+            "Lysine Dig. Porc %": 1.34,
+            "Lysine Dig. Volaille %": 1.42,
+            "Méthionine Dig. Volaille %": 0.22
+        }
+    },
+    {
+        "name": "Magnesium acetate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Magnesium carbonate RG",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Magnesium citrate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Magnesium hydroxide",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Magnesium lactate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Magnesium oxide",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Magnesium oxide, granular",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Magnesium oxide, powder",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Magnesium phosphate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 98.8,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 98.8,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 13.8,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Magnesium sulfate heptahydrate RG",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Magnesium sulfate monohydrate RG",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Maize",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 86.3,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 86.3,
+            "Protéine %": 7.6,
+            "Fibre %": 2.3,
+            "Calcium %": 0.04,
+            "Phosphore %": 0.25,
+            "Énergie Ruminant UFL": 1.11,
+            "PDIA Ruminant g/kg": 37.0,
+            "Lysine Dig. Porc %": 0.19,
+            "Lysine Dig. Volaille %": 0.21,
+            "Méthionine Dig. Volaille %": 0.15
+        }
+    },
+    {
+        "name": "Maize bran",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 90.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 90.9,
+            "Protéine %": 10.2,
+            "Fibre %": 7.8,
+            "Calcium %": 0.27,
+            "Phosphore %": 0.3,
+            "Énergie Ruminant UFL": 1.06,
+            "PDIA Ruminant g/kg": 60.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.28,
+            "Méthionine Dig. Volaille %": 0.14
+        }
+    },
+    {
+        "name": "Maize bran, starch production",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 87.4,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 87.4,
+            "Protéine %": 10.7,
+            "Fibre %": 10.3,
+            "Calcium %": 0.07,
+            "Phosphore %": 0.18,
+            "Énergie Ruminant UFL": 0.93,
+            "PDIA Ruminant g/kg": 26.0,
+            "Lysine Dig. Porc %": 0.25,
+            "Lysine Dig. Volaille %": 0.29,
+            "Méthionine Dig. Volaille %": 0.14
+        }
+    },
+    {
+        "name": "Maize distillers grains and solubles, oil < 6 %, dried",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 88.3,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 88.3,
+            "Protéine %": 24.6,
+            "Fibre %": 7.4,
+            "Calcium %": 0.21,
+            "Phosphore %": 0.84,
+            "Énergie Ruminant UFL": 1.03,
+            "PDIA Ruminant g/kg": 96.0,
+            "Lysine Dig. Porc %": 0.42,
+            "Lysine Dig. Volaille %": 0.54,
+            "Méthionine Dig. Volaille %": 0.37
+        }
+    },
+    {
+        "name": "Maize distillers grains with solubles, ethanol production, dried",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 89.6,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 89.6,
+            "Protéine %": 27.3,
+            "Fibre %": 7.1,
+            "Calcium %": 0.06,
+            "Phosphore %": 0.77,
+            "Énergie Ruminant UFL": 1.25,
+            "PDIA Ruminant g/kg": 106.0,
+            "Lysine Dig. Porc %": 0.49,
+            "Lysine Dig. Volaille %": 0.55,
+            "Méthionine Dig. Volaille %": 0.45
+        }
+    },
+    {
+        "name": "Maize flour byproduct, protein 8-18%, oil 14-30%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 91.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 91.0,
+            "Protéine %": 13.9,
+            "Fibre %": 5.3,
+            "Calcium %": 0.05,
+            "Phosphore %": 1.11,
+            "Énergie Ruminant UFL": 1.4,
+            "PDIA Ruminant g/kg": 35.0,
+            "Lysine Dig. Porc %": 0.29,
+            "Lysine Dig. Volaille %": 0.38,
+            "Méthionine Dig. Volaille %": 0.2
+        }
+    },
+    {
+        "name": "Maize flour byproduct, protein 8-18%, oil 5-14%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 89.5,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 89.5,
+            "Protéine %": 12.6,
+            "Fibre %": 5.2,
+            "Calcium %": 0.06,
+            "Phosphore %": 0.76,
+            "Énergie Ruminant UFL": 1.13,
+            "PDIA Ruminant g/kg": 31.0,
+            "Lysine Dig. Porc %": 0.3,
+            "Lysine Dig. Volaille %": 0.36,
+            "Méthionine Dig. Volaille %": 0.18
+        }
+    },
+    {
+        "name": "Maize flour byproduct, protein 8-18%, oil",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 89.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 89.0,
+            "Protéine %": 13.8,
+            "Fibre %": 7.1,
+            "Calcium %": 0.13,
+            "Phosphore %": 0.52,
+            "Énergie Ruminant UFL": 0.98,
+            "PDIA Ruminant g/kg": 34.0,
+            "Lysine Dig. Porc %": 0.32,
+            "Lysine Dig. Volaille %": 0.3,
+            "Méthionine Dig. Volaille %": 0.2
+        }
+    },
+    {
+        "name": "Maize flour, crude fibre 2-10%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 87.4,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 87.4,
+            "Protéine %": 9.1,
+            "Fibre %": 4.2,
+            "Calcium %": 0.07,
+            "Phosphore %": 0.44,
+            "Énergie Ruminant UFL": 1.16,
+            "PDIA Ruminant g/kg": 41.0,
+            "Lysine Dig. Porc %": 0.28,
+            "Lysine Dig. Volaille %": 0.33,
+            "Méthionine Dig. Volaille %": 0.15
+        }
+    },
+    {
+        "name": "Maize flour, crude fibre < 2%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 87.6,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 87.6,
+            "Protéine %": 7.1,
+            "Fibre %": 1.0,
+            "Calcium %": 0.03,
+            "Phosphore %": 0.14,
+            "Énergie Ruminant UFL": 1.16,
+            "PDIA Ruminant g/kg": 34.0,
+            "Lysine Dig. Porc %": 0.24,
+            "Lysine Dig. Volaille %": 0.28,
+            "Méthionine Dig. Volaille %": 0.12
+        }
+    },
+    {
+        "name": "Maize germ meal, oil 5-20%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 96.8,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 96.8,
+            "Protéine %": 25.6,
+            "Fibre %": 9.2,
+            "Calcium %": 0.03,
+            "Phosphore %": 0.53,
+            "Énergie Ruminant UFL": 1.25,
+            "PDIA Ruminant g/kg": 64.0,
+            "Lysine Dig. Porc %": 0.46,
+            "Lysine Dig. Volaille %": 0.47,
+            "Méthionine Dig. Volaille %": 0.3
+        }
+    },
+    {
+        "name": "Maize germ meal, oil < 5%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 87.8,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 87.8,
+            "Protéine %": 23.7,
+            "Fibre %": 8.9,
+            "Calcium %": 0.05,
+            "Phosphore %": 0.58,
+            "Énergie Ruminant UFL": 1.0,
+            "PDIA Ruminant g/kg": 93.0,
+            "Lysine Dig. Porc %": 0.43,
+            "Lysine Dig. Volaille %": 0.44,
+            "Méthionine Dig. Volaille %": 0.28
+        }
+    },
+    {
+        "name": "Maize germs",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 95.3,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 95.3,
+            "Protéine %": 12.9,
+            "Fibre %": 8.2,
+            "Calcium %": 0.1,
+            "Phosphore %": 0.43,
+            "Énergie Ruminant UFL": 1.99,
+            "PDIA Ruminant g/kg": 33.0,
+            "Lysine Dig. Porc %": 0.27,
+            "Lysine Dig. Volaille %": 0.34,
+            "Méthionine Dig. Volaille %": 0.18
+        }
+    },
+    {
+        "name": "Maize starch",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 88.2,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 88.2,
+            "Protéine %": 0.7,
+            "Fibre %": 0.2,
+            "Calcium %": 0.01,
+            "Phosphore %": 0.02,
+            "Énergie Ruminant UFL": 1.2,
+            "PDIA Ruminant g/kg": 3.0,
+            "Lysine Dig. Porc %": 0.02,
+            "Lysine Dig. Volaille %": 0.02,
+            "Méthionine Dig. Volaille %": 0.01
+        }
+    },
+    {
+        "name": "Maize, extruded",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 86.3,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 86.3,
+            "Protéine %": 7.6,
+            "Fibre %": 2.3,
+            "Calcium %": 0.04,
+            "Phosphore %": 0.25,
+            "Énergie Ruminant UFL": 1.11,
+            "PDIA Ruminant g/kg": 45.0,
+            "Lysine Dig. Porc %": 0.18,
+            "Lysine Dig. Volaille %": 0.21,
+            "Méthionine Dig. Volaille %": 0.15
+        }
+    },
+    {
+        "name": "Maize, flaked",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 86.3,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 86.3,
+            "Protéine %": 7.6,
+            "Fibre %": 2.3,
+            "Calcium %": 0.04,
+            "Phosphore %": 0.25,
+            "Énergie Ruminant UFL": 1.11,
+            "PDIA Ruminant g/kg": 44.0,
+            "Lysine Dig. Porc %": 0.18,
+            "Lysine Dig. Volaille %": 0.21,
+            "Méthionine Dig. Volaille %": 0.15
+        }
+    },
+    {
+        "name": "Maize, high moisture",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 67.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 67.0,
+            "Protéine %": 6.2,
+            "Fibre %": 1.8,
+            "Calcium %": 0.04,
+            "Phosphore %": 0.21,
+            "Énergie Ruminant UFL": 0.86,
+            "PDIA Ruminant g/kg": 16.0,
+            "Lysine Dig. Porc %": 0.15,
+            "Lysine Dig. Volaille %": 0.17,
+            "Méthionine Dig. Volaille %": 0.12
+        }
+    },
+    {
+        "name": "Manganese carbonate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Manganese chloride dihydrate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Manganese chloride tetrahydrate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Manganese methionine",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Manganese oxide MnO",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Manganese oxide MnO-Mn2O3",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Manganese oxide MnO2",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Manganese proteinate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Manganese sulfate monohydrate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Mealworm larvae, dried",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 94.6,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 94.6,
+            "Protéine %": 47.7,
+            "Fibre %": 4.8,
+            "Calcium %": 0.22,
+            "Phosphore %": 0.73,
+            "Énergie Ruminant UFL": 1.78,
+            "PDIA Ruminant g/kg": 151.0,
+            "Lysine Dig. Porc %": 2.76,
+            "Lysine Dig. Volaille %": 2.53,
+            "Méthionine Dig. Volaille %": 0.8
+        }
+    },
+    {
+        "name": "Methionine Hydroxy Analog MHA",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 88.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 88.0,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Milk powder, skimmed",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 94.8,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 94.8,
+            "Protéine %": 34.1,
+            "Fibre %": 0.0,
+            "Calcium %": 1.13,
+            "Phosphore %": 0.9,
+            "Énergie Ruminant UFL": 1.2,
+            "PDIA Ruminant g/kg": 42.0,
+            "Lysine Dig. Porc %": 2.6,
+            "Lysine Dig. Volaille %": 2.66,
+            "Méthionine Dig. Volaille %": 0.97
+        }
+    },
+    {
+        "name": "Milk powder, whole",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 96.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 96.0,
+            "Protéine %": 24.4,
+            "Fibre %": 0.0,
+            "Calcium %": 1.05,
+            "Phosphore %": 0.74,
+            "Énergie Ruminant UFL": 1.7,
+            "PDIA Ruminant g/kg": 30.0,
+            "Lysine Dig. Porc %": 1.68,
+            "Lysine Dig. Volaille %": 1.87,
+            "Méthionine Dig. Volaille %": 0.55
+        }
+    },
+    {
+        "name": "Millet, pearl",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 89.6,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 89.6,
+            "Protéine %": 11.2,
+            "Fibre %": 2.8,
+            "Calcium %": 0.05,
+            "Phosphore %": 0.3,
+            "Énergie Ruminant UFL": 1.18,
+            "PDIA Ruminant g/kg": 50.0,
+            "Lysine Dig. Porc %": 0.24,
+            "Lysine Dig. Volaille %": 0.24,
+            "Méthionine Dig. Volaille %": 0.32
+        }
+    },
+    {
+        "name": "Millet, proso",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 90.6,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 90.6,
+            "Protéine %": 12.9,
+            "Fibre %": 6.7,
+            "Calcium %": 0.04,
+            "Phosphore %": 0.27,
+            "Énergie Ruminant UFL": 1.2,
+            "PDIA Ruminant g/kg": 24.0,
+            "Lysine Dig. Porc %": 0.22,
+            "Lysine Dig. Volaille %": 0.25,
+            "Méthionine Dig. Volaille %": 0.37
+        }
+    },
+    {
+        "name": "Molasses, beet",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 75.4,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 75.4,
+            "Protéine %": 10.7,
+            "Fibre %": 0.0,
+            "Calcium %": 0.09,
+            "Phosphore %": 0.02,
+            "Énergie Ruminant UFL": 0.72,
+            "PDIA Ruminant g/kg": 7.0,
+            "Lysine Dig. Porc %": 0.15,
+            "Lysine Dig. Volaille %": 0.15,
+            "Méthionine Dig. Volaille %": 0.02
+        }
+    },
+    {
+        "name": "Molasses, sugarcane",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 72.3,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 72.3,
+            "Protéine %": 4.2,
+            "Fibre %": 0.0,
+            "Calcium %": 0.66,
+            "Phosphore %": 0.05,
+            "Énergie Ruminant UFL": 0.57,
+            "PDIA Ruminant g/kg": 2.0,
+            "Lysine Dig. Porc %": 0.01,
+            "Lysine Dig. Volaille %": 0.01,
+            "Méthionine Dig. Volaille %": 0.02
+        }
+    },
+    {
+        "name": "Molybdenum metal",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Molybdenum trioxide",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Monoammonium phosphate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.2,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.2,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 26.8,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Monocalcium phosphate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 98.5,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 98.5,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 16.7,
+            "Phosphore %": 22.4,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Monodicalcium phosphate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 98.2,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 98.2,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 17.3,
+            "Phosphore %": 22.2,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Monosodium phosphate anhydrous",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 25.5,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Monosodium phosphate anhydrous FG",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 25.5,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Monosodium phosphate hydrate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 20.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Monosodium phosphate hydrate FG",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 20.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Mustard bran",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 89.5,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 89.5,
+            "Protéine %": 16.3,
+            "Fibre %": 18.8,
+            "Calcium %": 0.84,
+            "Phosphore %": 0.37,
+            "Énergie Ruminant UFL": 0.81,
+            "PDIA Ruminant g/kg": 39.0,
+            "Lysine Dig. Porc %": 0.54,
+            "Lysine Dig. Volaille %": 0.6,
+            "Méthionine Dig. Volaille %": 0.16
+        }
+    },
+    {
+        "name": "Oat groats",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 85.7,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 85.7,
+            "Protéine %": 11.0,
+            "Fibre %": 3.9,
+            "Calcium %": 0.09,
+            "Phosphore %": 0.29,
+            "Énergie Ruminant UFL": 1.0,
+            "PDIA Ruminant g/kg": 22.0,
+            "Lysine Dig. Porc %": 0.36,
+            "Lysine Dig. Volaille %": 0.41,
+            "Méthionine Dig. Volaille %": 0.18
+        }
+    },
+    {
+        "name": "Oat hulls",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 90.8,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 90.8,
+            "Protéine %": 4.7,
+            "Fibre %": 27.6,
+            "Calcium %": 0.2,
+            "Phosphore %": 0.18,
+            "Énergie Ruminant UFL": 0.48,
+            "PDIA Ruminant g/kg": 10.0,
+            "Lysine Dig. Porc %": 0.1,
+            "Lysine Dig. Volaille %": 0.13,
+            "Méthionine Dig. Volaille %": 0.07
+        }
+    },
+    {
+        "name": "Oats",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 87.6,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 87.6,
+            "Protéine %": 9.4,
+            "Fibre %": 11.5,
+            "Calcium %": 0.1,
+            "Phosphore %": 0.31,
+            "Énergie Ruminant UFL": 0.87,
+            "PDIA Ruminant g/kg": 17.0,
+            "Lysine Dig. Porc %": 0.29,
+            "Lysine Dig. Volaille %": 0.33,
+            "Méthionine Dig. Volaille %": 0.15
+        }
+    },
+    {
+        "name": "Oats, flaked",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 87.6,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 87.6,
+            "Protéine %": 9.4,
+            "Fibre %": 11.5,
+            "Calcium %": 0.1,
+            "Phosphore %": 0.31,
+            "Énergie Ruminant UFL": 0.87,
+            "PDIA Ruminant g/kg": 21.0,
+            "Lysine Dig. Porc %": 0.29,
+            "Lysine Dig. Volaille %": 0.33,
+            "Méthionine Dig. Volaille %": 0.15
+        }
+    },
+    {
+        "name": "Olive oil cake, with pits, oil < 5%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 89.3,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 89.3,
+            "Protéine %": 10.2,
+            "Fibre %": 35.6,
+            "Calcium %": 1.14,
+            "Phosphore %": 0.14,
+            "Énergie Ruminant UFL": 0.2,
+            "PDIA Ruminant g/kg": 24.0,
+            "Lysine Dig. Porc %": 0.04,
+            "Lysine Dig. Volaille %": 0.05,
+            "Méthionine Dig. Volaille %": 0.11
+        }
+    },
+    {
+        "name": "Olive oil cake, with pits, oil > 5%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 88.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 88.0,
+            "Protéine %": 7.8,
+            "Fibre %": 33.0,
+            "Calcium %": 0.67,
+            "Phosphore %": 0.09,
+            "Énergie Ruminant UFL": 0.27,
+            "PDIA Ruminant g/kg": 19.0,
+            "Lysine Dig. Porc %": 0.03,
+            "Lysine Dig. Volaille %": 0.04,
+            "Méthionine Dig. Volaille %": 0.08
+        }
+    },
+    {
+        "name": "Olive pulp, oil < 10%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 88.5,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 88.5,
+            "Protéine %": 10.9,
+            "Fibre %": 18.9,
+            "Calcium %": 1.11,
+            "Phosphore %": 0.15,
+            "Énergie Ruminant UFL": 0.36,
+            "PDIA Ruminant g/kg": 8.0,
+            "Lysine Dig. Porc %": 0.05,
+            "Lysine Dig. Volaille %": 0.06,
+            "Méthionine Dig. Volaille %": 0.12
+        }
+    },
+    {
+        "name": "Olive pulp, oil > 10%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 78.5,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 78.5,
+            "Protéine %": 9.1,
+            "Fibre %": 16.8,
+            "Calcium %": 0.88,
+            "Phosphore %": 0.11,
+            "Énergie Ruminant UFL": 0.54,
+            "PDIA Ruminant g/kg": 27.0,
+            "Lysine Dig. Porc %": 0.04,
+            "Lysine Dig. Volaille %": 0.05,
+            "Méthionine Dig. Volaille %": 0.1
+        }
+    },
+    {
+        "name": "Palm kernel meal, oil 5-20%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 91.7,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 91.7,
+            "Protéine %": 15.6,
+            "Fibre %": 19.0,
+            "Calcium %": 0.28,
+            "Phosphore %": 0.55,
+            "Énergie Ruminant UFL": 0.84,
+            "PDIA Ruminant g/kg": 68.0,
+            "Lysine Dig. Porc %": 0.17,
+            "Lysine Dig. Volaille %": 0.41,
+            "Méthionine Dig. Volaille %": 0.25
+        }
+    },
+    {
+        "name": "Palm kernel meal, oil < 5%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 90.6,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 90.6,
+            "Protéine %": 16.6,
+            "Fibre %": 18.7,
+            "Calcium %": 0.27,
+            "Phosphore %": 0.55,
+            "Énergie Ruminant UFL": 0.77,
+            "PDIA Ruminant g/kg": 72.0,
+            "Lysine Dig. Porc %": 0.18,
+            "Lysine Dig. Volaille %": 0.31,
+            "Méthionine Dig. Volaille %": 0.22
+        }
+    },
+    {
+        "name": "Palm oil",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.8,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.8,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 3.61,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Pea",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 87.2,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 87.2,
+            "Protéine %": 20.3,
+            "Fibre %": 5.6,
+            "Calcium %": 0.1,
+            "Phosphore %": 0.38,
+            "Énergie Ruminant UFL": 1.05,
+            "PDIA Ruminant g/kg": 35.0,
+            "Lysine Dig. Porc %": 1.23,
+            "Lysine Dig. Volaille %": 1.34,
+            "Méthionine Dig. Volaille %": 0.17
+        }
+    },
+    {
+        "name": "Pea protein concentrate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 93.2,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 93.2,
+            "Protéine %": 78.0,
+            "Fibre %": 0.3,
+            "Calcium %": 0.13,
+            "Phosphore %": 0.46,
+            "Énergie Ruminant UFL": 1.41,
+            "PDIA Ruminant g/kg": 133.0,
+            "Lysine Dig. Porc %": 4.58,
+            "Lysine Dig. Volaille %": 4.15,
+            "Méthionine Dig. Volaille %": 0.54
+        }
+    },
+    {
+        "name": "Pea, extruded",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 87.2,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 87.2,
+            "Protéine %": 20.3,
+            "Fibre %": 5.6,
+            "Calcium %": 0.1,
+            "Phosphore %": 0.38,
+            "Énergie Ruminant UFL": 1.05,
+            "PDIA Ruminant g/kg": 61.0,
+            "Lysine Dig. Porc %": 1.37,
+            "Lysine Dig. Volaille %": 1.21,
+            "Méthionine Dig. Volaille %": 0.17
+        }
+    },
+    {
+        "name": "Pentacalcium orthoperiodate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 31.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Phosphate, defluorinated",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 30.6,
+            "Phosphore %": 18.2,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Potassium iodide",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Potato protein concentrate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 91.8,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 91.8,
+            "Protéine %": 77.2,
+            "Fibre %": 0.8,
+            "Calcium %": 0.2,
+            "Phosphore %": 0.41,
+            "Énergie Ruminant UFL": 1.41,
+            "PDIA Ruminant g/kg": 388.0,
+            "Lysine Dig. Porc %": 5.27,
+            "Lysine Dig. Volaille %": 5.42,
+            "Méthionine Dig. Volaille %": 1.65
+        }
+    },
+    {
+        "name": "Potato pulp, dried",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 86.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 86.9,
+            "Protéine %": 4.7,
+            "Fibre %": 16.2,
+            "Calcium %": 0.35,
+            "Phosphore %": 0.13,
+            "Énergie Ruminant UFL": 0.78,
+            "PDIA Ruminant g/kg": 12.0,
+            "Lysine Dig. Porc %": 0.04,
+            "Lysine Dig. Volaille %": 0.04,
+            "Méthionine Dig. Volaille %": 0.02
+        }
+    },
+    {
+        "name": "Potato tuber, dried",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 89.1,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 89.1,
+            "Protéine %": 9.2,
+            "Fibre %": 2.3,
+            "Calcium %": 0.1,
+            "Phosphore %": 0.2,
+            "Énergie Ruminant UFL": 0.97,
+            "PDIA Ruminant g/kg": 23.0,
+            "Lysine Dig. Porc %": 0.35,
+            "Lysine Dig. Volaille %": 0.34,
+            "Méthionine Dig. Volaille %": 0.11
+        }
+    },
+    {
+        "name": "Poultry fat",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 100.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 100.0,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 3.61,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Processed animal proteins, pig",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 95.1,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 95.1,
+            "Protéine %": 52.4,
+            "Fibre %": 1.6,
+            "Calcium %": 8.67,
+            "Phosphore %": 4.2,
+            "Énergie Ruminant UFL": 0.96,
+            "PDIA Ruminant g/kg": 198.0,
+            "Lysine Dig. Porc %": 2.22,
+            "Lysine Dig. Volaille %": 2.04,
+            "Méthionine Dig. Volaille %": 0.53
+        }
+    },
+    {
+        "name": "Processed animal proteins, poultry, protein 45-60%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 91.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 91.9,
+            "Protéine %": 52.9,
+            "Fibre %": 1.2,
+            "Calcium %": 1.92,
+            "Phosphore %": 0.96,
+            "Énergie Ruminant UFL": 1.5,
+            "PDIA Ruminant g/kg": 214.0,
+            "Lysine Dig. Porc %": 1.91,
+            "Lysine Dig. Volaille %": 1.35,
+            "Méthionine Dig. Volaille %": 0.49
+        }
+    },
+    {
+        "name": "Processed animal proteins, poultry, protein 60-70%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 93.6,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 93.6,
+            "Protéine %": 63.2,
+            "Fibre %": 0.9,
+            "Calcium %": 2.17,
+            "Phosphore %": 1.16,
+            "Énergie Ruminant UFL": 1.47,
+            "PDIA Ruminant g/kg": 255.0,
+            "Lysine Dig. Porc %": 2.44,
+            "Lysine Dig. Volaille %": 2.37,
+            "Méthionine Dig. Volaille %": 0.89
+        }
+    },
+    {
+        "name": "Processed animal proteins, poultry, protein > 70%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 93.5,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 93.5,
+            "Protéine %": 76.9,
+            "Fibre %": 1.2,
+            "Calcium %": 1.44,
+            "Phosphore %": 0.59,
+            "Énergie Ruminant UFL": 1.43,
+            "PDIA Ruminant g/kg": 311.0,
+            "Lysine Dig. Porc %": 3.14,
+            "Lysine Dig. Volaille %": 3.04,
+            "Méthionine Dig. Volaille %": 0.76
+        }
+    },
+    {
+        "name": "Rapeseed meal, oil 5-20%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 92.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 92.0,
+            "Protéine %": 31.0,
+            "Fibre %": 11.6,
+            "Calcium %": 0.75,
+            "Phosphore %": 1.09,
+            "Énergie Ruminant UFL": 1.1,
+            "PDIA Ruminant g/kg": 75.0,
+            "Lysine Dig. Porc %": 1.3,
+            "Lysine Dig. Volaille %": 1.32,
+            "Méthionine Dig. Volaille %": 0.55
+        }
+    },
+    {
+        "name": "Rapeseed meal, oil < 5%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 89.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 89.0,
+            "Protéine %": 33.9,
+            "Fibre %": 12.7,
+            "Calcium %": 0.77,
+            "Phosphore %": 1.13,
+            "Énergie Ruminant UFL": 0.88,
+            "PDIA Ruminant g/kg": 82.0,
+            "Lysine Dig. Porc %": 1.37,
+            "Lysine Dig. Volaille %": 1.41,
+            "Méthionine Dig. Volaille %": 0.6
+        }
+    },
+    {
+        "name": "Rapeseed oil",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 3.61,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Rapeseed, whole",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 92.4,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 92.4,
+            "Protéine %": 18.6,
+            "Fibre %": 8.5,
+            "Calcium %": 0.45,
+            "Phosphore %": 0.67,
+            "Énergie Ruminant UFL": 1.88,
+            "PDIA Ruminant g/kg": 34.0,
+            "Lysine Dig. Porc %": 0.9,
+            "Lysine Dig. Volaille %": 0.9,
+            "Méthionine Dig. Volaille %": 0.36
+        }
+    },
+    {
+        "name": "Rapeseed, whole, extruded",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 92.4,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 92.4,
+            "Protéine %": 18.6,
+            "Fibre %": 8.5,
+            "Calcium %": 0.45,
+            "Phosphore %": 0.67,
+            "Énergie Ruminant UFL": 1.88,
+            "PDIA Ruminant g/kg": 75.0,
+            "Lysine Dig. Porc %": 0.9,
+            "Lysine Dig. Volaille %": 0.9,
+            "Méthionine Dig. Volaille %": 0.36
+        }
+    },
+    {
+        "name": "Rice bran, oil < 5%, crude fibre 11-20%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 88.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 88.9,
+            "Protéine %": 14.5,
+            "Fibre %": 13.5,
+            "Calcium %": 0.12,
+            "Phosphore %": 1.52,
+            "Énergie Ruminant UFL": 0.55,
+            "PDIA Ruminant g/kg": 53.0,
+            "Lysine Dig. Porc %": 0.52,
+            "Lysine Dig. Volaille %": 0.4,
+            "Méthionine Dig. Volaille %": 0.23
+        }
+    },
+    {
+        "name": "Rice bran, oil < 5%, crude fibre 5-11%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 89.7,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 89.7,
+            "Protéine %": 14.7,
+            "Fibre %": 9.2,
+            "Calcium %": 0.08,
+            "Phosphore %": 1.5,
+            "Énergie Ruminant UFL": 0.66,
+            "PDIA Ruminant g/kg": 57.0,
+            "Lysine Dig. Porc %": 0.49,
+            "Lysine Dig. Volaille %": 0.41,
+            "Méthionine Dig. Volaille %": 0.23
+        }
+    },
+    {
+        "name": "Rice bran, oil < 5%, crude fibre > 20%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 91.6,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 91.6,
+            "Protéine %": 5.9,
+            "Fibre %": 30.1,
+            "Calcium %": 0.1,
+            "Phosphore %": 0.39,
+            "Énergie Ruminant UFL": 0.39,
+            "PDIA Ruminant g/kg": 19.0,
+            "Lysine Dig. Porc %": 0.16,
+            "Lysine Dig. Volaille %": 0.14,
+            "Méthionine Dig. Volaille %": 0.11
+        }
+    },
+    {
+        "name": "Rice bran, oil > 5%, crude fibre 11-20%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 90.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 90.0,
+            "Protéine %": 11.1,
+            "Fibre %": 14.6,
+            "Calcium %": 0.08,
+            "Phosphore %": 1.11,
+            "Énergie Ruminant UFL": 0.73,
+            "PDIA Ruminant g/kg": 28.0,
+            "Lysine Dig. Porc %": 0.38,
+            "Lysine Dig. Volaille %": 0.35,
+            "Méthionine Dig. Volaille %": 0.18
+        }
+    },
+    {
+        "name": "Rice bran, oil > 5%, crude fibre 5-11%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 89.6,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 89.6,
+            "Protéine %": 13.8,
+            "Fibre %": 8.1,
+            "Calcium %": 0.06,
+            "Phosphore %": 1.48,
+            "Énergie Ruminant UFL": 0.96,
+            "PDIA Ruminant g/kg": 37.0,
+            "Lysine Dig. Porc %": 0.47,
+            "Lysine Dig. Volaille %": 0.45,
+            "Méthionine Dig. Volaille %": 0.21
+        }
+    },
+    {
+        "name": "Rice bran, oil > 5%, crude fibre > 20%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 91.5,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 91.5,
+            "Protéine %": 7.1,
+            "Fibre %": 26.3,
+            "Calcium %": 0.08,
+            "Phosphore %": 0.51,
+            "Énergie Ruminant UFL": 0.47,
+            "PDIA Ruminant g/kg": 16.0,
+            "Lysine Dig. Porc %": 0.21,
+            "Lysine Dig. Volaille %": 0.18,
+            "Méthionine Dig. Volaille %": 0.13
+        }
+    },
+    {
+        "name": "Rice distillers grains with solubles, protein 40-50%, dried",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 89.7,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 89.7,
+            "Protéine %": 43.7,
+            "Fibre %": 5.8,
+            "Calcium %": 0.46,
+            "Phosphore %": 0.58,
+            "Énergie Ruminant UFL": 1.19,
+            "PDIA Ruminant g/kg": 161.0,
+            "Lysine Dig. Porc %": 0.79,
+            "Lysine Dig. Volaille %": 0.86,
+            "Méthionine Dig. Volaille %": 0.86
+        }
+    },
+    {
+        "name": "Rice hulls",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 91.5,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 91.5,
+            "Protéine %": 3.4,
+            "Fibre %": 38.8,
+            "Calcium %": 0.13,
+            "Phosphore %": 0.15,
+            "Énergie Ruminant UFL": 0.26,
+            "PDIA Ruminant g/kg": 9.0,
+            "Lysine Dig. Porc %": 0.04,
+            "Lysine Dig. Volaille %": 0.05,
+            "Méthionine Dig. Volaille %": 0.07
+        }
+    },
+    {
+        "name": "Rice shorts, oil < 5%, crude fibre < 5%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 87.7,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 87.7,
+            "Protéine %": 10.1,
+            "Fibre %": 3.4,
+            "Calcium %": 0.05,
+            "Phosphore %": 0.67,
+            "Énergie Ruminant UFL": 0.95,
+            "PDIA Ruminant g/kg": 42.0,
+            "Lysine Dig. Porc %": 0.33,
+            "Lysine Dig. Volaille %": 0.34,
+            "Méthionine Dig. Volaille %": 0.19
+        }
+    },
+    {
+        "name": "Rice shorts, oil > 5%, crude fibre < 5%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 89.7,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 89.7,
+            "Protéine %": 12.6,
+            "Fibre %": 3.7,
+            "Calcium %": 0.04,
+            "Phosphore %": 1.09,
+            "Énergie Ruminant UFL": 1.03,
+            "PDIA Ruminant g/kg": 36.0,
+            "Lysine Dig. Porc %": 0.42,
+            "Lysine Dig. Volaille %": 0.44,
+            "Méthionine Dig. Volaille %": 0.23
+        }
+    },
+    {
+        "name": "Rice, brown",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 88.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 88.0,
+            "Protéine %": 9.2,
+            "Fibre %": 2.1,
+            "Calcium %": 0.04,
+            "Phosphore %": 0.31,
+            "Énergie Ruminant UFL": 1.06,
+            "PDIA Ruminant g/kg": 25.0,
+            "Lysine Dig. Porc %": 0.3,
+            "Lysine Dig. Volaille %": 0.31,
+            "Méthionine Dig. Volaille %": 0.19
+        }
+    },
+    {
+        "name": "Rice, paddy",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 88.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 88.0,
+            "Protéine %": 7.5,
+            "Fibre %": 9.6,
+            "Calcium %": 0.06,
+            "Phosphore %": 0.25,
+            "Énergie Ruminant UFL": 0.76,
+            "PDIA Ruminant g/kg": 18.0,
+            "Lysine Dig. Porc %": 0.21,
+            "Lysine Dig. Volaille %": 0.21,
+            "Méthionine Dig. Volaille %": 0.15
+        }
+    },
+    {
+        "name": "Rice, polished, broken",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 87.6,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 87.6,
+            "Protéine %": 8.1,
+            "Fibre %": 0.6,
+            "Calcium %": 0.04,
+            "Phosphore %": 0.21,
+            "Énergie Ruminant UFL": 1.08,
+            "PDIA Ruminant g/kg": 22.0,
+            "Lysine Dig. Porc %": 0.29,
+            "Lysine Dig. Volaille %": 0.29,
+            "Méthionine Dig. Volaille %": 0.16
+        }
+    },
+    {
+        "name": "Rye",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 86.7,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 86.7,
+            "Protéine %": 8.5,
+            "Fibre %": 2.0,
+            "Calcium %": 0.06,
+            "Phosphore %": 0.3,
+            "Énergie Ruminant UFL": 1.04,
+            "PDIA Ruminant g/kg": 17.0,
+            "Lysine Dig. Porc %": 0.24,
+            "Lysine Dig. Volaille %": 0.24,
+            "Méthionine Dig. Volaille %": 0.11
+        }
+    },
+    {
+        "name": "Seashells, ground",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.6,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.6,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 34.5,
+            "Phosphore %": 0.08,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Selenium methionine",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Selenium yeast",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 94.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 94.0,
+            "Protéine %": 45.0,
+            "Fibre %": 1.8,
+            "Calcium %": 0.33,
+            "Phosphore %": 1.27,
+            "Énergie Ruminant UFL": 1.12,
+            "PDIA Ruminant g/kg": 82.0,
+            "Lysine Dig. Porc %": 2.04,
+            "Lysine Dig. Volaille %": 2.48,
+            "Méthionine Dig. Volaille %": 0.57
+        }
+    },
+    {
+        "name": "Sesame meal, oil > 5%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 93.1,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 93.1,
+            "Protéine %": 42.0,
+            "Fibre %": 7.1,
+            "Calcium %": 1.86,
+            "Phosphore %": 1.15,
+            "Énergie Ruminant UFL": 1.24,
+            "PDIA Ruminant g/kg": 115.0,
+            "Lysine Dig. Porc %": 0.85,
+            "Lysine Dig. Volaille %": 0.79,
+            "Méthionine Dig. Volaille %": 0.95
+        }
+    },
+    {
+        "name": "Sheanut oil meal, oil > 5%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 93.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 93.0,
+            "Protéine %": 12.5,
+            "Fibre %": 9.6,
+            "Calcium %": 0.23,
+            "Phosphore %": 0.19,
+            "Énergie Ruminant UFL": 0.97,
+            "PDIA Ruminant g/kg": 23.0,
+            "Lysine Dig. Porc %": 0.33,
+            "Lysine Dig. Volaille %": 0.36,
+            "Méthionine Dig. Volaille %": 0.21
+        }
+    },
+    {
+        "name": "Shrimp meal",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 91.2,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 91.2,
+            "Protéine %": 39.5,
+            "Fibre %": 13.0,
+            "Calcium %": 10.5,
+            "Phosphore %": 1.3,
+            "Énergie Ruminant UFL": 0.76,
+            "PDIA Ruminant g/kg": 196.0,
+            "Lysine Dig. Porc %": 1.47,
+            "Lysine Dig. Volaille %": 1.53,
+            "Méthionine Dig. Volaille %": 0.71
+        }
+    },
+    {
+        "name": "Sodium bicarbonate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.0,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.05,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Sodium chloride",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.6,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.6,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Sodium iodide",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Sodium molybdate dihydrate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Sodium selenate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Sodium selenite",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Sodium sulfate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Sodium-calcium-magnesium phosphate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 8.0,
+            "Phosphore %": 17.5,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Sorghum",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 87.8,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 87.8,
+            "Protéine %": 9.3,
+            "Fibre %": 2.4,
+            "Calcium %": 0.03,
+            "Phosphore %": 0.3,
+            "Énergie Ruminant UFL": 1.06,
+            "PDIA Ruminant g/kg": 42.0,
+            "Lysine Dig. Porc %": 0.16,
+            "Lysine Dig. Volaille %": 0.19,
+            "Méthionine Dig. Volaille %": 0.14
+        }
+    },
+    {
+        "name": "Soybean hulls",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 88.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 88.9,
+            "Protéine %": 11.4,
+            "Fibre %": 34.8,
+            "Calcium %": 0.49,
+            "Phosphore %": 0.15,
+            "Énergie Ruminant UFL": 0.94,
+            "PDIA Ruminant g/kg": 33.0,
+            "Lysine Dig. Porc %": 0.44,
+            "Lysine Dig. Volaille %": 0.46,
+            "Méthionine Dig. Volaille %": 0.1
+        }
+    },
+    {
+        "name": "Soybean meal, oil 5-20%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 93.2,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 93.2,
+            "Protéine %": 43.8,
+            "Fibre %": 6.0,
+            "Calcium %": 0.34,
+            "Phosphore %": 0.65,
+            "Énergie Ruminant UFL": 1.27,
+            "PDIA Ruminant g/kg": 143.0,
+            "Lysine Dig. Porc %": 2.45,
+            "Lysine Dig. Volaille %": 2.4,
+            "Méthionine Dig. Volaille %": 0.57
+        }
+    },
+    {
+        "name": "Soybean meal, oil < 5%, 46% protein + oil",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 87.7,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 87.7,
+            "Protéine %": 43.5,
+            "Fibre %": 6.3,
+            "Calcium %": 0.34,
+            "Phosphore %": 0.62,
+            "Énergie Ruminant UFL": 1.1,
+            "PDIA Ruminant g/kg": 142.0,
+            "Lysine Dig. Porc %": 2.42,
+            "Lysine Dig. Volaille %": 2.38,
+            "Méthionine Dig. Volaille %": 0.56
+        }
+    },
+    {
+        "name": "Soybean meal, oil < 5%, 48% protein + oil",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 88.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 88.0,
+            "Protéine %": 46.2,
+            "Fibre %": 6.0,
+            "Calcium %": 0.34,
+            "Phosphore %": 0.62,
+            "Énergie Ruminant UFL": 1.11,
+            "PDIA Ruminant g/kg": 152.0,
+            "Lysine Dig. Porc %": 2.58,
+            "Lysine Dig. Volaille %": 2.53,
+            "Méthionine Dig. Volaille %": 0.59
+        }
+    },
+    {
+        "name": "Soybean meal, oil < 5%, 48% protein + oil, extruded",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 88.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 88.0,
+            "Protéine %": 46.2,
+            "Fibre %": 6.0,
+            "Calcium %": 0.34,
+            "Phosphore %": 0.62,
+            "Énergie Ruminant UFL": 1.11,
+            "PDIA Ruminant g/kg": 163.0,
+            "Lysine Dig. Porc %": 2.58,
+            "Lysine Dig. Volaille %": 2.53,
+            "Méthionine Dig. Volaille %": 0.59
+        }
+    },
+    {
+        "name": "Soybean meal, oil < 5%, 48% protein + oil, formaldehyde-treated",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 88.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 88.0,
+            "Protéine %": 46.2,
+            "Fibre %": 6.0,
+            "Calcium %": 0.34,
+            "Phosphore %": 0.62,
+            "Énergie Ruminant UFL": 1.11,
+            "PDIA Ruminant g/kg": 292.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Soybean meal, oil < 5%, 50% protein + oil",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 88.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 88.0,
+            "Protéine %": 48.5,
+            "Fibre %": 3.9,
+            "Calcium %": 0.34,
+            "Phosphore %": 0.62,
+            "Énergie Ruminant UFL": 1.12,
+            "PDIA Ruminant g/kg": 161.0,
+            "Lysine Dig. Porc %": 2.77,
+            "Lysine Dig. Volaille %": 2.66,
+            "Méthionine Dig. Volaille %": 0.62
+        }
+    },
+    {
+        "name": "Soybean molasses",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 57.6,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 57.6,
+            "Protéine %": 4.4,
+            "Fibre %": 0.0,
+            "Calcium %": 0.18,
+            "Phosphore %": 0.33,
+            "Énergie Ruminant UFL": 0.41,
+            "PDIA Ruminant g/kg": 3.0,
+            "Lysine Dig. Porc %": 0.25,
+            "Lysine Dig. Volaille %": 0.24,
+            "Méthionine Dig. Volaille %": 0.06
+        }
+    },
+    {
+        "name": "Soybean oil",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.8,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.8,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 3.61,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Soybean protein concentrate, protein 50-60%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 92.7,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 92.7,
+            "Protéine %": 54.0,
+            "Fibre %": 3.7,
+            "Calcium %": 0.36,
+            "Phosphore %": 0.66,
+            "Énergie Ruminant UFL": 1.19,
+            "PDIA Ruminant g/kg": 179.0,
+            "Lysine Dig. Porc %": 3.14,
+            "Lysine Dig. Volaille %": 2.99,
+            "Méthionine Dig. Volaille %": 0.69
+        }
+    },
+    {
+        "name": "Soybean protein concentrate, protein 60-70%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 93.3,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 93.3,
+            "Protéine %": 64.7,
+            "Fibre %": 4.1,
+            "Calcium %": 0.36,
+            "Phosphore %": 0.83,
+            "Énergie Ruminant UFL": 1.23,
+            "PDIA Ruminant g/kg": 214.0,
+            "Lysine Dig. Porc %": 3.79,
+            "Lysine Dig. Volaille %": 3.59,
+            "Méthionine Dig. Volaille %": 0.82
+        }
+    },
+    {
+        "name": "Soybean protein concentrate, protein 70-90%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 92.7,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 92.7,
+            "Protéine %": 78.3,
+            "Fibre %": 1.2,
+            "Calcium %": 0.15,
+            "Phosphore %": 0.53,
+            "Énergie Ruminant UFL": 1.32,
+            "PDIA Ruminant g/kg": 259.0,
+            "Lysine Dig. Porc %": 4.59,
+            "Lysine Dig. Volaille %": 4.34,
+            "Méthionine Dig. Volaille %": 0.99
+        }
+    },
+    {
+        "name": "Soybean, whole, extruded",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 89.5,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 89.5,
+            "Protéine %": 36.0,
+            "Fibre %": 5.6,
+            "Calcium %": 0.3,
+            "Phosphore %": 0.56,
+            "Énergie Ruminant UFL": 1.34,
+            "PDIA Ruminant g/kg": 158.0,
+            "Lysine Dig. Porc %": 1.95,
+            "Lysine Dig. Volaille %": 1.9,
+            "Méthionine Dig. Volaille %": 0.44
+        }
+    },
+    {
+        "name": "Soybean, whole, flaked",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 89.5,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 89.5,
+            "Protéine %": 36.0,
+            "Fibre %": 5.6,
+            "Calcium %": 0.3,
+            "Phosphore %": 0.56,
+            "Énergie Ruminant UFL": 1.34,
+            "PDIA Ruminant g/kg": 94.0,
+            "Lysine Dig. Porc %": 1.88,
+            "Lysine Dig. Volaille %": 1.83,
+            "Méthionine Dig. Volaille %": 0.45
+        }
+    },
+    {
+        "name": "Soybean, whole, toasted",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 88.5,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 88.5,
+            "Protéine %": 35.8,
+            "Fibre %": 5.8,
+            "Calcium %": 0.3,
+            "Phosphore %": 0.53,
+            "Énergie Ruminant UFL": 1.35,
+            "PDIA Ruminant g/kg": 106.0,
+            "Lysine Dig. Porc %": 1.75,
+            "Lysine Dig. Volaille %": 1.89,
+            "Méthionine Dig. Volaille %": 0.43
+        }
+    },
+    {
+        "name": "Soybean, whole, toasted, flaked and expanded",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 90.7,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 90.7,
+            "Protéine %": 35.9,
+            "Fibre %": 5.9,
+            "Calcium %": 0.28,
+            "Phosphore %": 0.51,
+            "Énergie Ruminant UFL": 1.39,
+            "PDIA Ruminant g/kg": 157.0,
+            "Lysine Dig. Porc %": 1.74,
+            "Lysine Dig. Volaille %": 1.9,
+            "Méthionine Dig. Volaille %": 0.44
+        }
+    },
+    {
+        "name": "Sunflower hulls",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 91.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 91.0,
+            "Protéine %": 5.2,
+            "Fibre %": 52.3,
+            "Calcium %": 0.37,
+            "Phosphore %": 0.08,
+            "Énergie Ruminant UFL": 0.27,
+            "PDIA Ruminant g/kg": 11.0,
+            "Lysine Dig. Porc %": 0.13,
+            "Lysine Dig. Volaille %": 0.17,
+            "Méthionine Dig. Volaille %": 0.08
+        }
+    },
+    {
+        "name": "Sunflower meal, oil 5-20%, dehulled",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 93.8,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 93.8,
+            "Protéine %": 33.7,
+            "Fibre %": 18.4,
+            "Calcium %": 0.39,
+            "Phosphore %": 0.99,
+            "Énergie Ruminant UFL": 0.91,
+            "PDIA Ruminant g/kg": 72.0,
+            "Lysine Dig. Porc %": 1.0,
+            "Lysine Dig. Volaille %": 0.99,
+            "Méthionine Dig. Volaille %": 0.7
+        }
+    },
+    {
+        "name": "Sunflower meal, oil 5-20%, non dehulled",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 92.3,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 92.3,
+            "Protéine %": 23.9,
+            "Fibre %": 25.4,
+            "Calcium %": 0.36,
+            "Phosphore %": 0.83,
+            "Énergie Ruminant UFL": 0.84,
+            "PDIA Ruminant g/kg": 48.0,
+            "Lysine Dig. Porc %": 0.68,
+            "Lysine Dig. Volaille %": 0.73,
+            "Méthionine Dig. Volaille %": 0.49
+        }
+    },
+    {
+        "name": "Sunflower meal, oil < 5%, dehulled",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 90.4,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 90.4,
+            "Protéine %": 36.6,
+            "Fibre %": 17.8,
+            "Calcium %": 0.4,
+            "Phosphore %": 1.04,
+            "Énergie Ruminant UFL": 0.78,
+            "PDIA Ruminant g/kg": 79.0,
+            "Lysine Dig. Porc %": 1.08,
+            "Lysine Dig. Volaille %": 1.06,
+            "Méthionine Dig. Volaille %": 0.75
+        }
+    },
+    {
+        "name": "Sunflower meal, oil < 5%, non dehulled",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 88.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 88.9,
+            "Protéine %": 27.3,
+            "Fibre %": 26.2,
+            "Calcium %": 0.38,
+            "Phosphore %": 0.97,
+            "Énergie Ruminant UFL": 0.62,
+            "PDIA Ruminant g/kg": 55.0,
+            "Lysine Dig. Porc %": 0.76,
+            "Lysine Dig. Volaille %": 0.82,
+            "Méthionine Dig. Volaille %": 0.57
+        }
+    },
+    {
+        "name": "Sunflower oil",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.3,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.3,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 3.59,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Sunflower seed, whole",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 92.8,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 92.8,
+            "Protéine %": 14.8,
+            "Fibre %": 15.9,
+            "Calcium %": 0.25,
+            "Phosphore %": 0.53,
+            "Énergie Ruminant UFL": 1.57,
+            "PDIA Ruminant g/kg": 21.0,
+            "Lysine Dig. Porc %": 0.45,
+            "Lysine Dig. Volaille %": 0.46,
+            "Méthionine Dig. Volaille %": 0.27
+        }
+    },
+    {
+        "name": "Sweet potato, dried",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 88.3,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 88.3,
+            "Protéine %": 4.5,
+            "Fibre %": 2.6,
+            "Calcium %": 0.12,
+            "Phosphore %": 0.13,
+            "Énergie Ruminant UFL": 0.96,
+            "PDIA Ruminant g/kg": 12.0,
+            "Lysine Dig. Porc %": 0.15,
+            "Lysine Dig. Volaille %": 0.1,
+            "Méthionine Dig. Volaille %": 0.03
+        }
+    },
+    {
+        "name": "Tallow",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 100.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 100.0,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 3.61,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Tomato pulp, dehydrated",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 92.7,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 92.7,
+            "Protéine %": 19.0,
+            "Fibre %": 37.6,
+            "Calcium %": 0.46,
+            "Phosphore %": 0.48,
+            "Énergie Ruminant UFL": 0.81,
+            "PDIA Ruminant g/kg": 36.0,
+            "Lysine Dig. Porc %": 0.56,
+            "Lysine Dig. Volaille %": 0.65,
+            "Méthionine Dig. Volaille %": 0.27
+        }
+    },
+    {
+        "name": "Tricalcium phosphate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.2,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.2,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 36.7,
+            "Phosphore %": 17.3,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Triticale",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 86.8,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 86.8,
+            "Protéine %": 10.0,
+            "Fibre %": 2.5,
+            "Calcium %": 0.06,
+            "Phosphore %": 0.33,
+            "Énergie Ruminant UFL": 1.02,
+            "PDIA Ruminant g/kg": 21.0,
+            "Lysine Dig. Porc %": 0.33,
+            "Lysine Dig. Volaille %": 0.32,
+            "Méthionine Dig. Volaille %": 0.16
+        }
+    },
+    {
+        "name": "Urea",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.4,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.4,
+            "Protéine %": 286.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.26,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Vinasse, different origins",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 67.6,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 67.6,
+            "Protéine %": 43.4,
+            "Fibre %": 0.0,
+            "Calcium %": 0.08,
+            "Phosphore %": 0.22,
+            "Énergie Ruminant UFL": 0.62,
+            "PDIA Ruminant g/kg": 4.0,
+            "Lysine Dig. Porc %": 0.51,
+            "Lysine Dig. Volaille %": 0.49,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Vinasse, from the production of glutamic acid",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 69.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 69.9,
+            "Protéine %": 48.9,
+            "Fibre %": 0.0,
+            "Calcium %": 0.07,
+            "Phosphore %": 0.29,
+            "Énergie Ruminant UFL": 0.68,
+            "PDIA Ruminant g/kg": 11.0,
+            "Lysine Dig. Porc %": 0.09,
+            "Lysine Dig. Volaille %": 0.08,
+            "Méthionine Dig. Volaille %": 0.06
+        }
+    },
+    {
+        "name": "Vinasse, from yeast production, protein 30 %",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 62.4,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 62.4,
+            "Protéine %": 30.7,
+            "Fibre %": 0.0,
+            "Calcium %": 0.22,
+            "Phosphore %": 0.14,
+            "Énergie Ruminant UFL": 0.54,
+            "PDIA Ruminant g/kg": 8.0,
+            "Lysine Dig. Porc %": 0.24,
+            "Lysine Dig. Volaille %": 0.23,
+            "Méthionine Dig. Volaille %": 0.18
+        }
+    },
+    {
+        "name": "Vinasse, from yeast production, protein 40%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 68.1,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 68.1,
+            "Protéine %": 41.7,
+            "Fibre %": 0.0,
+            "Calcium %": 0.17,
+            "Phosphore %": 0.1,
+            "Énergie Ruminant UFL": 0.64,
+            "PDIA Ruminant g/kg": 11.0,
+            "Lysine Dig. Porc %": 0.32,
+            "Lysine Dig. Volaille %": 0.31,
+            "Méthionine Dig. Volaille %": 0.24
+        }
+    },
+    {
+        "name": "Vinasse, from yeast production, protein 48%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 70.6,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 70.6,
+            "Protéine %": 46.7,
+            "Fibre %": 0.0,
+            "Calcium %": 0.14,
+            "Phosphore %": 0.15,
+            "Énergie Ruminant UFL": 0.69,
+            "PDIA Ruminant g/kg": 13.0,
+            "Lysine Dig. Porc %": 0.36,
+            "Lysine Dig. Volaille %": 0.34,
+            "Méthionine Dig. Volaille %": 0.27
+        }
+    },
+    {
+        "name": "Wheat bran",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 86.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 86.9,
+            "Protéine %": 15.3,
+            "Fibre %": 9.2,
+            "Calcium %": 0.12,
+            "Phosphore %": 0.95,
+            "Énergie Ruminant UFL": 0.79,
+            "PDIA Ruminant g/kg": 32.0,
+            "Lysine Dig. Porc %": 0.41,
+            "Lysine Dig. Volaille %": 0.46,
+            "Méthionine Dig. Volaille %": 0.19
+        }
+    },
+    {
+        "name": "Wheat bran from starch production",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 87.6,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 87.6,
+            "Protéine %": 15.2,
+            "Fibre %": 9.0,
+            "Calcium %": 0.12,
+            "Phosphore %": 0.89,
+            "Énergie Ruminant UFL": 0.8,
+            "PDIA Ruminant g/kg": 32.0,
+            "Lysine Dig. Porc %": 0.42,
+            "Lysine Dig. Volaille %": 0.46,
+            "Méthionine Dig. Volaille %": 0.19
+        }
+    },
+    {
+        "name": "Wheat bran, durum",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 86.6,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 86.6,
+            "Protéine %": 14.9,
+            "Fibre %": 9.3,
+            "Calcium %": 0.12,
+            "Phosphore %": 0.9,
+            "Énergie Ruminant UFL": 0.8,
+            "PDIA Ruminant g/kg": 32.0,
+            "Lysine Dig. Porc %": 0.4,
+            "Lysine Dig. Volaille %": 0.45,
+            "Méthionine Dig. Volaille %": 0.18
+        }
+    },
+    {
+        "name": "Wheat distillers grains, starch < 7%, dried",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 91.3,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 91.3,
+            "Protéine %": 32.7,
+            "Fibre %": 7.1,
+            "Calcium %": 0.16,
+            "Phosphore %": 0.8,
+            "Énergie Ruminant UFL": 0.97,
+            "PDIA Ruminant g/kg": 85.0,
+            "Lysine Dig. Porc %": 0.45,
+            "Lysine Dig. Volaille %": 0.31,
+            "Méthionine Dig. Volaille %": 0.37
+        }
+    },
+    {
+        "name": "Wheat distillers grains, starch > 7%, dried",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 91.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 91.9,
+            "Protéine %": 30.0,
+            "Fibre %": 5.5,
+            "Calcium %": 0.14,
+            "Phosphore %": 0.79,
+            "Énergie Ruminant UFL": 1.02,
+            "PDIA Ruminant g/kg": 64.0,
+            "Lysine Dig. Porc %": 0.4,
+            "Lysine Dig. Volaille %": 0.35,
+            "Méthionine Dig. Volaille %": 0.35
+        }
+    },
+    {
+        "name": "Wheat feed flour",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 87.6,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 87.6,
+            "Protéine %": 13.3,
+            "Fibre %": 1.0,
+            "Calcium %": 0.07,
+            "Phosphore %": 0.38,
+            "Énergie Ruminant UFL": 1.06,
+            "PDIA Ruminant g/kg": 30.0,
+            "Lysine Dig. Porc %": 0.47,
+            "Lysine Dig. Volaille %": 0.41,
+            "Méthionine Dig. Volaille %": 0.18
+        }
+    },
+    {
+        "name": "Wheat feed flour, durum",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 87.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 87.0,
+            "Protéine %": 14.3,
+            "Fibre %": 1.5,
+            "Calcium %": 0.07,
+            "Phosphore %": 0.42,
+            "Énergie Ruminant UFL": 1.04,
+            "PDIA Ruminant g/kg": 32.0,
+            "Lysine Dig. Porc %": 0.51,
+            "Lysine Dig. Volaille %": 0.46,
+            "Méthionine Dig. Volaille %": 0.19
+        }
+    },
+    {
+        "name": "Wheat flour \"Gruau D\", durum",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 86.6,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 86.6,
+            "Protéine %": 16.1,
+            "Fibre %": 1.1,
+            "Calcium %": 0.08,
+            "Phosphore %": 0.53,
+            "Énergie Ruminant UFL": 1.05,
+            "PDIA Ruminant g/kg": 36.0,
+            "Lysine Dig. Porc %": 0.61,
+            "Lysine Dig. Volaille %": 0.54,
+            "Méthionine Dig. Volaille %": 0.22
+        }
+    },
+    {
+        "name": "Wheat gluten",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 94.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 94.0,
+            "Protéine %": 79.8,
+            "Fibre %": 0.7,
+            "Calcium %": 0.1,
+            "Phosphore %": 0.18,
+            "Énergie Ruminant UFL": 1.5,
+            "PDIA Ruminant g/kg": 477.0,
+            "Lysine Dig. Porc %": 0.91,
+            "Lysine Dig. Volaille %": 1.31,
+            "Méthionine Dig. Volaille %": 1.03
+        }
+    },
+    {
+        "name": "Wheat gluten feed, type 20% starch",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 90.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 90.9,
+            "Protéine %": 17.4,
+            "Fibre %": 6.2,
+            "Calcium %": 0.12,
+            "Phosphore %": 0.75,
+            "Énergie Ruminant UFL": 1.0,
+            "PDIA Ruminant g/kg": 38.0,
+            "Lysine Dig. Porc %": 0.31,
+            "Lysine Dig. Volaille %": 0.41,
+            "Méthionine Dig. Volaille %": 0.2
+        }
+    },
+    {
+        "name": "Wheat gluten feed, type 30% starch",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 88.5,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 88.5,
+            "Protéine %": 14.8,
+            "Fibre %": 5.7,
+            "Calcium %": 0.12,
+            "Phosphore %": 0.7,
+            "Énergie Ruminant UFL": 1.0,
+            "PDIA Ruminant g/kg": 33.0,
+            "Lysine Dig. Porc %": 0.28,
+            "Lysine Dig. Volaille %": 0.37,
+            "Méthionine Dig. Volaille %": 0.18
+        }
+    },
+    {
+        "name": "Wheat middlings (average)",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 88.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 88.0,
+            "Protéine %": 15.7,
+            "Fibre %": 7.0,
+            "Calcium %": 0.11,
+            "Phosphore %": 0.83,
+            "Énergie Ruminant UFL": 0.88,
+            "PDIA Ruminant g/kg": 34.0,
+            "Lysine Dig. Porc %": 0.47,
+            "Lysine Dig. Volaille %": 0.49,
+            "Méthionine Dig. Volaille %": 0.2
+        }
+    },
+    {
+        "name": "Wheat middlings, durum",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 87.1,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 87.1,
+            "Protéine %": 15.7,
+            "Fibre %": 7.0,
+            "Calcium %": 0.11,
+            "Phosphore %": 0.8,
+            "Énergie Ruminant UFL": 0.88,
+            "PDIA Ruminant g/kg": 33.0,
+            "Lysine Dig. Porc %": 0.47,
+            "Lysine Dig. Volaille %": 0.49,
+            "Méthionine Dig. Volaille %": 0.2
+        }
+    },
+    {
+        "name": "Wheat middlings, starch 20-30%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 88.0,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 88.0,
+            "Protéine %": 16.0,
+            "Fibre %": 7.1,
+            "Calcium %": 0.11,
+            "Phosphore %": 0.77,
+            "Énergie Ruminant UFL": 0.89,
+            "PDIA Ruminant g/kg": 35.0,
+            "Lysine Dig. Porc %": 0.48,
+            "Lysine Dig. Volaille %": 0.5,
+            "Méthionine Dig. Volaille %": 0.2
+        }
+    },
+    {
+        "name": "Wheat middlings, starch 30-40%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 87.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 87.9,
+            "Protéine %": 15.4,
+            "Fibre %": 6.0,
+            "Calcium %": 0.1,
+            "Phosphore %": 0.7,
+            "Énergie Ruminant UFL": 0.92,
+            "PDIA Ruminant g/kg": 33.0,
+            "Lysine Dig. Porc %": 0.48,
+            "Lysine Dig. Volaille %": 0.48,
+            "Méthionine Dig. Volaille %": 0.2
+        }
+    },
+    {
+        "name": "Wheat middlings, starch < 20%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 88.1,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 88.1,
+            "Protéine %": 15.8,
+            "Fibre %": 7.2,
+            "Calcium %": 0.11,
+            "Phosphore %": 0.8,
+            "Énergie Ruminant UFL": 0.88,
+            "PDIA Ruminant g/kg": 34.0,
+            "Lysine Dig. Porc %": 0.47,
+            "Lysine Dig. Volaille %": 0.49,
+            "Méthionine Dig. Volaille %": 0.2
+        }
+    },
+    {
+        "name": "Wheat middlings, starch > 40%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 87.8,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 87.8,
+            "Protéine %": 15.0,
+            "Fibre %": 5.7,
+            "Calcium %": 0.1,
+            "Phosphore %": 0.66,
+            "Énergie Ruminant UFL": 0.92,
+            "PDIA Ruminant g/kg": 33.0,
+            "Lysine Dig. Porc %": 0.47,
+            "Lysine Dig. Volaille %": 0.47,
+            "Méthionine Dig. Volaille %": 0.19
+        }
+    },
+    {
+        "name": "Wheat straw",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 90.3,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 90.3,
+            "Protéine %": 3.5,
+            "Fibre %": 37.5,
+            "Calcium %": 0.4,
+            "Phosphore %": 0.06,
+            "Énergie Ruminant UFL": 0.45,
+            "PDIA Ruminant g/kg": 12.0,
+            "Lysine Dig. Porc %": 0.05,
+            "Lysine Dig. Volaille %": 0.07,
+            "Méthionine Dig. Volaille %": 0.03
+        }
+    },
+    {
+        "name": "Wheat, durum",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 87.8,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 87.8,
+            "Protéine %": 14.4,
+            "Fibre %": 2.7,
+            "Calcium %": 0.07,
+            "Phosphore %": 0.34,
+            "Énergie Ruminant UFL": 1.06,
+            "PDIA Ruminant g/kg": 32.0,
+            "Lysine Dig. Porc %": 0.3,
+            "Lysine Dig. Volaille %": 0.31,
+            "Méthionine Dig. Volaille %": 0.2
+        }
+    },
+    {
+        "name": "Wheat, soft",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 86.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 86.9,
+            "Protéine %": 11.0,
+            "Fibre %": 2.4,
+            "Calcium %": 0.06,
+            "Phosphore %": 0.31,
+            "Énergie Ruminant UFL": 1.04,
+            "PDIA Ruminant g/kg": 24.0,
+            "Lysine Dig. Porc %": 0.25,
+            "Lysine Dig. Volaille %": 0.26,
+            "Méthionine Dig. Volaille %": 0.16
+        }
+    },
+    {
+        "name": "Whey permeate",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 97.7,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 97.7,
+            "Protéine %": 5.6,
+            "Fibre %": 0.0,
+            "Calcium %": 0.67,
+            "Phosphore %": 0.68,
+            "Énergie Ruminant UFL": 1.05,
+            "PDIA Ruminant g/kg": 7.0,
+            "Lysine Dig. Porc %": 0.37,
+            "Lysine Dig. Volaille %": 0.4,
+            "Méthionine Dig. Volaille %": 0.07
+        }
+    },
+    {
+        "name": "Whey powder, acid",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 97.1,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 97.1,
+            "Protéine %": 9.0,
+            "Fibre %": 0.0,
+            "Calcium %": 1.39,
+            "Phosphore %": 0.97,
+            "Énergie Ruminant UFL": 1.0,
+            "PDIA Ruminant g/kg": 11.0,
+            "Lysine Dig. Porc %": 0.6,
+            "Lysine Dig. Volaille %": 0.63,
+            "Méthionine Dig. Volaille %": 0.12
+        }
+    },
+    {
+        "name": "Whey powder, sweet",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 97.1,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 97.1,
+            "Protéine %": 10.9,
+            "Fibre %": 0.0,
+            "Calcium %": 1.12,
+            "Phosphore %": 0.84,
+            "Énergie Ruminant UFL": 1.04,
+            "PDIA Ruminant g/kg": 13.0,
+            "Lysine Dig. Porc %": 0.73,
+            "Lysine Dig. Volaille %": 0.77,
+            "Méthionine Dig. Volaille %": 0.16
+        }
+    },
+    {
+        "name": "Whey, dehydrated, with added fat 4-15%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 95.7,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 95.7,
+            "Protéine %": 14.4,
+            "Fibre %": 0.0,
+            "Calcium %": 0.88,
+            "Phosphore %": 0.72,
+            "Énergie Ruminant UFL": 1.23,
+            "PDIA Ruminant g/kg": 18.0,
+            "Lysine Dig. Porc %": 0.95,
+            "Lysine Dig. Volaille %": 1.01,
+            "Méthionine Dig. Volaille %": 0.22
+        }
+    },
+    {
+        "name": "Whey, dried, with added fat 15-30%",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 96.2,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 96.2,
+            "Protéine %": 13.3,
+            "Fibre %": 0.0,
+            "Calcium %": 0.81,
+            "Phosphore %": 0.7,
+            "Énergie Ruminant UFL": 1.43,
+            "PDIA Ruminant g/kg": 16.0,
+            "Lysine Dig. Porc %": 0.88,
+            "Lysine Dig. Volaille %": 0.93,
+            "Méthionine Dig. Volaille %": 0.2
+        }
+    },
+    {
+        "name": "Zinc carbonate FG",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Zinc carbonate RG",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Zinc chloride",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Zinc lysine",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Zinc metal",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Zinc methionine",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 97.5,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 97.5,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Zinc oxide",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.8,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.8,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
+        }
+    },
+    {
+        "name": "Zinc sulfate heptahydrate RG",
+        "cost": 1.0,
+        "transport_cost": 0.05,
+        "dm": 99.9,
+        "inventory_limit_tons": 50.0,
+        "nutrients": {
+            "MS %": 99.9,
+            "Protéine %": 0.0,
+            "Fibre %": 0.0,
+            "Calcium %": 0.0,
+            "Phosphore %": 0.0,
+            "Énergie Ruminant UFL": 0.0,
+            "PDIA Ruminant g/kg": 0.0,
+            "Lysine Dig. Porc %": 0.0,
+            "Lysine Dig. Volaille %": 0.0,
+            "Méthionine Dig. Volaille %": 0.0
         }
     }
 ]
