@@ -124,24 +124,31 @@ def seed_database():
     """Seed defaults if tables are empty, and run safe migrations."""
     db = next(get_db())
     try:
-        # --- Migration: Add parent_id and version_tag to recipes if missing ---
-        conn = engine.connect()
+        # --- Migration: Add missing columns to recipes if needed ---
+        from sqlalchemy import inspect as sa_inspect
         try:
-            columns_query = conn.execute(text("PRAGMA table_info(recipes)")).fetchall()
-            existing_cols = [col[1] for col in columns_query]
-            
-            if "parent_id" not in existing_cols:
-                conn.execute(text("ALTER TABLE recipes ADD COLUMN parent_id INTEGER"))
-            if "version_tag" not in existing_cols:
-                conn.execute(text("ALTER TABLE recipes ADD COLUMN version_tag VARCHAR NOT NULL DEFAULT 'V1'"))
-            if "species" not in existing_cols:
-                conn.execute(text("ALTER TABLE recipes ADD COLUMN species VARCHAR NOT NULL DEFAULT 'General'"))
-            conn.commit()
+            inspector = sa_inspect(engine)
+            if inspector.has_table("recipes"):
+                existing_cols = [col["name"] for col in inspector.get_columns("recipes")]
+
+                if "parent_id" not in existing_cols:
+                    print("⚙️  Migrating: adding 'parent_id' to recipes…")
+                    with engine.begin() as conn:
+                        conn.execute(text("ALTER TABLE recipes ADD COLUMN parent_id INTEGER"))
+
+                if "version_tag" not in existing_cols:
+                    print("⚙️  Migrating: adding 'version_tag' to recipes…")
+                    with engine.begin() as conn:
+                        conn.execute(text("ALTER TABLE recipes ADD COLUMN version_tag VARCHAR NOT NULL DEFAULT 'V1'"))
+
+                if "species" not in existing_cols:
+                    print("⚙️  Migrating: adding 'species' to recipes…")
+                    with engine.begin() as conn:
+                        conn.execute(text("ALTER TABLE recipes ADD COLUMN species VARCHAR DEFAULT 'General'"))
         except Exception as e:
-            print(f"Migration error: {e}")
-        finally:
-            conn.close()
-        # ----------------------------------------------------------------------
+            print(f"Migration warning: {e}")
+        # ------------------------------------------------------------
+
 
         if db.query(IngredientDB).count() == 0:
             for row in DEFAULT_INGREDIENTS:
