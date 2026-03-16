@@ -81,7 +81,7 @@ class RecipeDemand(BaseModel):
     constraints: Dict[str, ConstraintConfig] = Field(default_factory=dict)
 
 class MultiBlendRequest(BaseModel):
-    ingredients: List[MultiBlendIngredient]
+    ingredient_ids: List[int]
     recipes: List[RecipeDemand]
 
 # -- CRUD response schemas (include DB id) --
@@ -362,9 +362,24 @@ def optimize_recipe(request: OptimizeRequest):
 
 
 @app.post("/api/optimize-multi")
-def optimize_multi_blend(request: MultiBlendRequest):
+def optimize_multi_blend(request: MultiBlendRequest, db: Session = Depends(get_db)):
     try:
-        return solve_multi_blend(request.ingredients, request.recipes)
+        ingredients_to_use = db.query(IngredientDB).filter(IngredientDB.id.in_(request.ingredient_ids)).all()
+        
+        # Convert DB rows to MultiBlendIngredient schema for the solver
+        ing_list = []
+        for row in ingredients_to_use:
+            ing_list.append(MultiBlendIngredient(
+                name=row.name,
+                cost=row.cost,
+                transport_cost=row.transport_cost,
+                dm=row.dm,
+                nutrients=row.nutrients or {},
+                inventory_limit_tons=row.inventory_limit_tons,
+                is_active=row.is_active
+            ))
+            
+        return solve_multi_blend(ing_list, request.recipes)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 

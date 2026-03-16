@@ -61,11 +61,15 @@ export default function PurchasingPage() {
   const runOptimization = async () => {
     setLoading(true); setError(null); setResult(null); setAiInsights(null);
     try {
+      const allowedNames = new Set<string>();
+      recipes.forEach(r => Object.keys(r.constraints || {}).forEach(k => allowedNames.add(k)));
+      const ingredientIds = ingredients.filter(i => allowedNames.has(i.name)).map(i => i.id);
+
       const res = await fetch(`${API}/api/optimize-multi`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ingredients: ingredients.map(({ id, ...rest }: any) => rest),
+          ingredient_ids: ingredientIds,
           recipes: recipes.map(({ id, ...rest }: any) => rest),
         }),
       });
