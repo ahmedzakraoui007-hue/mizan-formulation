@@ -50,6 +50,7 @@ export default function IngredientsPage() {
   const [filterStatus, setFilterStatus] = useState("Tous");
   const [fetching, setFetching] = useState(true);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [modifiedIds, setModifiedIds] = useState<Set<number>>(new Set());
   const [selectedIngredient, setSelectedIngredient] = useState<Ingredient | null>(null);
   const [panelSearch, setPanelSearch] = useState("");
 
@@ -73,18 +74,18 @@ export default function IngredientsPage() {
   }, [ingredients]);
 
   const saveToBackendList = async () => {
+    if (modifiedIds.size === 0) {
+        setHasUnsavedChanges(false);
+        return;
+    }
     setFetching(true);
     try {
-      await Promise.all(ingredients.map(async ing => {
+      const toSave = ingredients.filter(ing => modifiedIds.has(ing.id));
+      await Promise.all(toSave.map(async ing => {
         const payload: any = {
             name: ing.name, cost: ing.cost, transport_cost: ing.transport_cost,
             dm: ing.dm, inventory_limit_tons: ing.inventory_limit_tons,
-            is_active: ing.is_active,
         };
-        // Omit empty nutrients dict so we don't accidentally wipe them out in the backend
-        if (ing.nutrients && Object.keys(ing.nutrients).length > 0) {
-            payload.nutrients = ing.nutrients;
-        }
 
         const res = await fetch(`${API}/api/ingredients/${ing.id}`, {
           method: "PUT",
@@ -97,6 +98,7 @@ export default function IngredientsPage() {
             setIngredients(prev => prev.map(i => i.id === updated.id ? updated : i));
         }
       }));
+      setModifiedIds(new Set());
       setHasUnsavedChanges(false);
     } catch { alert("Erreur lors de la sauvegarde."); }
     finally { setFetching(false); }
@@ -104,6 +106,7 @@ export default function IngredientsPage() {
 
   const editIng = (id: number, field: keyof Ingredient, val: string) => {
     setHasUnsavedChanges(true);
+    setModifiedIds(prev => new Set(prev).add(id));
     setIngredients(prev => prev.map(i => i.id !== id ? i :
       { ...i, [field]: field === "name" ? val : parseFloat(val) || 0 }
     ));
@@ -115,14 +118,10 @@ export default function IngredientsPage() {
     const newActive = !ing.is_active;
     setIngredients(prev => prev.map(i => i.id === id ? { ...i, is_active: newActive } : i));
     try {
-      const payload: any = { ...ing, is_active: newActive };
-      if (!payload.nutrients || Object.keys(payload.nutrients).length === 0) {
-          delete payload.nutrients;
-      }
       const res = await fetch(`${API}/api/ingredients/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ is_active: newActive }),
       });
       if (res.ok) {
           const updated = await res.json();

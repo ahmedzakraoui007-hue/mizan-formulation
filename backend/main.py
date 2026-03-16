@@ -52,7 +52,6 @@ class OptimizeRequest(BaseModel):
     ingredients: List[Ingredient]
     constraints: Constraints
 
-# -- Multi-blend --
 class MultiBlendIngredient(BaseModel):
     name: str
     cost: float
@@ -61,6 +60,15 @@ class MultiBlendIngredient(BaseModel):
     nutrients: Dict[str, float] = Field(default_factory=dict)
     inventory_limit_tons: float
     is_active: bool = True
+
+class MultiBlendIngredientUpdate(BaseModel):
+    name: Optional[str] = None
+    cost: Optional[float] = None
+    transport_cost: Optional[float] = None
+    dm: Optional[float] = None
+    nutrients: Optional[Dict[str, float]] = None
+    inventory_limit_tons: Optional[float] = None
+    is_active: Optional[bool] = None
 
 class ConstraintConfig(BaseModel):
     min: Optional[float] = None
@@ -207,7 +215,7 @@ def create_ingredient(data: MultiBlendIngredient, db: Session = Depends(get_db))
 
 
 @app.put("/api/ingredients/{ingredient_id}", response_model=IngredientOut)
-def update_ingredient(ingredient_id: int, data: MultiBlendIngredient, db: Session = Depends(get_db)):
+def update_ingredient(ingredient_id: int, data: MultiBlendIngredientUpdate, db: Session = Depends(get_db)):
     row = db.query(IngredientDB).filter(IngredientDB.id == ingredient_id).first()
     if not row:
         raise HTTPException(status_code=404, detail="Ingredient not found")
