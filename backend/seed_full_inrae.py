@@ -14,7 +14,7 @@ def seed_inrae_data():
     logging.info("Database tables verified.")
 
     # Load JSON data
-    input_file = "inrae_scraped_data.json"
+    input_file = "inrae_scraped_data_full.json"
     try:
         with open(input_file, "r", encoding="utf-8") as f:
             data = json.load(f)
