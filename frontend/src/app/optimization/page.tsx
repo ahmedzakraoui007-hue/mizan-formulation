@@ -392,23 +392,30 @@ export default function OptimizationPage() {
                               </tr>
                             </thead>
                             <tbody>
-                              {Object.entries(rec.nutrients).map(([key, val], i) => {
-                                const cons = originalRec?.constraints?.[key];
-                                let cibleStr = "—";
-                                if (cons) {
-                                    if (cons.exact !== undefined) cibleStr = `Exact: ${cons.exact}`;
-                                    else if (cons.min !== undefined && cons.max !== undefined) cibleStr = `${cons.min} - ${cons.max}`;
-                                    else if (cons.min !== undefined) cibleStr = `Min: ${cons.min}`;
-                                    else if (cons.max !== undefined) cibleStr = `Max: ${cons.max}`;
-                                }
-                                return (
-                                  <tr key={key} style={{ backgroundColor: i % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
-                                    <td style={{ padding: '10px 12px', borderBottom: '1px solid #e5e7eb', fontWeight: '500', color: '#1f2937' }}>{key}</td>
-                                    <td style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '1px solid #e5e7eb', fontWeight: 'bold', color: '#2563eb' }}>{val.toFixed(2)}</td>
-                                    <td style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '1px solid #e5e7eb', color: '#6b7280' }}>{cibleStr}</td>
-                                  </tr>
-                                );
-                              })}
+                              {Object.entries(rec.nutrients)
+                                .filter(([key]) => {
+                                  const essentialKeys = ["crude protein", "dry matter", "crude fat", "énergie", "protéine %", "fibre %", "ms %", "matière sèche"];
+                                  const isEssential = essentialKeys.some(ek => key.toLowerCase().includes(ek));
+                                  const hasConstraint = originalRec?.constraints && Object.keys(originalRec.constraints).includes(key);
+                                  return hasConstraint || isEssential;
+                                })
+                                .map(([key, val], i) => {
+                                  const cons = originalRec?.constraints?.[key];
+                                  let cibleStr = "—";
+                                  if (cons) {
+                                      if (cons.exact !== undefined) cibleStr = `Exact: ${cons.exact}`;
+                                      else if (cons.min !== undefined && cons.max !== undefined) cibleStr = `${cons.min} - ${cons.max}`;
+                                      else if (cons.min !== undefined) cibleStr = `Min: ${cons.min}`;
+                                      else if (cons.max !== undefined) cibleStr = `Max: ${cons.max}`;
+                                  }
+                                  return (
+                                    <tr key={key} style={{ backgroundColor: i % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
+                                      <td style={{ padding: '10px 12px', borderBottom: '1px solid #e5e7eb', fontWeight: '500', color: '#1f2937' }}>{key}</td>
+                                      <td style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '1px solid #e5e7eb', fontWeight: 'bold', color: '#2563eb' }}>{val.toFixed(2)}</td>
+                                      <td style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '1px solid #e5e7eb', color: '#6b7280' }}>{cibleStr}</td>
+                                    </tr>
+                                  );
+                                })}
                             </tbody>
                           </table>
                         </div>
