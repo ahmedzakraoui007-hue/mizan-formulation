@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, LineChart, Line } from "recharts";
 import ReactMarkdown from "react-markdown";
 import FicheModal from "@/components/FicheModal";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -59,6 +61,7 @@ export default function OptimizationPage() {
   // Stats
   const [stockStats, setStockStats] = useState({ total_stock: 0, total_demand: 0 });
   const [selectedReport, setSelectedReport] = useState<RecipeResult | null>(null);
+  const [exportingPdf, setExportingPdf] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setFetching(true);
@@ -115,6 +118,33 @@ export default function OptimizationPage() {
       const displayName = val > 1000 ? `${key} (/100)` : key;
       return { name: displayName, cible: cible / factor, atteint: val / factor };
     });
+  };
+
+  const exportPDF = async (rec: RecipeResult, originalRec: any) => {
+    setExportingPdf(rec.name);
+    try {
+      const el = document.getElementById(`pdf-template-${rec.name}`);
+      if (!el) return;
+      
+      const canvas = await html2canvas(el, { scale: 2, useCORS: true });
+      const imgData = canvas.toDataURL("image/png");
+      
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4"
+      });
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`Fiche_Technique_${rec.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setExportingPdf(null);
+    }
   };
 
   const runAudit = async () => {
@@ -277,25 +307,118 @@ export default function OptimizationPage() {
 
 
 
-                    <div className="flex gap-3 mt-auto">
-                      <button onClick={() => setSelectedReport(rec)} className="flex-1 py-3.5 rounded-xl bg-gray-900 border border-transparent text-white hover:bg-gray-800 transition-all font-bold cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-gray-900/20">
+                    <div className="flex flex-col gap-3 mt-auto">
+                      <button onClick={() => setSelectedReport(rec)} className="w-full py-3.5 rounded-xl bg-gray-900 border border-transparent text-white hover:bg-gray-800 transition-all font-bold cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-gray-900/20">
                         👁️ Voir Fiche de Fabrication
                       </button>
-                      <button onClick={() => {
-                        // Pre-populate with first nutrient from recipe constraints
-                        const originalRec2 = recipes.find((r: any) => r.name === rec.name || rec.name.startsWith(r.name));
-                        const keys = originalRec2?.constraints ? Object.keys(originalRec2.constraints) : [];
-                        setParamNutrient(keys[0] || "");
-                        const existing = originalRec2?.constraints?.[keys[0]];
-                        const baseMin = existing?.min ?? 0;
-                        setParamStart(String(Math.max(0, baseMin - (baseMin * 0.15)).toFixed(1)));
-                        setParamEnd(String((baseMin + (baseMin * 0.15)).toFixed(1)));
-                        setParamSteps("10");
-                        setParamData([]);
-                        setParamModalOpen(true);
-                      }} className="py-3.5 px-5 rounded-xl bg-indigo-100 border border-indigo-200 text-indigo-700 hover:bg-indigo-200 transition-all font-bold cursor-pointer flex items-center justify-center gap-2 shadow-sm text-sm">
-                        📈 Paramétrique
-                      </button>
+                      <div className="flex gap-3">
+                        <button onClick={() => {
+                          // Pre-populate with first nutrient from recipe constraints
+                          const originalRec2 = recipes.find((r: any) => r.name === rec.name || rec.name.startsWith(r.name));
+                          const keys = originalRec2?.constraints ? Object.keys(originalRec2.constraints) : [];
+                          setParamNutrient(keys[0] || "");
+                          const existing = originalRec2?.constraints?.[keys[0]];
+                          const baseMin = existing?.min ?? 0;
+                          setParamStart(String(Math.max(0, baseMin - (baseMin * 0.15)).toFixed(1)));
+                          setParamEnd(String((baseMin + (baseMin * 0.15)).toFixed(1)));
+                          setParamSteps("10");
+                          setParamData([]);
+                          setParamModalOpen(true);
+                        }} className="flex-1 py-3.5 px-3 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 transition-all font-bold cursor-pointer flex items-center justify-center gap-2 shadow-sm text-sm">
+                          📈 Paramétrique
+                        </button>
+                        <button onClick={() => exportPDF(rec, originalRec)} disabled={exportingPdf === rec.name} className="flex-1 py-3.5 px-3 rounded-xl bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 transition-all font-bold cursor-pointer flex items-center justify-center gap-2 shadow-sm text-sm">
+                          {exportingPdf === rec.name ? (
+                            <>
+                              <div className="w-4 h-4 rounded-full border-2 border-red-300 border-r-red-700 animate-spin" />
+                              Génération...
+                            </>
+                          ) : "🖨️ Exporter PDF"}
+                        </button>
+                      </div>
+                    </div>
+                    
+                    {/* Hidden PDF Template */}
+                    <div style={{ position: 'absolute', top: '-9999px', left: '-9999px' }}>
+                      <div id={`pdf-template-${rec.name}`} style={{ width: '800px', backgroundColor: 'white', padding: '40px', color: 'black', fontFamily: 'sans-serif' }}>
+                        {/* Header */}
+                        <div style={{ borderBottom: '2px solid #111', paddingBottom: '15px', marginBottom: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                          <div>
+                            <h1 style={{ fontSize: '28px', fontWeight: '900', margin: '0 0 10px 0', color: '#111827' }}>Mizan Formulation</h1>
+                            <h2 style={{ fontSize: '18px', fontWeight: '600', margin: 0, color: '#4b5563' }}>Fiche Technique Officielle</h2>
+                          </div>
+                          <div style={{ textAlign: 'right', fontSize: '14px', color: '#374151' }}>
+                            <p style={{ margin: '0 0 4px 0' }}><strong>Espèce :</strong> {originalRec?.species || "Générale"}</p>
+                            <p style={{ margin: 0 }}><strong>Date :</strong> {new Date().toLocaleDateString('fr-FR')}</p>
+                          </div>
+                        </div>
+
+                        <div style={{ backgroundColor: '#f3f4f6', padding: '15px', borderRadius: '8px', marginBottom: '30px' }}>
+                          <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold', color: '#1f2937' }}>Recette : {rec.name}</h3>
+                        </div>
+                        
+                        {/* Section 1: Composition */}
+                        <div style={{ marginBottom: '35px' }}>
+                          <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '15px', borderBottom: '1px solid #e5e7eb', paddingBottom: '8px', color: '#111827' }}>1. Composition (Matières Premières)</h2>
+                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+                            <thead>
+                              <tr style={{ backgroundColor: '#f9fafb' }}>
+                                <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '2px solid #e5e7eb', color: '#4b5563' }}>Ingrédient</th>
+                                <th style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '2px solid #e5e7eb', color: '#4b5563' }}>Inclusion (%)</th>
+                                <th style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '2px solid #e5e7eb', color: '#4b5563' }}>Quantité (kg/T)</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {rec.ingredients.map((ing, i) => (
+                                <tr key={ing.name} style={{ backgroundColor: i % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
+                                  <td style={{ padding: '10px 12px', borderBottom: '1px solid #e5e7eb', fontWeight: '600', color: '#1f2937' }}>{ing.name}</td>
+                                  <td style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '1px solid #e5e7eb', color: '#374151' }}>{ing.percentage.toFixed(2)} %</td>
+                                  <td style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '1px solid #e5e7eb', fontWeight: 'bold', color: '#059669' }}>{(ing.percentage * 10).toFixed(1)} kg</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                        
+                        {/* Section 2: Nutrition */}
+                        <div style={{ marginBottom: '40px' }}>
+                          <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '15px', borderBottom: '1px solid #e5e7eb', paddingBottom: '8px', color: '#111827' }}>2. Valeurs Nutritionnelles Garanties</h2>
+                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+                            <thead>
+                              <tr style={{ backgroundColor: '#f9fafb' }}>
+                                <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '2px solid #e5e7eb', color: '#4b5563' }}>Paramètre / Nutriment</th>
+                                <th style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '2px solid #e5e7eb', color: '#4b5563' }}>Valeur Calculée</th>
+                                <th style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '2px solid #e5e7eb', color: '#4b5563' }}>Cible Min/Max</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {Object.entries(rec.nutrients).map(([key, val], i) => {
+                                const cons = originalRec?.constraints?.[key];
+                                let cibleStr = "—";
+                                if (cons) {
+                                    if (cons.exact !== undefined) cibleStr = `Exact: ${cons.exact}`;
+                                    else if (cons.min !== undefined && cons.max !== undefined) cibleStr = `${cons.min} - ${cons.max}`;
+                                    else if (cons.min !== undefined) cibleStr = `Min: ${cons.min}`;
+                                    else if (cons.max !== undefined) cibleStr = `Max: ${cons.max}`;
+                                }
+                                return (
+                                  <tr key={key} style={{ backgroundColor: i % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
+                                    <td style={{ padding: '10px 12px', borderBottom: '1px solid #e5e7eb', fontWeight: '500', color: '#1f2937' }}>{key}</td>
+                                    <td style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '1px solid #e5e7eb', fontWeight: 'bold', color: '#2563eb' }}>{val.toFixed(2)}</td>
+                                    <td style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '1px solid #e5e7eb', color: '#6b7280' }}>{cibleStr}</td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        {/* Footer */}
+                        <div style={{ paddingTop: '20px', borderTop: '2px solid #111', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <p style={{ margin: 0, fontSize: '12px', color: '#9ca3af' }}>Document généré automatiquement par Mizan Formulation Engine.</p>
+                          <p style={{ margin: 0, fontSize: '18px', fontWeight: '900', color: '#111827' }}>Coût Total : <span style={{ color: '#2563eb' }}>{rec.cost_tnd.toFixed(2)} TND / Tonne</span></p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 );
