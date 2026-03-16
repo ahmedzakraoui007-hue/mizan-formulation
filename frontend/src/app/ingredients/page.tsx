@@ -56,7 +56,7 @@ export default function IngredientsPage() {
   const fetchIngredients = useCallback(async () => {
     setFetching(true);
     try {
-      const res = await fetch(`${API}/api/ingredients`);
+      const res = await fetch(`${API}/api/ingredients?lite=true`);
       if (res.ok) setIngredients(await res.json());
     } catch { /* backend not ready */ }
     setFetching(false);
@@ -75,17 +75,28 @@ export default function IngredientsPage() {
   const saveToBackendList = async () => {
     setFetching(true);
     try {
-      await Promise.all(ingredients.map(ing =>
-        fetch(`${API}/api/ingredients/${ing.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+      await Promise.all(ingredients.map(async ing => {
+        const payload: any = {
             name: ing.name, cost: ing.cost, transport_cost: ing.transport_cost,
             dm: ing.dm, inventory_limit_tons: ing.inventory_limit_tons,
-            nutrients: ing.nutrients, is_active: ing.is_active,
-          }),
-        })
-      ));
+            is_active: ing.is_active,
+        };
+        // Omit empty nutrients dict so we don't accidentally wipe them out in the backend
+        if (ing.nutrients && Object.keys(ing.nutrients).length > 0) {
+            payload.nutrients = ing.nutrients;
+        }
+
+        const res = await fetch(`${API}/api/ingredients/${ing.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        
+        if (res.ok) {
+            const updated = await res.json();
+            setIngredients(prev => prev.map(i => i.id === updated.id ? updated : i));
+        }
+      }));
       setHasUnsavedChanges(false);
     } catch { alert("Erreur lors de la sauvegarde."); }
     finally { setFetching(false); }
@@ -104,11 +115,19 @@ export default function IngredientsPage() {
     const newActive = !ing.is_active;
     setIngredients(prev => prev.map(i => i.id === id ? { ...i, is_active: newActive } : i));
     try {
-      await fetch(`${API}/api/ingredients/${id}`, {
+      const payload: any = { ...ing, is_active: newActive };
+      if (!payload.nutrients || Object.keys(payload.nutrients).length === 0) {
+          delete payload.nutrients;
+      }
+      const res = await fetch(`${API}/api/ingredients/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...ing, is_active: newActive }),
+        body: JSON.stringify(payload),
       });
+      if (res.ok) {
+          const updated = await res.json();
+          setIngredients(prev => prev.map(i => i.id === updated.id ? updated : i));
+      }
     } catch { /* revert silently handled by next fetch */ }
   };
 
@@ -276,7 +295,22 @@ export default function IngredientsPage() {
 
                     {/* Fiche Technique */}
                     <td className="py-3 px-5 text-center">
-                      <button onClick={() => { setSelectedIngredient(ing); setPanelSearch(""); }}
+                      <button onClick={async () => { 
+                          setPanelSearch("");
+                          // If we don't have nutrients loaded yet, fetch the heavy payload
+                          if (!ing.nutrients || Object.keys(ing.nutrients).length === 0) {
+                              try {
+                                  const res = await fetch(`${API}/api/ingredients/${ing.id}`);
+                                  if (res.ok) {
+                                      const fullIng = await res.json();
+                                      setSelectedIngredient(fullIng);
+                                      setIngredients(prev => prev.map(i => i.id === fullIng.id ? fullIng : i));
+                                  }
+                              } catch (e) { console.error("Could not fetch full ingredient", e); }
+                          } else {
+                              setSelectedIngredient(ing); 
+                          }
+                        }}
                         className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
                           selectedIngredient?.id === ing.id
                             ? "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/25"

@@ -170,8 +170,31 @@ def seed_database():
 # ═══════════════════  CRUD — INGREDIENTS  ═════════════════════════════
 
 @app.get("/api/ingredients", response_model=List[IngredientOut])
-def list_ingredients(db: Session = Depends(get_db)):
-    return db.query(IngredientDB).all()
+def list_ingredients(lite: bool = False, db: Session = Depends(get_db)):
+    rows = db.query(IngredientDB).all()
+    if lite:
+        result = []
+        for row in rows:
+            data = {
+                "id": row.id,
+                "name": row.name,
+                "cost": row.cost,
+                "transport_cost": row.transport_cost,
+                "dm": row.dm,
+                "inventory_limit_tons": row.inventory_limit_tons,
+                "is_active": row.is_active,
+                "nutrients": {}
+            }
+            result.append(data)
+        return result
+    return rows
+
+@app.get("/api/ingredients/{ingredient_id}", response_model=IngredientOut)
+def get_ingredient(ingredient_id: int, db: Session = Depends(get_db)):
+    row = db.query(IngredientDB).filter(IngredientDB.id == ingredient_id).first()
+    if not row:
+        raise HTTPException(status_code=404, detail="Ingredient not found")
+    return row
 
 
 @app.post("/api/ingredients", response_model=IngredientOut)
@@ -189,7 +212,7 @@ def update_ingredient(ingredient_id: int, data: MultiBlendIngredient, db: Sessio
     if not row:
         raise HTTPException(status_code=404, detail="Ingredient not found")
     
-    update_data = data.model_dump()
+    update_data = data.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         setattr(row, key, value)
         
