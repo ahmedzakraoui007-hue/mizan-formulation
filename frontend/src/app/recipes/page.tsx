@@ -353,14 +353,16 @@ export default function RecipesPage() {
   ];
 
   const SPECIES_HIDE: Record<string, string[]> = {
-    Volaille:  ["Porc", "Ruminant", "UFL", "UFV"],
-    Porc:      ["Volaille", "Ruminant", "UFL", "UFV"],
-    Ruminant:  ["Volaille", "Porc"],
-    General:   [],
+    Volaille: ["pig", "porc", "ruminant", "horse", "rabbit", "salmonid", "calf"],
+    Porc: ["poultry", "volaille", "ruminant", "broiler", "cockerel", "horse", "rabbit", "salmonid"],
+    Ruminant: ["pig", "porc", "poultry", "volaille", "broiler", "cockerel", "horse", "rabbit", "salmonid"],
+    General: [],
   };
 
-  const filterKeysBySpecies = (keys: string[], species: string): string[] => {
-    const blocked = SPECIES_HIDE[species] ?? [];
+  const getFilteredNutrients = (keys: string[], species: string): string[] => {
+    // If species is null/undefined or General, map it directly or use empty exclusion list
+    const mappedSpecies = species === 'Poultry' ? 'Volaille' : (species === 'Pig' ? 'Porc' : species);
+    const blocked = SPECIES_HIDE[mappedSpecies] ?? [];
     if (blocked.length === 0) return keys;
     return keys.filter(k => !blocked.some(b => k.toLowerCase().includes(b.toLowerCase())));
   };
@@ -633,7 +635,7 @@ export default function RecipesPage() {
                               <option value="" disabled>🧬 Ajouter une cible nutritionnelle...</option>
                               {Object.entries(
                                 groupNutrientKeys(
-                                  filterKeysBySpecies(
+                                  getFilteredNutrients(
                                     availableKeys.filter(k =>
                                       !globalIngredientNames.includes(k) &&
                                       !activeNutritionalCols.includes(k)
