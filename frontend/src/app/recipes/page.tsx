@@ -70,7 +70,7 @@ export default function RecipesPage() {
           if (ing.is_active !== false) {
             itemNames.add(ing.name);
           }
-          keys.add(ing.name);
+          // Only actual nutrients or special keys, NOT ingredient names
           Object.keys(ing.nutrients || {}).forEach(k => keys.add(k));
         });
         setAvailableKeys(Array.from(keys).sort());
@@ -436,13 +436,18 @@ export default function RecipesPage() {
             className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2.5 rounded-xl text-sm font-bold transition-all shadow-sm outline-none cursor-pointer"
           >
             <option value="" disabled>+ Ajouter Colonne...</option>
-            {Object.entries(groupNutrientKeys(availableKeys.filter(k => !nutrientColumns.includes(k)))).map(
-              ([group, keys]) => keys.length === 0 ? null : (
-                <optgroup key={group} label={group}>
-                  {keys.map(k => <option key={k} value={k}>{k}</option>)}
-                </optgroup>
+            {Object.entries(
+              groupNutrientKeys(
+                getFilteredNutrients(
+                  availableKeys.filter(k => !nutrientColumns.includes(k)),
+                  "General" 
+                )
               )
-            )}
+            ).map(([group, keys]) => keys.length === 0 ? null : (
+              <optgroup key={group} label={group}>
+                {keys.map(k => <option key={k} value={k}>{k}</option>)}
+              </optgroup>
+            ))}
           </select>
           <button onClick={addRec} className="bg-emerald-600 text-white hover:bg-emerald-700 px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md shadow-emerald-600/20">
             + Ajouter Formule
@@ -570,7 +575,8 @@ export default function RecipesPage() {
                               {activeNutritionalCols.length === 0 && (
                                   <tr><td colSpan={5} className="text-center py-4 text-xs text-blue-400 font-medium italic">Aucune cible définie...</td></tr>
                               )}
-                              {activeNutritionalCols.map(nc => (
+                              {/* Only show rows that are in THIS recipe's constraints */}
+                              {Object.keys(activeItem.constraints).filter(nc => !globalIngredientNames.includes(nc)).map(nc => (
                                 <tr key={nc} className="group/row hover:bg-white rounded-md transition-colors">
                                   <td className="py-2.5 text-blue-950 font-semibold">{nc}</td>
                                   <td className="py-2.5 pr-2">
@@ -675,10 +681,10 @@ export default function RecipesPage() {
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-emerald-50/50">
-                              {activeIngredientCols.length === 0 && (
+                              {Object.keys(activeItem.constraints).filter(nc => globalIngredientNames.includes(nc)).length === 0 && (
                                   <tr><td colSpan={5} className="text-center py-4 text-xs text-emerald-600/60 font-medium italic">Aucune limite d'incorporation...</td></tr>
                               )}
-                              {activeIngredientCols.map(nc => (
+                              {Object.keys(activeItem.constraints).filter(nc => globalIngredientNames.includes(nc)).map(nc => (
                                 <tr key={nc} className="group/row hover:bg-white rounded-md transition-colors">
                                   <td className="py-2.5 text-emerald-950 font-semibold">{nc}</td>
                                   <td className="py-2.5 pr-2">
@@ -740,7 +746,7 @@ export default function RecipesPage() {
                             >
                               <option value="" disabled>＋ Ajouter une matière première...</option>
                               {globalIngredientNames
-                                .filter(k => !activeIngredientCols.includes(k))
+                                .filter(k => !Object.keys(activeItem.constraints).includes(k))
                                 .map(k => (
                                   <option key={k} value={k}>{k}</option>
                                 ))}
