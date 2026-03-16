@@ -353,15 +353,21 @@ export default function RecipesPage() {
   ];
 
   const SPECIES_REGEX: Record<string, RegExp | null> = {
-    Volaille: /pig|porc|ruminant|horse|rabbit|salmonid|calf/i,
-    Porc: /poultry|volaille|ruminant|broiler|cockerel|horse|rabbit|salmonid/i,
-    Ruminant: /pig|porc|poultry|volaille|broiler|cockerel|horse|rabbit|salmonid/i,
+    Volaille: /pig|porc|pork|swine|ruminant|bovine|bull|cow|calf|sheep|lamb|horse|rabbit|salmonid/i,
+    Porc: /poultry|volaille|broiler|cockerel|ruminant|bovine|bull|cow|calf|sheep|lamb|horse|rabbit|salmonid/i,
+    Ruminant: /pig|porc|pork|swine|poultry|volaille|broiler|cockerel|horse|rabbit|salmonid/i,
     General: null,
   };
 
   const getFilteredNutrients = (keys: string[], species: string): string[] => {
-    const mappedSpecies = species === 'Poultry' ? 'Volaille' : (species === 'Pig' ? 'Porc' : species);
-    const regex = SPECIES_REGEX[mappedSpecies] ?? null;
+    if (!species) return keys;
+    const s = species.toLowerCase();
+    let mapped = "General";
+    if (s.includes("volaille") || s.includes("poultry") || s.includes("chicken") || s.includes("broiler")) mapped = "Volaille";
+    else if (s.includes("porc") || s.includes("pig") || s.includes("swine")) mapped = "Porc";
+    else if (s.includes("ruminant") || s.includes("cow") || s.includes("bovine") || s.includes("sheep")) mapped = "Ruminant";
+    
+    const regex = SPECIES_REGEX[mapped] ?? null;
     if (!regex) return keys;
     return keys.filter(k => !regex.test(k));
   };
@@ -386,21 +392,21 @@ export default function RecipesPage() {
       terms.some(t => k.toLowerCase().includes(t.toLowerCase()));
 
     for (const k of keys) {
-      if (is(k, "volaille", "broiler", "poultry") && !is(k, "Porc", "Ruminant")) {
+      if (is(k, "volaille", "broiler", "poultry", "chicken", "laying hen", "cockerel", "turkey", "duck")) {
         groups["🐔 Spécifique Volaille"].push(k);
-      } else if (is(k, "porc", "pig", "swine") && !is(k, "Volaille", "Ruminant")) {
+      } else if (is(k, "porc", "pig", "swine", "sow", "piglet")) {
         groups["🐷 Spécifique Porc"].push(k);
-      } else if (is(k, "ruminant", "ufl", "ufv", "pdia", "pdie", "pdim", "uem", "inra 2018")) {
+      } else if (is(k, "ruminant", "ufl", "ufv", "pdia", "pdie", "pdim", "uem", "inra 2018", "bovine", "cow", "bull", "calf", "sheep", "lamb", "goat")) {
         groups["🐄 Spécifique Ruminant"].push(k);
-      } else if (is(k, "energy", "énergie", "nergie", "amei", "ame", "ne ", "neo", "gel", "kcal", "mj/")) {
+      } else if (is(k, "energy", "énergie", "nergie", "amei", "ame", "ne ", "neo", "gel", "kcal", "mj/", "eb ", "em ", "en ")) {
         groups["⚡ Énergie"].push(k);
-      } else if (is(k, "lysine", "methionine", "méthionine", "threonine", "tryptophan", "isoleucine", "leucine", "valine", "arginine", "histidine", "phenylalanine", "cystine", "glycine", "amino", "acide aminé")) {
+      } else if (is(k, "lysine", "methionine", "méthionine", "threonine", "tryptophan", "isoleucine", "leucine", "valine", "arginine", "histidine", "phenylalanine", "cystine", "glycine", "amino", "acide aminé", "lys ", "met ", "thr ", "trp ", "ile ", "leu ", "val ", "arg ", "his ", "phe ", "cys ")) {
         groups["🔗 Acides Aminés"].push(k);
-      } else if (is(k, "vitamin", "vitamine", "choline", "niacin", "riboflavin", "thiamin", "biotin", "pantothenic", "folic", "cobalamin")) {
+      } else if (is(k, "vitamin", "vitamine", "choline", "niacin", "riboflavin", "thiamin", "biotin", "pantothenic", "folic", "cobalamin", "vit ")) {
         groups["💊 Vitamines"].push(k);
-      } else if (is(k, "calcium", "phosphor", "sodium", "magnesium", "potassium", "zinc", "copper", "manganese", "iron", "selenium", "iodine", "chloride", "sulfur", "cobalt")) {
+      } else if (is(k, "calcium", "phosphor", "sodium", "magnesium", "potassium", "zinc", "copper", "manganese", "iron", "selenium", "iodine", "chloride", "sulfur", "cobalt", "ca ", "p ", "na ", "mg ", "k ", "zn ", "cu ", "mn ", "fe ", "se ", " i ", "cl ", " s ", "co ")) {
         groups["🧂 Minéraux"].push(k);
-      } else if (is(k, "dry matter", "crude protein", "crude fibre", "crude fat", "ash", "ndf", "adf", "starch", "sugar", "protéine", "fibre", "matière", "ms %", "extractif")) {
+      } else if (is(k, "dry matter", "crude protein", "crude fibre", "crude fat", "ash", "ndf", "adf", "starch", "sugar", "protéine", "fibre", "matière", "ms %", "extractif", "cb ", "mat ", "cel ", "cb %", "ma %", "mg %")) {
         groups["⚗️ Composition Générale"].push(k);
       } else {
         groups["📊 Autre"].push(k);
@@ -427,28 +433,6 @@ export default function RecipesPage() {
           <p className="text-gray-500 mt-1">Définir le tonnage, rendement, taille du sac, et cibles nutritionnelles</p>
         </div>
         <div className="flex gap-4">
-          <select
-            value=""
-            onChange={(e) => {
-              const val = e.target.value;
-              if (val && !nutrientColumns.includes(val)) setNutrientCols(prev => [...prev, val]);
-            }}
-            className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2.5 rounded-xl text-sm font-bold transition-all shadow-sm outline-none cursor-pointer"
-          >
-            <option value="" disabled>+ Ajouter Colonne...</option>
-            {Object.entries(
-              groupNutrientKeys(
-                getFilteredNutrients(
-                  availableKeys.filter(k => !nutrientColumns.includes(k)),
-                  "General" 
-                )
-              )
-            ).map(([group, keys]) => keys.length === 0 ? null : (
-              <optgroup key={group} label={group}>
-                {keys.map(k => <option key={k} value={k}>{k}</option>)}
-              </optgroup>
-            ))}
-          </select>
           <button onClick={addRec} className="bg-emerald-600 text-white hover:bg-emerald-700 px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md shadow-emerald-600/20">
             + Ajouter Formule
           </button>
