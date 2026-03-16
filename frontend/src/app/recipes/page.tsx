@@ -365,6 +365,50 @@ export default function RecipesPage() {
     return keys.filter(k => !blocked.some(b => k.toLowerCase().includes(b.toLowerCase())));
   };
 
+  // ── Categorise nutrient keys into optgroups ─────────────────────────────────
+  type NutrientGroups = Record<string, string[]>;
+
+  const groupNutrientKeys = (keys: string[]): NutrientGroups => {
+    const groups: NutrientGroups = {
+      "⚗️ Composition Générale": [],
+      "🧂 Minéraux": [],
+      "💊 Vitamines": [],
+      "🔗 Acides Aminés": [],
+      "⚡ Énergie": [],
+      "🐔 Spécifique Volaille": [],
+      "🐷 Spécifique Porc": [],
+      "🐄 Spécifique Ruminant": [],
+      "📊 Autre": [],
+    };
+
+    const is = (k: string, ...terms: string[]) =>
+      terms.some(t => k.toLowerCase().includes(t.toLowerCase()));
+
+    for (const k of keys) {
+      if (is(k, "volaille", "broiler", "poultry") && !is(k, "Porc", "Ruminant")) {
+        groups["🐔 Spécifique Volaille"].push(k);
+      } else if (is(k, "porc", "pig", "swine") && !is(k, "Volaille", "Ruminant")) {
+        groups["🐷 Spécifique Porc"].push(k);
+      } else if (is(k, "ruminant", "ufl", "ufv", "pdia", "pdie", "pdim", "uem", "inra 2018")) {
+        groups["🐄 Spécifique Ruminant"].push(k);
+      } else if (is(k, "energy", "énergie", "nergie", "amei", "ame", "ne ", "neo", "gel", "kcal", "mj/")) {
+        groups["⚡ Énergie"].push(k);
+      } else if (is(k, "lysine", "methionine", "méthionine", "threonine", "tryptophan", "isoleucine", "leucine", "valine", "arginine", "histidine", "phenylalanine", "cystine", "glycine", "amino", "acide aminé")) {
+        groups["🔗 Acides Aminés"].push(k);
+      } else if (is(k, "vitamin", "vitamine", "choline", "niacin", "riboflavin", "thiamin", "biotin", "pantothenic", "folic", "cobalamin")) {
+        groups["💊 Vitamines"].push(k);
+      } else if (is(k, "calcium", "phosphor", "sodium", "magnesium", "potassium", "zinc", "copper", "manganese", "iron", "selenium", "iodine", "chloride", "sulfur", "cobalt")) {
+        groups["🧂 Minéraux"].push(k);
+      } else if (is(k, "dry matter", "crude protein", "crude fibre", "crude fat", "ash", "ndf", "adf", "starch", "sugar", "protéine", "fibre", "matière", "ms %", "extractif")) {
+        groups["⚗️ Composition Générale"].push(k);
+      } else {
+        groups["📊 Autre"].push(k);
+      }
+    }
+
+    return groups;
+  };
+
   if (fetching) {
     return (
       <div className="flex items-center justify-center py-20 min-h-screen">
@@ -382,8 +426,8 @@ export default function RecipesPage() {
           <p className="text-gray-500 mt-1">Définir le tonnage, rendement, taille du sac, et cibles nutritionnelles</p>
         </div>
         <div className="flex gap-4">
-          <select 
-            value="" 
+          <select
+            value=""
             onChange={(e) => {
               const val = e.target.value;
               if (val && !nutrientColumns.includes(val)) setNutrientCols(prev => [...prev, val]);
@@ -391,9 +435,13 @@ export default function RecipesPage() {
             className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2.5 rounded-xl text-sm font-bold transition-all shadow-sm outline-none cursor-pointer"
           >
             <option value="" disabled>+ Ajouter Colonne...</option>
-            {availableKeys.filter(k => !nutrientColumns.includes(k)).map(k => (
-              <option key={k} value={k}>{k}</option>
-            ))}
+            {Object.entries(groupNutrientKeys(availableKeys.filter(k => !nutrientColumns.includes(k)))).map(
+              ([group, keys]) => keys.length === 0 ? null : (
+                <optgroup key={group} label={group}>
+                  {keys.map(k => <option key={k} value={k}>{k}</option>)}
+                </optgroup>
+              )
+            )}
           </select>
           <button onClick={addRec} className="bg-emerald-600 text-white hover:bg-emerald-700 px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md shadow-emerald-600/20">
             + Ajouter Formule
@@ -583,15 +631,25 @@ export default function RecipesPage() {
                               className="w-full bg-white border-2 border-dashed border-blue-200 text-blue-700 hover:border-blue-400 hover:bg-blue-50 px-3 py-2 rounded-lg text-xs font-bold transition-all outline-none cursor-pointer"
                             >
                               <option value="" disabled>🧬 Ajouter une cible nutritionnelle...</option>
-                              {filterKeysBySpecies(
-                                availableKeys.filter(k =>
-                                  !globalIngredientNames.includes(k) &&
-                                  !activeNutritionalCols.includes(k)
-                                ),
-                                activeItem.species ?? "General"
-                              ).map(k => (
-                                <option key={k} value={k}>{k}</option>
-                              ))}
+                              {Object.entries(
+                                groupNutrientKeys(
+                                  filterKeysBySpecies(
+                                    availableKeys.filter(k =>
+                                      !globalIngredientNames.includes(k) &&
+                                      !activeNutritionalCols.includes(k)
+                                    ),
+                                    activeItem.species ?? "General"
+                                  )
+                                )
+                              ).map(([group, keys]) =>
+                                keys.length === 0 ? null : (
+                                  <optgroup key={group} label={group}>
+                                    {keys.map(k => (
+                                      <option key={k} value={k}>{k}</option>
+                                    ))}
+                                  </optgroup>
+                                )
+                              )}
                             </select>
                           </div>
                         </div>
