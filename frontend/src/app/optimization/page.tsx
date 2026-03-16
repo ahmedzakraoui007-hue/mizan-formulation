@@ -147,6 +147,52 @@ export default function OptimizationPage() {
     }
   };
 
+  const PDF_WHITELIST = ['Crude protein', 'Dry matter', 'Crude fat', 'Calcium', 'Phosphorus', 'Gross energy (kcal)'];
+
+  const getKeysToPrint = (nutrients: Record<string, number>, constraints: Record<string, any> | undefined): [string, number][] => {
+    return Object.entries(nutrients).filter(([key]) => {
+      const hasConstraint = constraints && key in constraints;
+      const isWhitelisted = PDF_WHITELIST.some(wk => key === wk);
+      return hasConstraint || isWhitelisted;
+    });
+  };
+
+  const exportCSV = (rec: RecipeResult, originalRec: any) => {
+    const constraintKeys = originalRec?.constraints ?? {};
+    const filteredNutrients = getKeysToPrint(rec.nutrients, constraintKeys);
+
+    let csv = '\uFEFF'; // UTF-8 BOM for Excel
+    csv += `Recette;${rec.name};Espèce;${originalRec?.species || 'Générale'};Date;${new Date().toLocaleDateString('fr-FR')}\n`;
+    csv += `\n`;
+    csv += `Matière Première;Inclusion (%);Quantité (kg/T)\n`;
+    for (const ing of rec.ingredients) {
+      csv += `${ing.name};${ing.percentage.toFixed(2)}%;${(ing.percentage * 10).toFixed(1)}\n`;
+    }
+    csv += `\n`;
+    csv += `Paramètre Nutritionnel;Valeur Calculée;Cible Min/Max\n`;
+    for (const [key, val] of filteredNutrients) {
+      const cons = constraintKeys[key];
+      let cibleStr = '—';
+      if (cons) {
+        if (cons.exact !== undefined) cibleStr = `Exact: ${cons.exact}`;
+        else if (cons.min !== undefined && cons.max !== undefined) cibleStr = `${cons.min} - ${cons.max}`;
+        else if (cons.min !== undefined) cibleStr = `Min: ${cons.min}`;
+        else if (cons.max !== undefined) cibleStr = `Max: ${cons.max}`;
+      }
+      csv += `${key};${val.toFixed(2)};${cibleStr}\n`;
+    }
+    csv += `\n`;
+    csv += `Coût Total (TND/Tonne);${rec.cost_tnd.toFixed(2)}\n`;
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Fiche_Technique_${rec.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const runAudit = async () => {
     if (!result) return;
     setAuditLoading(true);
@@ -327,13 +373,16 @@ export default function OptimizationPage() {
                         }} className="flex-1 py-3.5 px-3 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 transition-all font-bold cursor-pointer flex items-center justify-center gap-2 shadow-sm text-sm">
                           📈 Paramétrique
                         </button>
-                        <button onClick={() => exportPDF(rec, originalRec)} disabled={exportingPdf === rec.name} className="flex-1 py-3.5 px-3 rounded-xl bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 transition-all font-bold cursor-pointer flex items-center justify-center gap-2 shadow-sm text-sm">
+                        <button onClick={() => exportPDF(rec, originalRec)} disabled={exportingPdf === rec.name} className="flex-1 py-3 px-2 rounded-xl bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 transition-all font-bold cursor-pointer flex items-center justify-center gap-1.5 shadow-sm text-xs">
                           {exportingPdf === rec.name ? (
                             <>
                               <div className="w-4 h-4 rounded-full border-2 border-red-300 border-r-red-700 animate-spin" />
-                              Génération...
+                              PDF...
                             </>
-                          ) : "🖨️ Exporter PDF"}
+                          ) : "🖨️ PDF"}
+                        </button>
+                        <button onClick={() => exportCSV(rec, originalRec)} className="flex-1 py-3 px-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 transition-all font-bold cursor-pointer flex items-center justify-center gap-1.5 shadow-sm text-xs">
+                          📊 CSV
                         </button>
                       </div>
                     </div>
@@ -392,13 +441,7 @@ export default function OptimizationPage() {
                               </tr>
                             </thead>
                             <tbody>
-                              {Object.entries(rec.nutrients)
-                                .filter(([key]) => {
-                                  const essentialKeys = ["crude protein", "dry matter", "crude fat", "énergie", "protéine %", "fibre %", "ms %", "matière sèche"];
-                                  const isEssential = essentialKeys.some(ek => key.toLowerCase().includes(ek));
-                                  const hasConstraint = originalRec?.constraints && Object.keys(originalRec.constraints).includes(key);
-                                  return hasConstraint || isEssential;
-                                })
+                              {getKeysToPrint(rec.nutrients, originalRec?.constraints)
                                 .map(([key, val], i) => {
                                   const cons = originalRec?.constraints?.[key];
                                   let cibleStr = "—";

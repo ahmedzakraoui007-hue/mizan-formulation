@@ -352,19 +352,18 @@ export default function RecipesPage() {
     { value: "General",  label: "♾️ Standard" },
   ];
 
-  const SPECIES_HIDE: Record<string, string[]> = {
-    Volaille: ["pig", "porc", "ruminant", "horse", "rabbit", "salmonid", "calf"],
-    Porc: ["poultry", "volaille", "ruminant", "broiler", "cockerel", "horse", "rabbit", "salmonid"],
-    Ruminant: ["pig", "porc", "poultry", "volaille", "broiler", "cockerel", "horse", "rabbit", "salmonid"],
-    General: [],
+  const SPECIES_REGEX: Record<string, RegExp | null> = {
+    Volaille: /pig|porc|ruminant|horse|rabbit|salmonid|calf/i,
+    Porc: /poultry|volaille|ruminant|broiler|cockerel|horse|rabbit|salmonid/i,
+    Ruminant: /pig|porc|poultry|volaille|broiler|cockerel|horse|rabbit|salmonid/i,
+    General: null,
   };
 
   const getFilteredNutrients = (keys: string[], species: string): string[] => {
-    // If species is null/undefined or General, map it directly or use empty exclusion list
     const mappedSpecies = species === 'Poultry' ? 'Volaille' : (species === 'Pig' ? 'Porc' : species);
-    const blocked = SPECIES_HIDE[mappedSpecies] ?? [];
-    if (blocked.length === 0) return keys;
-    return keys.filter(k => !blocked.some(b => k.toLowerCase().includes(b.toLowerCase())));
+    const regex = SPECIES_REGEX[mappedSpecies] ?? null;
+    if (!regex) return keys;
+    return keys.filter(k => !regex.test(k));
   };
 
   // ── Categorise nutrient keys into optgroups ─────────────────────────────────
