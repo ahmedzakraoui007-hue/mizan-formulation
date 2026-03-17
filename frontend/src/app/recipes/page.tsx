@@ -627,7 +627,7 @@ export default function RecipesPage() {
                                   getFilteredNutrients(
                                     availableKeys.filter(k =>
                                       !globalIngredientNames.includes(k) &&
-                                      !activeNutritionalCols.includes(k)
+                                      !Object.keys(activeItem.constraints).includes(k)
                                     ),
                                     activeItem.species ?? "General"
                                   )
