@@ -353,8 +353,8 @@ export default function RecipesPage() {
   ];
 
   const SPECIES_REGEX: Record<string, RegExp | null> = {
-    Volaille: /pig|porc|pork|swine|sow|piglet|ruminant|bovine|bull|cow|calf|sheep|lamb|goat|horse|rabbit|salmonid|ufl|ufv|pdi[aeim]|uem/i,
-    Porc: /poultry|volaille|broiler|cockerel|laying hen|turkey|duck|chicken|ruminant|bovine|bull|cow|calf|sheep|lamb|goat|horse|rabbit|salmonid|ufl|ufv|pdi[aeim]|uem|ame/i,
+    Volaille: /pig|porc|pork|swine|sow|piglet|ruminant|bovine|bull|cow|calf|sheep|lamb|goat|horse|rabbit|salmonid|ufl|ufv|pdi[aeim]|uem|inra 2018/i,
+    Porc: /poultry|volaille|broiler|cockerel|laying hen|turkey|duck|chicken|ruminant|bovine|bull|cow|calf|sheep|lamb|goat|horse|rabbit|salmonid|ufl|ufv|pdi[aeim]|uem|ame|inra 2018/i,
     Ruminant: /pig|porc|pork|swine|sow|piglet|poultry|volaille|broiler|cockerel|laying hen|turkey|duck|chicken|horse|rabbit|salmonid|ame/i,
     General: null,
   };
@@ -641,9 +641,9 @@ export default function RecipesPage() {
                                 const isPorc = s.includes("porc") || s.includes("pig") || s.includes("swine");
                                 const isRum = s.includes("ruminant") || s.includes("cow") || s.includes("bovine");
 
-                                if (isVol && (group.includes("Porc") || group.includes("Ruminant"))) return null;
-                                if (isPorc && (group.includes("Volaille") || group.includes("Ruminant"))) return null;
-                                if (isRum && (group.includes("Volaille") || group.includes("Porc"))) return null;
+                                  if (isVol && (group.toLowerCase().includes("porc") || group.toLowerCase().includes("ruminant"))) return null;
+                                  if (isPorc && (group.toLowerCase().includes("volaille") || group.toLowerCase().includes("ruminant"))) return null;
+                                  if (isRum && (group.toLowerCase().includes("volaille") || group.toLowerCase().includes("porc"))) return null;
 
                                 return (
                                   <optgroup key={group} label={group}>
