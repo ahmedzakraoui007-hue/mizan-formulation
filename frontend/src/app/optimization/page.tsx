@@ -113,6 +113,18 @@ export default function OptimizationPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  const getOriginalRecipe = (name: string) => {
+    // Search in masters and versions
+    for (const master of recipes) {
+      if (master.name === name) return master;
+      if (master.versions) {
+        const v = master.versions.find((v: any) => v.version_tag === name || `${master.name} (${v.version_tag})` === name || v.name === name);
+        if (v) return v;
+      }
+    }
+    return recipes.find(r => name.startsWith(r.name));
+  };
+
   const runFactory = async () => {
     setLoading(true); setError(null); setResult(null);
     try {
@@ -170,9 +182,24 @@ export default function OptimizationPage() {
       });
       
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      const pdfHeight = pdf.internal.pageSize.getHeight();
       
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      const imgWidth = pdfWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      let heightLeft = imgHeight;
+      let position = 0;
+      
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pdfHeight;
+      
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
+      }
+      
       pdf.save(`Fiche_Technique_${rec.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`);
     } catch (err) {
       console.error(err);
@@ -328,7 +355,7 @@ export default function OptimizationPage() {
 
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
               {result.recipes.map((rec, idx) => {
-                const originalRec = recipes.find(r => r.name === rec.name || rec.name.startsWith(r.name));
+                const originalRec = getOriginalRecipe(rec.name);
                 const chartData = getChartData(rec, originalRec);
 
                 return (
@@ -392,8 +419,7 @@ export default function OptimizationPage() {
                       </button>
                       <div className="flex gap-3">
                         <button onClick={() => {
-                          // Pre-populate with first nutrient from recipe constraints
-                          const originalRec2 = recipes.find((r: any) => r.name === rec.name || rec.name.startsWith(r.name));
+                          const originalRec2 = getOriginalRecipe(rec.name);
                           const keys = originalRec2?.constraints ? Object.keys(originalRec2.constraints) : [];
                           setParamNutrient(keys[0] || "");
                           const existing = originalRec2?.constraints?.[keys[0]];
@@ -511,14 +537,17 @@ export default function OptimizationPage() {
         )}
       </div>
 
-      {selectedReport && (
-        <FicheModal 
-          report={selectedReport} 
-          originalConstraints={recipes.find(r => r.name === selectedReport.name || selectedReport.name.startsWith(r.name))?.constraints} 
-          species={recipes.find(r => r.name === selectedReport.name || selectedReport.name.startsWith(r.name))?.species}
-          onClose={() => setSelectedReport(null)} 
-        />
-      )}
+      {selectedReport && (() => {
+        const original = getOriginalRecipe(selectedReport.name);
+        return (
+          <FicheModal 
+            report={selectedReport} 
+            originalConstraints={original?.constraints} 
+            species={original?.species}
+            onClose={() => setSelectedReport(null)} 
+          />
+        );
+      })()}
 
       {/* Parametric Analysis Modal */}
       {paramModalOpen && (

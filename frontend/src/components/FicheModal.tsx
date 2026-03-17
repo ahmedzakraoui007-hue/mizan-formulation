@@ -74,8 +74,24 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
 
   const hrLine = "border-t border-gray-300 my-6";
 
+  const printStyles = `
+    @media print {
+      @page {
+        margin: 15mm;
+        size: auto;
+      }
+      .break-inside-avoid {
+        break-inside: avoid;
+      }
+      body {
+        background: white !important;
+      }
+    }
+  `;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 print:bg-white print:relative print:z-0 print:block overflow-y-auto pt-10 pb-10 print:p-0">
+      <style dangerouslySetInnerHTML={{ __html: printStyles }} />
       <div className="bg-white rounded-2xl shadow-2xl w-11/12 max-w-4xl p-10 max-h-none print:shadow-none print:w-full print:p-0 relative my-auto">
         
         {/* Close Button (Hidden in Print) */}

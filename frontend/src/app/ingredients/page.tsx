@@ -306,7 +306,8 @@ export default function IngredientsPage() {
 
                     {/* MS % */}
                     <td className="py-3 px-5 text-right">
-                      <span className="font-mono text-gray-600 font-semibold">{ing.dm ?? "—"}</span>
+                      <input type="number" step="0.1" value={ing.dm} onChange={e => editIng(ing.id, "dm", e.target.value)}
+                        className={`${cell} w-20 text-right font-semibold text-gray-700`} />
                     </td>
 
                     {/* Protéine % */}
@@ -384,7 +385,11 @@ export default function IngredientsPage() {
                   </div>
                   <h2 className="text-lg font-black text-white leading-tight truncate">{selectedIngredient.name}</h2>
                   <div className="flex items-center gap-4 mt-2">
-                    <span className="text-xs text-slate-400 font-mono">MS: <span className="text-white font-bold">{selectedIngredient.dm}%</span></span>
+                    <span className="text-xs text-slate-400 font-mono">MS: 
+                      <input type="number" step="0.1" value={selectedIngredient.dm} 
+                        onChange={e => editIng(selectedIngredient.id, "dm", e.target.value)}
+                        className="w-16 bg-white/10 border-none outline-none text-white font-bold ml-1 rounded px-1" />
+                    %</span>
                     <span className="text-xs text-slate-400 font-mono">Coût: <span className="text-white font-bold">{selectedIngredient.cost} TND/kg</span></span>
                     <span className="text-xs bg-blue-800/60 text-blue-200 px-2 py-0.5 rounded-full font-bold border border-blue-700">
                       {totalNutrients} paramètres
@@ -469,11 +474,17 @@ export default function IngredientsPage() {
                   defaultValue=""
                 >
                   <option value="" disabled>＋ Ajouter un nutriment...</option>
-                  {COMMON_NUTRIENTS
-                    .filter(n => !(n in selectedIngredient.nutrients))
-                    .sort().map(n => (
-                    <option key={n} value={n}>{n}</option>
-                  ))}
+                  {(() => {
+                    const allKeys = new Set(COMMON_NUTRIENTS);
+                    ingredients.forEach(i => {
+                      if (i.nutrients) Object.keys(i.nutrients).forEach(k => allKeys.add(k));
+                    });
+                    return Array.from(allKeys)
+                      .filter(n => !(n in selectedIngredient.nutrients))
+                      .sort().map(n => (
+                      <option key={n} value={n}>{n}</option>
+                    ));
+                  })()}
                   <option value="NEW_PROMPT" className="italic">Autre (Texte libre)...</option>
                 </select>
                 <button 
