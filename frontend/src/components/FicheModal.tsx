@@ -1,6 +1,7 @@
 "use client";
 
 import { saveAs } from "file-saver";
+import { isNutrientSpecificToSpecies } from "@/utils/nutrientUtils";
 
 interface ResultIngredient {
   name: string;
@@ -23,10 +24,11 @@ interface RecipeResult {
 interface FicheModalProps {
   report: RecipeResult;
   originalConstraints?: Record<string, { min?: number; max?: number; exact?: number }>;
+  species?: string;
   onClose: () => void;
 }
 
-export default function FicheModal({ report, originalConstraints, onClose }: FicheModalProps) {
+export default function FicheModal({ report, originalConstraints, species = "General", onClose }: FicheModalProps) {
   const now = new Date();
   const dateStr = now.toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
   
@@ -50,9 +52,15 @@ export default function FicheModal({ report, originalConstraints, onClose }: Fic
     });
     
     csv += `\nValeurs Nutritionnelles,Atteint\n`;
-    Object.entries(report.nutrients).forEach(([key, val]) => {
-      csv += `"${key}",${val}\n`;
-    });
+    Object.entries(report.nutrients)
+      .filter(([key]) => {
+        const hasConstraint = originalConstraints && key in originalConstraints;
+        const isSpecific = isNutrientSpecificToSpecies(key, species);
+        return hasConstraint || isSpecific;
+      })
+      .forEach(([key, val]) => {
+        csv += `"${key}",${val}\n`;
+      });
     
     const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
     const blob = new Blob([bom, csv], { type: "text/csv;charset=utf-8" });
@@ -147,24 +155,30 @@ export default function FicheModal({ report, originalConstraints, onClose }: Fic
         <div className="break-inside-avoid">
           <h3 className="text-lg font-black text-gray-900 mb-4 border-l-4 border-orange-500 pl-3">Valeurs Nutritionnelles Atteintes</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-y-2 gap-x-8 text-sm bg-gray-50 p-6 rounded-xl border border-gray-200 print:bg-transparent print:border-gray-800 print:rounded-none">
-            {Object.entries(report.nutrients).map(([key, val]) => {
-              const c = originalConstraints?.[key];
-              let targetStr = "";
-              if (c) {
-                if (c.exact !== undefined && c.exact !== null) targetStr = ` (Cible: ${c.exact})`;
-                else if (c.min !== undefined && c.min !== null && c.max !== undefined && c.max !== null) targetStr = ` (Min: ${c.min} / Max: ${c.max})`;
-                else if (c.min !== undefined && c.min !== null) targetStr = ` (Min: ${c.min})`;
-                else if (c.max !== undefined && c.max !== null) targetStr = ` (Max: ${c.max})`;
-              }
-              return (
-                <div key={key} className="flex justify-between border-b border-gray-200/60 pb-1 print:border-gray-400">
-                  <span className="text-gray-600 font-bold">{key}</span>
-                  <span className="font-black text-gray-900 text-right">
-                    {val.toLocaleString("fr-FR", { maximumFractionDigits: 2 })} <span className="text-xs text-gray-500 font-medium">{targetStr}</span>
-                  </span>
-                </div>
-              );
-            })}
+            {Object.entries(report.nutrients)
+              .filter(([key]) => {
+                const hasConstraint = originalConstraints && key in originalConstraints;
+                const isSpecific = isNutrientSpecificToSpecies(key, species);
+                return hasConstraint || isSpecific;
+              })
+              .map(([key, val]) => {
+                const c = originalConstraints?.[key];
+                let targetStr = "";
+                if (c) {
+                  if (c.exact !== undefined && c.exact !== null) targetStr = ` (Cible: ${c.exact})`;
+                  else if (c.min !== undefined && c.min !== null && c.max !== undefined && c.max !== null) targetStr = ` (Min: ${c.min} / Max: ${c.max})`;
+                  else if (c.min !== undefined && c.min !== null) targetStr = ` (Min: ${c.min})`;
+                  else if (c.max !== undefined && c.max !== null) targetStr = ` (Max: ${c.max})`;
+                }
+                return (
+                  <div key={key} className="flex justify-between border-b border-gray-200/60 pb-1 print:border-gray-400">
+                    <span className="text-gray-600 font-bold">{key}</span>
+                    <span className="font-black text-gray-900 text-right">
+                      {val.toLocaleString("fr-FR", { maximumFractionDigits: 2 })} <span className="text-xs text-gray-500 font-medium">{targetStr}</span>
+                    </span>
+                  </div>
+                );
+              })}
           </div>
         </div>
 

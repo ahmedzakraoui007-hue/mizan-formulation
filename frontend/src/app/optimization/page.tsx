@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, LineChart, Line } from "recharts";
 import ReactMarkdown from "react-markdown";
 import FicheModal from "@/components/FicheModal";
+import { isNutrientSpecificToSpecies } from "@/utils/nutrientUtils";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
@@ -109,15 +110,22 @@ export default function OptimizationPage() {
   };
 
   const getChartData = (rec: RecipeResult, originalRec: any) => {
-    return Object.entries(rec.nutrients).map(([key, val]) => {
-      const c = originalRec?.constraints?.[key];
-      let cible = 0;
-      if (c?.exact !== undefined) cible = c.exact;
-      else if (c?.min !== undefined) cible = c.min;
-      const factor = val > 1000 ? 100 : 1; 
-      const displayName = val > 1000 ? `${key} (/100)` : key;
-      return { name: displayName, cible: cible / factor, atteint: val / factor };
-    });
+    const species = originalRec?.species || "General";
+    return Object.entries(rec.nutrients)
+      .filter(([key]) => {
+        const hasConstraint = originalRec?.constraints && key in originalRec.constraints;
+        const isSpecific = isNutrientSpecificToSpecies(key, species);
+        return hasConstraint || isSpecific;
+      })
+      .map(([key, val]) => {
+        const c = originalRec?.constraints?.[key];
+        let cible = 0;
+        if (c?.exact !== undefined) cible = c.exact;
+        else if (c?.min !== undefined) cible = c.min;
+        const factor = val > 1000 ? 100 : 1; 
+        const displayName = val > 1000 ? `${key} (/100)` : key;
+        return { name: displayName, cible: cible / factor, atteint: val / factor };
+      });
   };
 
   const exportPDF = async (rec: RecipeResult, originalRec: any) => {
@@ -147,19 +155,18 @@ export default function OptimizationPage() {
     }
   };
 
-  const PDF_WHITELIST = ['Crude protein', 'Dry matter', 'Crude fat', 'Calcium', 'Phosphorus', 'Gross energy (kcal)'];
-
-  const getKeysToPrint = (nutrients: Record<string, number>, constraints: Record<string, any> | undefined): [string, number][] => {
+  const getKeysToPrint = (nutrients: Record<string, number>, constraints: Record<string, any> | undefined, species: string = "General"): [string, number][] => {
     return Object.entries(nutrients).filter(([key]) => {
       const hasConstraint = constraints && key in constraints;
-      const isWhitelisted = PDF_WHITELIST.some(wk => key === wk);
-      return hasConstraint || isWhitelisted;
+      const isSpecific = isNutrientSpecificToSpecies(key, species);
+      return hasConstraint || isSpecific;
     });
   };
 
   const exportCSV = (rec: RecipeResult, originalRec: any) => {
     const constraintKeys = originalRec?.constraints ?? {};
-    const filteredNutrients = getKeysToPrint(rec.nutrients, constraintKeys);
+    const species = originalRec?.species || "General";
+    const filteredNutrients = getKeysToPrint(rec.nutrients, constraintKeys, species);
 
     let csv = '\uFEFF'; // UTF-8 BOM for Excel
     csv += `Recette;${rec.name};Espèce;${originalRec?.species || 'Générale'};Date;${new Date().toLocaleDateString('fr-FR')}\n`;
@@ -441,7 +448,7 @@ export default function OptimizationPage() {
                               </tr>
                             </thead>
                             <tbody>
-                              {getKeysToPrint(rec.nutrients, originalRec?.constraints)
+                              {getKeysToPrint(rec.nutrients, originalRec?.constraints, originalRec?.species || "General")
                                 .map(([key, val], i) => {
                                   const cons = originalRec?.constraints?.[key];
                                   let cibleStr = "—";
@@ -482,6 +489,7 @@ export default function OptimizationPage() {
         <FicheModal 
           report={selectedReport} 
           originalConstraints={recipes.find(r => r.name === selectedReport.name || selectedReport.name.startsWith(r.name))?.constraints} 
+          species={recipes.find(r => r.name === selectedReport.name || selectedReport.name.startsWith(r.name))?.species}
           onClose={() => setSelectedReport(null)} 
         />
       )}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { getFilteredNutrients, SPECIES_OPTIONS, SPECIES_REGEX } from "@/utils/nutrientUtils";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -344,33 +345,7 @@ export default function RecipesPage() {
   const cell = "bg-white border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm transition-shadow";
   const label = "text-gray-600 text-[10px] font-bold uppercase tracking-wider mb-1 block";
 
-  // ── Species-aware nutrient key filter ──────────────────────────────────
-  const SPECIES_OPTIONS = [
-    { value: "Volaille",  label: "🐔 Volaille" },
-    { value: "Porc",     label: "🐷 Porc" },
-    { value: "Ruminant", label: "🐄 Ruminant" },
-    { value: "General",  label: "♾️ Standard" },
-  ];
 
-  const SPECIES_REGEX: Record<string, RegExp | null> = {
-    Volaille: /pig|porc|pork|swine|sow|piglet|ruminant|bovine|bull|cow|calf|sheep|lamb|goat|horse|rabbit|salmonid|ufl|ufv|pdi[aeim]|uem|inra 2018/i,
-    Porc: /poultry|volaille|broiler|cockerel|laying hen|turkey|duck|chicken|ruminant|bovine|bull|cow|calf|sheep|lamb|goat|horse|rabbit|salmonid|ufl|ufv|pdi[aeim]|uem|ame|inra 2018/i,
-    Ruminant: /pig|porc|pork|swine|sow|piglet|poultry|volaille|broiler|cockerel|laying hen|turkey|duck|chicken|horse|rabbit|salmonid|ame/i,
-    General: null,
-  };
-
-  const getFilteredNutrients = (keys: string[], species: string): string[] => {
-    if (!species) return keys;
-    const s = species.toLowerCase();
-    let mapped = "General";
-    if (s.includes("volaille") || s.includes("poultry") || s.includes("chicken") || s.includes("broiler")) mapped = "Volaille";
-    else if (s.includes("porc") || s.includes("pig") || s.includes("swine")) mapped = "Porc";
-    else if (s.includes("ruminant") || s.includes("cow") || s.includes("bovine") || s.includes("sheep")) mapped = "Ruminant";
-    
-    const regex = SPECIES_REGEX[mapped] ?? null;
-    if (!regex) return keys;
-    return keys.filter(k => !regex.test(k));
-  };
 
   // ── Categorise nutrient keys into optgroups ─────────────────────────────────
   type NutrientGroups = Record<string, string[]>;
