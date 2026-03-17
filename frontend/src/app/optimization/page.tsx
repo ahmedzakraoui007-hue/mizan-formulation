@@ -59,6 +59,32 @@ export default function OptimizationPage() {
   const [paramLoading, setParamLoading] = useState(false);
   const [paramLabel, setParamLabel] = useState("");
 
+  // ─── Dynamic Parametric Bounds ──────────────────────────────────────────
+  useEffect(() => {
+    if (!paramNutrient || recipes.length === 0) return;
+    
+    // Find the current constraint for this nutrient in any recipe
+    // Since parametric analysis in backend overrides ALL recipes with this value,
+    // we take the first recipe that has this constraint as a reference point.
+    let currentVal: number | null = null;
+    for (const r of recipes) {
+      if (r.constraints?.[paramNutrient]) {
+        const c = r.constraints[paramNutrient];
+        if (c.min !== undefined) currentVal = c.min;
+        else if (c.exact !== undefined) currentVal = c.exact;
+        if (currentVal !== null) break;
+      }
+    }
+
+    if (currentVal !== null) {
+      // Set default range to ±15% of current value
+      const start = Math.max(0, currentVal * 0.85).toFixed(2);
+      const end = (currentVal * 1.15).toFixed(2);
+      setParamStart(start);
+      setParamEnd(end);
+    }
+  }, [paramNutrient, recipes]);
+
   // Stats
   const [stockStats, setStockStats] = useState({ total_stock: 0, total_demand: 0 });
   const [selectedReport, setSelectedReport] = useState<RecipeResult | null>(null);
@@ -511,10 +537,11 @@ export default function OptimizationPage() {
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 block">Nutriment</label>
                 <select value={paramNutrient} onChange={e => setParamNutrient(e.target.value)}
                   className="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium">
+                  <option value="" disabled>Choisir un nutriment...</option>
                   {(() => {
                     const allKeys = new Set<string>();
                     recipes.forEach((r: any) => { if (r.constraints) Object.keys(r.constraints).forEach(k => allKeys.add(k)); });
-                    return Array.from(allKeys).map(k => <option key={k} value={k}>{k}</option>);
+                    return Array.from(allKeys).sort().map(k => <option key={k} value={k}>{k}</option>);
                   })()}
                 </select>
               </div>

@@ -15,6 +15,13 @@ interface Ingredient {
   is_active: boolean;
 }
 
+const COMMON_NUTRIENTS = [
+  "Crude protein", "Crude fat", "Crude fiber", "Calcium", "Phosphorus", "Dry matter",
+  "Gross energy (kcal)", "Net energy (kcal)", "Lysine", "Methionine", "Threonine", "Tryptophan",
+  "Sodium", "Chlorine", "Potassium", "Magnesium", "Copper", "Iron", "Manganese", "Zinc", "Selenium", "Iodine",
+  "Vitamin A", "Vitamin D3", "Vitamin E", "Amidon", "Sucres", "Cendres", "ADF", "NDF"
+];
+
 // ─── Nutrient category color coding ────────────────────────────────────────
 const CATEGORY_COLORS: { test: RegExp; badge: string; dot: string }[] = [
   { test: /volaille/i,  badge: "bg-amber-50  text-amber-700  border-amber-200",  dot: "bg-amber-400" },
@@ -85,6 +92,7 @@ export default function IngredientsPage() {
         const payload: any = {
             name: ing.name, cost: ing.cost, transport_cost: ing.transport_cost,
             dm: ing.dm, inventory_limit_tons: ing.inventory_limit_tons,
+            nutrients: ing.nutrients
         };
 
         const res = await fetch(`${API}/api/ingredients/${ing.id}`, {
@@ -104,12 +112,36 @@ export default function IngredientsPage() {
     finally { setFetching(false); }
   };
 
-  const editIng = (id: number, field: keyof Ingredient, val: string) => {
+  const editIng = (id: number, field: keyof Ingredient, val: any) => {
     setHasUnsavedChanges(true);
     setModifiedIds(prev => new Set(prev).add(id));
     setIngredients(prev => prev.map(i => i.id !== id ? i :
-      { ...i, [field]: field === "name" ? val : parseFloat(val) || 0 }
+      { ...i, [field]: (field === "name" || field === "nutrients") ? val : parseFloat(val) || 0 }
     ));
+  };
+
+  const updateNutrient = (ingId: number, key: string, val: string) => {
+    const ing = ingredients.find(i => i.id === ingId);
+    if (!ing) return;
+    const newNutrients = { ...ing.nutrients, [key]: parseFloat(val) || 0 };
+    editIng(ingId, "nutrients", newNutrients);
+  };
+
+  const addNutrient = (ingId: number, key: string) => {
+    if (!key) return;
+    const ing = ingredients.find(i => i.id === ingId);
+    if (!ing) return;
+    if (key in ing.nutrients) return;
+    const newNutrients = { ...ing.nutrients, [key]: 0 };
+    editIng(ingId, "nutrients", newNutrients);
+  };
+
+  const removeNutrient = (ingId: number, key: string) => {
+    const ing = ingredients.find(i => i.id === ingId);
+    if (!ing) return;
+    const newNutrients = { ...ing.nutrients };
+    delete newNutrients[key];
+    editIng(ingId, "nutrients", newNutrients);
   };
 
   const toggleActive = async (id: number) => {
@@ -393,10 +425,22 @@ export default function IngredientsPage() {
                       {items.map(({ key, value }) => (
                         <div key={key}
                           className={`flex items-center justify-between px-3 py-2 rounded-xl border ${cat.badge} transition-all hover:shadow-sm`}>
-                          <span className="text-xs font-medium truncate pr-2 max-w-[280px]" title={key}>{key}</span>
-                          <span className="font-mono text-sm font-bold flex-shrink-0 tabular-nums">
-                            {value === 0 ? <span className="text-gray-300">—</span> : value.toLocaleString("fr-FR", { maximumFractionDigits: 4 })}
-                          </span>
+                          <span className="text-xs font-medium truncate pr-2 max-w-[200px]" title={key}>{key}</span>
+                          <div className="flex items-center gap-2">
+                             <input 
+                               type="number" 
+                               step="0.001"
+                               value={value} 
+                               onChange={(e) => updateNutrient(selectedIngredient.id, key, e.target.value)}
+                               className="w-20 bg-white/50 border border-gray-200 rounded px-2 py-0.5 text-xs font-mono font-bold text-right outline-none focus:ring-1 focus:ring-blue-500"
+                             />
+                             <button 
+                               onClick={() => removeNutrient(selectedIngredient.id, key)}
+                               className="text-red-400 hover:text-red-600 transition-colors"
+                             >
+                               ✕
+                             </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -412,14 +456,45 @@ export default function IngredientsPage() {
             </div>
 
             {/* Panel Footer */}
-            <div className="flex-shrink-0 p-4 border-t border-gray-100 bg-gray-50/50 flex justify-between items-center">
-              <span className="text-xs text-gray-400 font-mono">
-                {Object.values(panelNutrientGroups).reduce((acc, g) => acc + g.length, 0)} / {totalNutrients} paramètres affichés
-              </span>
-              <button onClick={() => setSelectedIngredient(null)}
-                className="bg-gray-800 text-white hover:bg-gray-900 px-5 py-2 rounded-xl text-sm font-bold transition-all shadow-sm">
-                Fermer
-              </button>
+            <div className="flex-shrink-0 p-4 border-t border-gray-100 bg-gray-50/50 space-y-4">
+              <div className="flex items-center gap-2">
+                <select 
+                  className="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 text-xs font-bold outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      addNutrient(selectedIngredient.id, e.target.value);
+                      e.target.value = ""; // reset
+                    }
+                  }}
+                  defaultValue=""
+                >
+                  <option value="" disabled>＋ Ajouter un nutriment...</option>
+                  {COMMON_NUTRIENTS
+                    .filter(n => !(n in selectedIngredient.nutrients))
+                    .sort().map(n => (
+                    <option key={n} value={n}>{n}</option>
+                  ))}
+                  <option value="NEW_PROMPT" className="italic">Autre (Texte libre)...</option>
+                </select>
+                <button 
+                  onClick={() => {
+                    const custom = prompt("Nom du nouveau nutriment :");
+                    if (custom) addNutrient(selectedIngredient.id, custom);
+                  }}
+                  className="bg-blue-50 text-blue-600 border border-blue-100 hover:bg-blue-100 px-3 py-2 rounded-lg text-xs font-black transition-all"
+                >
+                  ✎
+                </button>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-gray-400 font-mono">
+                  {Object.values(panelNutrientGroups).reduce((acc, g) => acc + g.length, 0)} / {totalNutrients} paramètres
+                </span>
+                <button onClick={() => setSelectedIngredient(null)}
+                  className="bg-gray-800 text-white hover:bg-gray-900 px-5 py-2 rounded-xl text-sm font-bold transition-all shadow-sm">
+                  Fermer
+                </button>
+              </div>
             </div>
           </div>
         </>
