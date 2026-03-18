@@ -1,7 +1,7 @@
 "use client";
 
 import { saveAs } from "file-saver";
-import { isNutrientSpecificToSpecies } from "@/utils/nutrientUtils";
+import { isNutrientSpecificToSpecies, getNutrientUnit } from "@/utils/nutrientUtils";
 
 interface ResultIngredient {
   name: string;
@@ -70,6 +70,35 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const shareToWhatsApp = () => {
+    let msg = `*MIZAN FORMULATION - Fiche de Fabrication*\n`;
+    msg += `📅 Date: ${dateStr}\n`;
+    msg += `🌾 Formule: *${report.name}*\n`;
+    msg += `📦 Tonnage: ${report.demand_tons} t\n`;
+    msg += `💰 Coût: ${report.cost_tnd.toFixed(2)} TND\n\n`;
+    
+    msg += `*COMPOSITION:*\n`;
+    sortedIngredients.forEach(ing => {
+      msg += `- ${ing.name}: *${(ing.tons * 1000).toFixed(0)} kg* (${ing.percentage.toFixed(1)}%)\n`;
+    });
+    
+    msg += `\n*ANALYSE NUTRITIONNELLE:*\n`;
+    Object.entries(report.nutrients)
+      .filter(([key]) => {
+        const hasConstraint = originalConstraints && key in originalConstraints;
+        const isSpecific = isNutrientSpecificToSpecies(key, species);
+        return hasConstraint || isSpecific;
+      })
+      .forEach(([key, val]) => {
+        msg += `- ${key}: ${val.toFixed(2)} ${getNutrientUnit(key)}\n`;
+      });
+      
+    msg += `\n_Généré via Mizan Formulation_`;
+    
+    const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    window.open(url, "_blank");
   };
 
   const hrLine = "border-t border-gray-300 my-6";
@@ -190,7 +219,9 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
                   <div key={key} className="flex justify-between border-b border-gray-200/60 pb-1 print:border-gray-400">
                     <span className="text-gray-600 font-bold">{key}</span>
                     <span className="font-black text-gray-900 text-right">
-                      {val.toLocaleString("fr-FR", { maximumFractionDigits: 2 })} <span className="text-xs text-gray-500 font-medium">{targetStr}</span>
+                      {val.toLocaleString("fr-FR", { maximumFractionDigits: 2 })} 
+                      <span className="text-[10px] text-gray-400 ml-1 ml-1">{getNutrientUnit(key)}</span>
+                      <span className="text-xs text-gray-500 font-medium">{targetStr}</span>
                     </span>
                   </div>
                 );
@@ -202,6 +233,9 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
         <div className="mt-8 pt-6 border-t border-gray-200 flex flex-col sm:flex-row gap-4 justify-end print:hidden">
           <button onClick={generateCSV} className="px-6 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-bold hover:bg-gray-200 transition-colors shadow-sm flex items-center justify-center gap-2">
             📊 Exporter en CSV
+          </button>
+          <button onClick={shareToWhatsApp} className="px-6 py-2.5 rounded-xl bg-emerald-500 text-white font-bold hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2">
+            📲 WhatsApp
           </button>
           <button onClick={handlePrint} className="px-6 py-2.5 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
             🖨️ Imprimer la Fiche

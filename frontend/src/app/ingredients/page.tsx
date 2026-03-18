@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { getNutrientUnit } from "@/utils/nutrientUtils";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -194,7 +195,7 @@ export default function IngredientsPage() {
 
   if (fetching && ingredients.length === 0) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen text-gray-900">
         <div className="w-8 h-8 rounded-full border-4 border-gray-200 border-r-blue-600 animate-spin" />
         <span className="ml-3 text-gray-500 text-sm font-medium">Chargement des données ERP…</span>
       </div>
@@ -214,7 +215,7 @@ export default function IngredientsPage() {
   const totalNutrients = selectedIngredient ? Object.keys(selectedIngredient.nutrients).length : 0;
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50">
+    <div className="flex h-screen overflow-hidden bg-gray-50 text-gray-900">
 
       {/* ══════════════ MAIN CONTENT ══════════════ */}
       <div className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${selectedIngredient ? "mr-[480px]" : ""}`}>
@@ -274,7 +275,7 @@ export default function IngredientsPage() {
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-gray-50 text-gray-900">
                 {filteredIngredients.length === 0 && (
                   <tr><td colSpan={8} className="py-16 text-center text-gray-400 italic">
                     Aucun ingrédient ne correspond à votre recherche.
@@ -374,7 +375,7 @@ export default function IngredientsPage() {
           <div className="fixed inset-0 bg-black/10 z-30" onClick={() => setSelectedIngredient(null)} />
 
           {/* Panel */}
-          <div className="fixed top-0 right-0 h-full w-[480px] bg-white shadow-2xl z-40 flex flex-col border-l border-gray-200 animate-in slide-in-from-right duration-300">
+          <div className="fixed top-0 right-0 h-full w-[480px] bg-white shadow-2xl z-40 flex flex-col border-l border-gray-200 animate-in slide-in-from-right duration-300 text-gray-900">
 
             {/* Panel Header */}
             <div className="flex-shrink-0 p-6 border-b border-gray-100 bg-gradient-to-r from-slate-900 to-blue-900">
@@ -391,13 +392,13 @@ export default function IngredientsPage() {
                         className="w-16 bg-white/10 border-none outline-none text-white font-bold ml-1 rounded px-1" />
                     %</span>
                     <span className="text-xs text-slate-400 font-mono">Coût: <span className="text-white font-bold">{selectedIngredient.cost} TND/kg</span></span>
-                    <span className="text-xs bg-blue-800/60 text-blue-200 px-2 py-0.5 rounded-full font-bold border border-blue-700">
+                    <span className="text-xs bg-blue-800/60 text-blue-200 px-2 py-0.5 rounded-full font-bold border border-blue-700 text-gray-100">
                       {totalNutrients} paramètres
                     </span>
                   </div>
                 </div>
                 <button onClick={() => setSelectedIngredient(null)}
-                  className="flex-shrink-0 text-slate-400 hover:text-white hover:bg-white/10 w-8 h-8 rounded-lg flex items-center justify-center transition-all text-lg font-bold">
+                  className="flex-shrink-0 text-slate-400 hover:text-white hover:bg-white/10 w-8 h-8 rounded-lg flex items-center justify-center transition-all text-lg font-bold text-gray-100">
                   ✕
                 </button>
               </div>
@@ -407,7 +408,7 @@ export default function IngredientsPage() {
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
                 <input type="text" placeholder="Filtrer les paramètres..."
                   value={panelSearch} onChange={e => setPanelSearch(e.target.value)}
-                  className="pl-9 pr-4 py-2 w-full bg-white/10 border border-white/20 rounded-lg text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all" />
+                  className="pl-9 pr-4 py-2.5 w-full bg-white/10 border border-white/20 rounded-lg text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all" />
               </div>
             </div>
 
@@ -430,22 +431,25 @@ export default function IngredientsPage() {
                       {items.map(({ key, value }) => (
                         <div key={key}
                           className={`flex items-center justify-between px-3 py-2 rounded-xl border ${cat.badge} transition-all hover:shadow-sm`}>
-                          <span className="text-xs font-medium truncate pr-2 max-w-[200px]" title={key}>{key}</span>
-                          <div className="flex items-center gap-2">
-                             <input 
-                               type="number" 
-                               step="0.001"
-                               value={value} 
-                               onChange={(e) => updateNutrient(selectedIngredient.id, key, e.target.value)}
-                               className="w-20 bg-white/50 border border-gray-200 rounded px-2 py-0.5 text-xs font-mono font-bold text-right outline-none focus:ring-1 focus:ring-blue-500"
-                             />
-                             <button 
-                               onClick={() => removeNutrient(selectedIngredient.id, key)}
-                               className="text-red-400 hover:text-red-600 transition-colors"
-                             >
-                               ✕
-                             </button>
+                          <div className="flex-1">
+                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{key}</p>
+                            <div className="flex items-center gap-2">
+                              <input 
+                                type="number" 
+                                step="0.01"
+                                value={value} 
+                                onChange={(e) => updateNutrient(selectedIngredient.id, key, e.target.value)}
+                                className="w-24 bg-white/50 border border-gray-200 rounded px-2 py-0.5 text-xs font-mono font-bold text-right outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
+                              />
+                              <span className="text-[10px] text-slate-500 font-bold">{getNutrientUnit(key)}</span>
+                            </div>
                           </div>
+                          <button 
+                            onClick={() => removeNutrient(selectedIngredient.id, key)}
+                            className="text-red-400 hover:text-red-600 transition-colors ml-2"
+                          >
+                            ✕
+                          </button>
                         </div>
                       ))}
                     </div>
@@ -464,7 +468,7 @@ export default function IngredientsPage() {
             <div className="flex-shrink-0 p-4 border-t border-gray-100 bg-gray-50/50 space-y-4">
               <div className="flex items-center gap-2">
                 <select 
-                  className="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 text-xs font-bold outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+                  className="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 text-xs font-bold outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer text-gray-900"
                   onChange={(e) => {
                     if (e.target.value) {
                       addNutrient(selectedIngredient.id, e.target.value);
@@ -497,7 +501,7 @@ export default function IngredientsPage() {
                   ✎
                 </button>
               </div>
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center text-gray-900">
                 <span className="text-xs text-gray-400 font-mono">
                   {Object.values(panelNutrientGroups).reduce((acc, g) => acc + g.length, 0)} / {totalNutrients} paramètres
                 </span>

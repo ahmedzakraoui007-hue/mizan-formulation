@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, LineChart, Line } from "recharts";
 import ReactMarkdown from "react-markdown";
 import FicheModal from "@/components/FicheModal";
-import { isNutrientSpecificToSpecies } from "@/utils/nutrientUtils";
+import { isNutrientSpecificToSpecies, getNutrientUnit } from "@/utils/nutrientUtils";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
@@ -513,8 +513,12 @@ export default function OptimizationPage() {
                                   return (
                                     <tr key={key} style={{ backgroundColor: i % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
                                       <td style={{ padding: '10px 12px', borderBottom: '1px solid #e5e7eb', fontWeight: '500', color: '#1f2937' }}>{key}</td>
-                                      <td style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '1px solid #e5e7eb', fontWeight: 'bold', color: '#2563eb' }}>{val.toFixed(2)}</td>
-                                      <td style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '1px solid #e5e7eb', color: '#6b7280' }}>{cibleStr}</td>
+                                      <td style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '1px solid #e5e7eb', fontWeight: 'bold', color: '#2563eb' }}>
+                                        {val.toFixed(2)} <span style={{ fontSize: '9px', color: '#9ca3af' }}>{getNutrientUnit(key)}</span>
+                                      </td>
+                                      <td style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '1px solid #e5e7eb', color: '#6b7280' }}>
+                                        {cibleStr} {cons ? <span style={{ fontSize: '9px' }}>{getNutrientUnit(key)}</span> : ""}
+                                      </td>
                                     </tr>
                                   );
                                 })}
@@ -586,8 +590,11 @@ export default function OptimizationPage() {
               </div>
               <div>
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 block">Pas</label>
-                <input type="number" value={paramSteps} onChange={e => setParamSteps(e.target.value)}
-                  className="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium" />
+                <div className="flex items-center gap-1">
+                  <input type="number" value={paramSteps} onChange={e => setParamSteps(e.target.value)}
+                    className="flex-1 py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium" />
+                  <span className="text-xs text-gray-400 font-bold">{getNutrientUnit(paramNutrient)}</span>
+                </div>
               </div>
             </div>
 

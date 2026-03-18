@@ -28,13 +28,37 @@ export const getFilteredNutrients = (keys: string[], species: string): string[] 
   return keys.filter(k => !regex.test(k));
 };
 
+
+/**
+ * Returns the unit for a given nutrient key.
+ */
+export const getNutrientUnit = (key: string): string => {
+  const k = key.toLowerCase();
+  if (k.includes("énergie") || k.includes("energy") || k.includes("kcal") || k.includes("emc") || k.includes("ems")) return "kcal/kg";
+  if (k.includes("dm") || k.includes("ms") || k.includes("matière sèche")) return "%";
+  if (k.includes("%") || k.includes("protéine") || k.includes("fibre") || k.includes("cellulose") || k.includes("matière grasse") || k.includes("amidon") || k.includes("sucres")) return "%";
+  if (k.includes("ca") || k.includes("p ") || k.includes("na ") || k.includes("cl ") || k.includes("lys") || k.includes("met") || k.includes("cys") || k.includes("thr") || k.includes("trp")) return "%";
+  return "units"; 
+};
+
 /**
  * Returns true if a nutrient key contains keywords specific to a species.
  * Useful for "ou bien specifique au espece" filtering.
  */
 export const isNutrientSpecificToSpecies = (key: string, species: string): boolean => {
   const mapped = mapSpecies(species);
-  // Keywords that define positive affinity for a species
+  
+  // Important primary nutrients per species (whitelist)
+  const primaryNutrients: Record<string, string[]> = {
+    Volaille: ["Protéine %", "EMc Volaille (kcal/kg)", "Lysine %", "Méthionine %", "Calcium %", "Phosphore %", "Amidon %"],
+    Porc: ["Protéine %", "EMs Porc (kcal/kg)", "Lysine %", "Thréonine %", "Tryptophane %", "Phosphore %"],
+    Ruminant: ["Protéine %", "UFL (par kg MS)", "UFV (par kg MS)", "PDIN (g/kg MS)", "PDIE (g/kg MS)", "Calcium %", "Phosphore %"],
+  };
+
+  const whitelist = primaryNutrients[mapped];
+  if (whitelist && whitelist.some(w => key.includes(w) || w.includes(key))) return true;
+
+  // Fallback to regex for more general matching
   const positiveAffinity: Record<string, RegExp> = {
     Volaille: /poultry|volaille|broiler|cockerel|laying hen|turkey|duck|chicken|ame/i,
     Porc: /pig|porc|pork|swine|sow|piglet/i,
@@ -43,5 +67,8 @@ export const isNutrientSpecificToSpecies = (key: string, species: string): boole
   
   const regex = positiveAffinity[mapped];
   if (!regex) return false;
+  
+  // Even if it matches regex, if it's very obscure, we might want to skip.
+  // For now, any match is fine if it's not excluded by SPECIES_REGEX elsewhere.
   return regex.test(key);
 };
