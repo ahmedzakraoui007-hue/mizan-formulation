@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, LineChart, Line } from "recharts";
 import ReactMarkdown from "react-markdown";
 import FicheModal from "@/components/FicheModal";
-import { isNutrientSpecificToSpecies, getNutrientUnit } from "@/utils/nutrientUtils";
+import { isNutrientSpecificToSpecies, getNutrientUnit, getTopNutrients } from "@/utils/nutrientUtils";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
@@ -149,12 +149,7 @@ export default function OptimizationPage() {
 
   const getChartData = (rec: RecipeResult, originalRec: any) => {
     const species = originalRec?.species || "General";
-    return Object.entries(rec.nutrients)
-      .filter(([key]) => {
-        const hasConstraint = originalRec?.constraints && key in originalRec.constraints;
-        const isSpecific = isNutrientSpecificToSpecies(key, species);
-        return hasConstraint || isSpecific;
-      })
+    return getTopNutrients(rec.nutrients, originalRec?.constraints, species)
       .map(([key, val]) => {
         const c = originalRec?.constraints?.[key];
         let cible = 0;
@@ -209,11 +204,7 @@ export default function OptimizationPage() {
   };
 
   const getKeysToPrint = (nutrients: Record<string, number>, constraints: Record<string, any> | undefined, species: string = "General"): [string, number][] => {
-    return Object.entries(nutrients).filter(([key]) => {
-      const hasConstraint = constraints && key in constraints;
-      const isSpecific = isNutrientSpecificToSpecies(key, species);
-      return hasConstraint || isSpecific;
-    });
+    return getTopNutrients(nutrients, constraints, species);
   };
 
   const exportCSV = (rec: RecipeResult, originalRec: any) => {
@@ -226,7 +217,7 @@ export default function OptimizationPage() {
     csv += `\n`;
     csv += `Matière Première;Inclusion (%);Quantité (kg/T)\n`;
     for (const ing of rec.ingredients) {
-      csv += `${ing.name};${ing.percentage.toFixed(2)}%;${(ing.percentage * 10).toFixed(1)}\n`;
+      csv += `${ing.name};${Math.round(ing.percentage)}%;${Math.round(ing.percentage * 10)}\n`;
     }
     csv += `\n`;
     csv += `Paramètre Nutritionnel;Valeur Calculée;Cible Min/Max\n`;
@@ -480,8 +471,8 @@ export default function OptimizationPage() {
                               {rec.ingredients.map((ing, i) => (
                                 <tr key={ing.name} style={{ backgroundColor: i % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
                                   <td style={{ padding: '10px 12px', borderBottom: '1px solid #e5e7eb', fontWeight: '600', color: '#1f2937' }}>{ing.name}</td>
-                                  <td style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '1px solid #e5e7eb', color: '#374151' }}>{ing.percentage.toFixed(2)} %</td>
-                                  <td style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '1px solid #e5e7eb', fontWeight: 'bold', color: '#059669' }}>{(ing.percentage * 10).toFixed(1)} kg</td>
+                                  <td style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '1px solid #e5e7eb', color: '#374151' }}>{Math.round(ing.percentage)} %</td>
+                                  <td style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '1px solid #e5e7eb', fontWeight: 'bold', color: '#059669' }}>{Math.round(ing.percentage * 10)} kg</td>
                                 </tr>
                               ))}
                             </tbody>

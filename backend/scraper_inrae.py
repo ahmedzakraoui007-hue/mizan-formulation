@@ -114,15 +114,35 @@ def parse_nutrient_table(page_source: str) -> dict[str, float]:
                 continue
 
             param_raw = cells[0].get_text(strip=True)
-            value_raw = cells[1].get_text(strip=True)
 
             # Skip empty or pure header rows
             if not param_raw or param_raw.lower() in ("parameter", "nutrient", "item", ""):
                 continue
 
+            # Find the best value: 'As fed' (1), 'Other' (4), or 'On DM' (2)
+            val = 0.0
+            for col_idx in [1, 4, 2]:
+                if len(cells) > col_idx:
+                    raw_val_str = cells[col_idx].get_text(strip=True)
+                    if raw_val_str not in ("", "-"):
+                        parsed = parse_float(raw_val_str)
+                        if parsed != 0.0 or "0" in raw_val_str:
+                            val = parsed
+                            break
+                            
+            # Extract unit from column 3 or 5
+            unit = ""
+            for col_idx in [3, 5]:
+                if len(cells) > col_idx:
+                    raw_unit = cells[col_idx].get_text(strip=True)
+                    if raw_unit not in ("", "-"):
+                        unit = raw_unit
+                        break
+
             # Build the namespaced key
-            key = f"{param_raw} {current_context}".strip() if current_context else param_raw
-            nutrients[key] = parse_float(value_raw)
+            base_key = f"{param_raw} ({unit})" if unit else param_raw
+            key = f"{base_key} {current_context}".strip() if current_context else base_key
+            nutrients[key] = val
 
     return nutrients
 

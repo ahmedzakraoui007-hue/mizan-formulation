@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { saveAs } from "file-saver";
-import { isNutrientSpecificToSpecies, getNutrientUnit } from "@/utils/nutrientUtils";
+import { isNutrientSpecificToSpecies, getNutrientUnit, getTopNutrients } from "@/utils/nutrientUtils";
 
 interface ResultIngredient {
   name: string;
@@ -48,18 +49,13 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
     
     csv += `Matiere Premiere,Quantite (kg),Quantite (t),Proportion (%)\n`;
     sortedIngredients.forEach(ing => {
-      csv += `"${ing.name}",${(ing.tons * 1000).toFixed(0)},${ing.tons.toFixed(2)},${ing.percentage.toFixed(1)}\n`;
+      csv += `"${ing.name}",${Math.round(ing.percentage * 10)},${ing.tons.toFixed(2)},${Math.round(ing.percentage)}\n`;
     });
     
-    csv += `\nValeurs Nutritionnelles,Atteint\n`;
-    Object.entries(report.nutrients)
-      .filter(([key]) => {
-        const hasConstraint = originalConstraints && key in originalConstraints;
-        const isSpecific = isNutrientSpecificToSpecies(key, species);
-        return hasConstraint || isSpecific;
-      })
+    csv += `\nValeurs Nutritionnelles,Atteint,Unité\n`;
+    getTopNutrients(report.nutrients, originalConstraints, species)
       .forEach(([key, val]) => {
-        csv += `"${key}",${val}\n`;
+        csv += `"${key}",${val.toFixed(2)},"${getNutrientUnit(key)}"\n`;
       });
     
     const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
@@ -72,33 +68,57 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
     window.print();
   };
 
-  const shareToWhatsApp = () => {
-    let msg = `*MIZAN FORMULATION - Fiche de Fabrication*\n`;
-    msg += `📅 Date: ${dateStr}\n`;
-    msg += `🌾 Formule: *${report.name}*\n`;
-    msg += `📦 Tonnage: ${report.demand_tons} t\n`;
-    msg += `💰 Coût: ${report.cost_tnd.toFixed(2)} TND\n\n`;
-    
-    msg += `*COMPOSITION:*\n`;
-    sortedIngredients.forEach(ing => {
-      msg += `- ${ing.name}: *${(ing.tons * 1000).toFixed(0)} kg* (${ing.percentage.toFixed(1)}%)\n`;
-    });
-    
-    msg += `\n*ANALYSE NUTRITIONNELLE:*\n`;
-    Object.entries(report.nutrients)
-      .filter(([key]) => {
-        const hasConstraint = originalConstraints && key in originalConstraints;
-        const isSpecific = isNutrientSpecificToSpecies(key, species);
-        return hasConstraint || isSpecific;
-      })
-      .forEach(([key, val]) => {
-        msg += `- ${key}: ${val.toFixed(2)} ${getNutrientUnit(key)}\n`;
-      });
+  const [sharing, setSharing] = useState(false);
+
+  const shareToWhatsApp = async () => {
+    setSharing(true);
+    try {
+      const el = document.getElementById(`modal-pdf-template`);
+      if (!el) return;
       
-    msg += `\n_Généré via Mizan Formulation_`;
-    
-    const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
-    window.open(url, "_blank");
+      const { default: html2canvas } = await import("html2canvas");
+      const { default: jsPDF } = await import("jspdf");
+
+      const canvas = await html2canvas(el, { scale: 2, useCORS: true });
+      const imgData = canvas.toDataURL("image/png");
+      
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      let heightLeft = imgHeight;
+      let position = 0;
+      
+      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+      heightLeft -= pdfHeight;
+      
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+        heightLeft -= pdfHeight;
+      }
+      
+      const pdfBlob = pdf.output("blob");
+      const file = new File([pdfBlob], `Fiche_${report.name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`, { type: "application/pdf" });
+      
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: `Fiche de Fabrication - ${report.name}`,
+          text: `Voici la fiche de fabrication pour ${report.name}`,
+        });
+      } else {
+        pdf.save(`Fiche_${report.name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`);
+        alert("Votre appareil ne supporte pas le partage direct de fichiers PDF via WhatsApp. Le PDF a été téléchargé, vous pouvez l'envoyer manuellement en pièce jointe.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors de la génération du PDF pour WhatsApp.");
+    } finally {
+      setSharing(false);
+    }
   };
 
   const hrLine = "border-t border-gray-300 my-6";
@@ -200,12 +220,7 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
         <div className="break-inside-avoid">
           <h3 className="text-lg font-black text-gray-900 mb-4 border-l-4 border-orange-500 pl-3">Valeurs Nutritionnelles Atteintes</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-y-2 gap-x-8 text-sm bg-gray-50 p-6 rounded-xl border border-gray-200 print:bg-transparent print:border-gray-800 print:rounded-none">
-            {Object.entries(report.nutrients)
-              .filter(([key]) => {
-                const hasConstraint = originalConstraints && key in originalConstraints;
-                const isSpecific = isNutrientSpecificToSpecies(key, species);
-                return hasConstraint || isSpecific;
-              })
+            {getTopNutrients(report.nutrients, originalConstraints, species)
               .map(([key, val]) => {
                 const c = originalConstraints?.[key];
                 let targetStr = "";
@@ -220,7 +235,7 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
                     <span className="text-gray-600 font-bold">{key}</span>
                     <span className="font-black text-gray-900 text-right">
                       {val.toLocaleString("fr-FR", { maximumFractionDigits: 2 })} 
-                      <span className="text-[10px] text-gray-400 ml-1 ml-1">{getNutrientUnit(key)}</span>
+                      <span className="text-[10px] text-gray-400 ml-1">{getNutrientUnit(key)}</span>
                       <span className="text-xs text-gray-500 font-medium">{targetStr}</span>
                     </span>
                   </div>
@@ -234,14 +249,102 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
           <button onClick={generateCSV} className="px-6 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-bold hover:bg-gray-200 transition-colors shadow-sm flex items-center justify-center gap-2">
             📊 Exporter en CSV
           </button>
-          <button onClick={shareToWhatsApp} className="px-6 py-2.5 rounded-xl bg-emerald-500 text-white font-bold hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2">
-            📲 WhatsApp
+          <button onClick={shareToWhatsApp} disabled={sharing} className={`px-6 py-2.5 rounded-xl text-white font-bold transition-colors shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 ${sharing ? "bg-emerald-400 cursor-not-allowed" : "bg-emerald-500 hover:bg-emerald-600"}`}>
+            {sharing ? (
+              <>
+                <div className="w-4 h-4 rounded-full border-2 border-white border-r-transparent animate-spin" />
+                Préparation...
+              </>
+            ) : "📲 WhatsApp"}
           </button>
           <button onClick={handlePrint} className="px-6 py-2.5 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
             🖨️ Imprimer la Fiche
           </button>
         </div>
 
+        {/* Hidden PDF Template for WhatsApp PDF generation */}
+        <div style={{ position: 'absolute', top: '-9999px', left: '-9999px' }}>
+          <div id="modal-pdf-template" style={{ width: '800px', backgroundColor: 'white', padding: '40px', color: 'black', fontFamily: 'sans-serif' }}>
+            <div style={{ borderBottom: '2px solid #111', paddingBottom: '15px', marginBottom: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+              <div>
+                <h1 style={{ fontSize: '28px', fontWeight: '900', margin: '0 0 10px 0', color: '#111827' }}>Mizan Formulation</h1>
+                <h2 style={{ fontSize: '18px', fontWeight: '600', margin: 0, color: '#4b5563' }}>Fiche Technique Officielle</h2>
+              </div>
+              <div style={{ textAlign: 'right', fontSize: '14px', color: '#374151' }}>
+                <p style={{ margin: '0 0 4px 0' }}><strong>Espèce :</strong> {species || "Générale"}</p>
+                <p style={{ margin: 0 }}><strong>Date :</strong> {new Date().toLocaleDateString('fr-FR')}</p>
+              </div>
+            </div>
+
+            <div style={{ backgroundColor: '#f3f4f6', padding: '15px', borderRadius: '8px', marginBottom: '30px' }}>
+              <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold', color: '#1f2937' }}>Recette : {report.name}</h3>
+            </div>
+            
+            <div style={{ marginBottom: '35px' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '15px', borderBottom: '1px solid #e5e7eb', paddingBottom: '8px', color: '#111827' }}>1. Composition (Matières Premières)</h2>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+                <thead>
+                  <tr style={{ backgroundColor: '#f9fafb' }}>
+                    <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '2px solid #e5e7eb', color: '#4b5563' }}>Ingrédient</th>
+                    <th style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '2px solid #e5e7eb', color: '#4b5563' }}>Inclusion (%)</th>
+                    <th style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '2px solid #e5e7eb', color: '#4b5563' }}>Quantité (kg/T)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedIngredients.map((ing, i) => (
+                    <tr key={ing.name} style={{ backgroundColor: i % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
+                      <td style={{ padding: '10px 12px', borderBottom: '1px solid #e5e7eb', fontWeight: '600', color: '#1f2937' }}>{ing.name}</td>
+                      <td style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '1px solid #e5e7eb', color: '#374151' }}>{Math.round(ing.percentage)} %</td>
+                      <td style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '1px solid #e5e7eb', fontWeight: 'bold', color: '#059669' }}>{Math.round(ing.percentage * 10)} kg</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            
+            <div style={{ marginBottom: '40px' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '15px', borderBottom: '1px solid #e5e7eb', paddingBottom: '8px', color: '#111827' }}>2. Valeurs Nutritionnelles Garanties</h2>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+                <thead>
+                  <tr style={{ backgroundColor: '#f9fafb' }}>
+                    <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '2px solid #e5e7eb', color: '#4b5563' }}>Paramètre / Nutriment</th>
+                    <th style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '2px solid #e5e7eb', color: '#4b5563' }}>Valeur Calculée</th>
+                    <th style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '2px solid #e5e7eb', color: '#4b5563' }}>Cible Min/Max</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {getTopNutrients(report.nutrients, originalConstraints, species)
+                    .map(([key, val], i) => {
+                      const cons = originalConstraints?.[key];
+                      let cibleStr = "—";
+                      if (cons) {
+                          if (cons.exact !== undefined) cibleStr = `Exact: ${cons.exact}`;
+                          else if (cons.min !== undefined && cons.max !== undefined) cibleStr = `${cons.min} - ${cons.max}`;
+                          else if (cons.min !== undefined) cibleStr = `Min: ${cons.min}`;
+                          else if (cons.max !== undefined) cibleStr = `Max: ${cons.max}`;
+                      }
+                      return (
+                        <tr key={key} style={{ backgroundColor: i % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
+                          <td style={{ padding: '10px 12px', borderBottom: '1px solid #e5e7eb', fontWeight: '500', color: '#1f2937' }}>{key}</td>
+                          <td style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '1px solid #e5e7eb', fontWeight: 'bold', color: '#2563eb' }}>
+                            {val.toFixed(2)} <span style={{ fontSize: '9px', color: '#9ca3af' }}>{getNutrientUnit(key)}</span>
+                          </td>
+                          <td style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '1px solid #e5e7eb', color: '#6b7280' }}>
+                            {cibleStr} {cons ? <span style={{ fontSize: '9px' }}>{getNutrientUnit(key)}</span> : ""}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            </div>
+
+            <div style={{ paddingTop: '20px', borderTop: '2px solid #111', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <p style={{ margin: 0, fontSize: '12px', color: '#9ca3af' }}>Document généré automatiquement par Mizan Formulation Engine.</p>
+              <p style={{ margin: 0, fontSize: '18px', fontWeight: '900', color: '#111827' }}>Coût Total : <span style={{ color: '#2563eb' }}>{report.cost_tnd.toFixed(2)} TND / Tonne</span></p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

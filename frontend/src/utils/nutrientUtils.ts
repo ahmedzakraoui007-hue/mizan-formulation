@@ -34,11 +34,13 @@ export const getFilteredNutrients = (keys: string[], species: string): string[] 
  */
 export const getNutrientUnit = (key: string): string => {
   const k = key.toLowerCase();
-  if (k.includes("énergie") || k.includes("energy") || k.includes("kcal") || k.includes("emc") || k.includes("ems")) return "kcal/kg";
+  if (k.includes("énergie") || k.includes("energy") || k.includes("kcal") || k.includes("emc") || k.includes("ems") || k.includes("ame") || k.includes("ne ")) return "kcal/kg";
   if (k.includes("dm") || k.includes("ms") || k.includes("matière sèche")) return "%";
+  if (k.includes("ufl") || k.includes("ufv")) return "/kg MS";
+  if (k.includes("pdi") || k.includes("g/kg")) return "g/kg";
   if (k.includes("%") || k.includes("protéine") || k.includes("fibre") || k.includes("cellulose") || k.includes("matière grasse") || k.includes("amidon") || k.includes("sucres")) return "%";
-  if (k.includes("ca") || k.includes("p ") || k.includes("na ") || k.includes("cl ") || k.includes("lys") || k.includes("met") || k.includes("cys") || k.includes("thr") || k.includes("trp")) return "%";
-  return "units"; 
+  if (k.includes("ca ") || k.includes("p ") || k.includes("na ") || k.includes("cl ") || k.includes("lys") || k.includes("met") || k.includes("cys") || k.includes("thr") || k.includes("trp")) return "%";
+  return ""; 
 };
 
 /**
@@ -69,6 +71,55 @@ export const isNutrientSpecificToSpecies = (key: string, species: string): boole
   if (!regex) return false;
   
   // Even if it matches regex, if it's very obscure, we might want to skip.
-  // For now, any match is fine if it's not excluded by SPECIES_REGEX elsewhere.
   return regex.test(key);
+};
+
+/**
+ * Returns the top 10 most important nutrients for a report.
+ * Priority: 1. Recipe Constraints, 2. Species-specific Primary Nutrients.
+ */
+export const getTopNutrients = (
+  nutrients: Record<string, number>,
+  constraints: Record<string, any> = {},
+  species: string = "General"
+  // Only return targets explicitly requested in constraints that exist in nutrients data.
+  if (constraints && Object.keys(constraints).length > 0) {
+    const constraintKeys = Object.keys(constraints);
+    return constraintKeys
+      .filter(k => k in nutrients)
+      .map(k => [k, nutrients[k]]);
+  }
+
+  const allKeys = Object.keys(nutrients);
+  const mapped = mapSpecies(species);
+  const primaryNutrients: Record<string, string[]> = {
+    Volaille: ["Protéine %", "EMc Volaille (kcal/kg)", "Lysine %", "Méthionine %", "Calcium %", "Phosphore %", "Amidon %", "Cellulose brute %"],
+    Porc: ["Protéine %", "EMs Porc (kcal/kg)", "Lysine %", "Thréonine %", "Tryptophane %", "Phosphore %", "Cellulose brute %"],
+    Ruminant: ["Protéine %", "UFL (par kg MS)", "UFV (par kg MS)", "PDIN (g/kg MS)", "PDIE (g/kg MS)", "Calcium %", "Phosphore %", "Cellulose brute %"],
+  };
+
+  const speciesPrimary = primaryNutrients[mapped] || [];
+  
+  let selected: string[] = [];
+  
+  // Fill with species primary until we hit 10
+  for (const p of speciesPrimary) {
+    if (selected.length >= 10) break;
+    const match = allKeys.find(k => k.toLowerCase().includes(p.toLowerCase()) || p.toLowerCase().includes(k.toLowerCase()));
+    if (match && !selected.includes(match)) {
+      selected.push(match);
+    }
+  }
+
+  // If still under 10, fill with other nutrients that match species regex
+  if (selected.length < 10) {
+    for (const k of allKeys) {
+      if (selected.length >= 10) break;
+      if (!selected.includes(k) && isNutrientSpecificToSpecies(k, species)) {
+        selected.push(k);
+      }
+    }
+  }
+
+  return selected.slice(0, 10).map(k => [k, nutrients[k] ?? 0]);
 };

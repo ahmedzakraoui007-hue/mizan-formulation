@@ -138,6 +138,11 @@ def solve_multi_blend(ingredients, recipes):
         # Set of exact ingredient names to distinguish ingredient constraints from nutritional constraints
         ing_names = {ing.name: i for i, ing in enumerate(ingredients)}
 
+        # Lock out any ingredients that are not explicitly part of this recipe's constraints
+        for i, ing in enumerate(ingredients):
+            if ing.name not in rec.constraints:
+                solver.Add(x[r, i] == 0)
+
         # Loop over every constrained parameter (can be a nutrient OR an ingredient) defined in the recipe
         for key, limit in rec.constraints.items():
             
