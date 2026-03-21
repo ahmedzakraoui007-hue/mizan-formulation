@@ -46,6 +46,18 @@ def seed():
 
         # ── Insert fresh rows ─────────────────────────────────────────────────
         for ing_data in data:
+            nutrients = ing_data.get('nutrients', {})
+            dm_val = None
+            for key in ["Dry matter (%)", "MS %", "Matière sèche"]:
+                if key in nutrients:
+                    dm_val = nutrients[key]
+                    break
+            if dm_val is not None:
+                try:
+                    ing_data['dm'] = float(dm_val)
+                except ValueError:
+                    pass
+            
             row = IngredientDB(**ing_data)
             db.add(row)
             print(f"   ✅ Ajout : {ing_data['name']} ({len(ing_data.get('nutrients', {}))} paramètres)")

@@ -314,7 +314,8 @@ export default function IngredientsPage() {
                     {/* Protéine % */}
                     <td className="py-3 px-5 text-right">
                       <span className="font-mono text-gray-600 font-semibold">
-                        {ing.nutrients?.["Crude protein"] ??
+                        {ing.nutrients?.["Crude protein (%)"] ??
+                         ing.nutrients?.["Crude protein"] ??
                          ing.nutrients?.["Protéine %"] ??
                          "—"}
                       </span>
