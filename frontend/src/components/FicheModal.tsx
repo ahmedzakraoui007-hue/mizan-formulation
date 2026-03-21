@@ -202,9 +202,9 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
             {sortedIngredients.map((ing, idx) => (
               <tr key={idx} className={idx % 2 !== 0 ? "bg-gray-50/50 print:bg-transparent" : "print:bg-transparent"}>
                 <td className="py-2.5 px-4 font-bold text-gray-900">{ing.name}</td>
-                <td className="py-2.5 px-4 text-right font-medium">{(ing.tons * 1000).toLocaleString("fr-FR", { maximumFractionDigits: 0 })} kg</td>
+                <td className="py-2.5 px-4 text-right font-medium">{Math.round(ing.percentage * 10).toLocaleString("fr-FR")} kg</td>
                 <td className="py-2.5 px-4 text-right text-gray-600 font-medium">{ing.tons.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} t</td>
-                <td className="py-2.5 px-4 text-right font-black text-blue-700">{ing.percentage.toLocaleString("fr-FR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %</td>
+                <td className="py-2.5 px-4 text-right font-black text-blue-700">{Math.round(ing.percentage)} %</td>
               </tr>
             ))}
             <tr className="bg-gray-100 font-black text-gray-900 border-t-2 border-gray-300 print:bg-gray-200">
