@@ -82,6 +82,7 @@ export const getTopNutrients = (
   nutrients: Record<string, number>,
   constraints: Record<string, any> = {},
   species: string = "General"
+): [string, number][] => {
   // Only return targets explicitly requested in constraints that exist in nutrients data.
   if (constraints && Object.keys(constraints).length > 0) {
     const constraintKeys = Object.keys(constraints);
