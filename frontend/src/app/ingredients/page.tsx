@@ -331,8 +331,8 @@ export default function IngredientsPage() {
                     <td className="py-3 px-5 text-center">
                       <button onClick={async () => { 
                           setPanelSearch("");
-                          // If we don't have nutrients loaded yet, fetch the heavy payload
-                          if (!ing.nutrients || Object.keys(ing.nutrients).length === 0) {
+                          // If we don't have the full nutrients loaded yet (lite mode sends 1-2 macro keys), fetch the heavy payload
+                          if (!ing.nutrients || Object.keys(ing.nutrients).length < 5) {
                               try {
                                   const res = await fetch(`${API}/api/ingredients/${ing.id}`);
                                   if (res.ok) {
