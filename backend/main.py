@@ -193,6 +193,12 @@ def list_ingredients(lite: bool = False, db: Session = Depends(get_db)):
                 "is_active": row.is_active,
                 "nutrients": {}
             }
+            # Preserve essential macros for UI main table
+            if row.nutrients:
+                for tk in ["Crude protein (%)", "Crude protein", "Protéine %"]:
+                    if tk in row.nutrients:
+                        data["nutrients"][tk] = row.nutrients[tk]
+                        break
             result.append(data)
         return result
     return rows
