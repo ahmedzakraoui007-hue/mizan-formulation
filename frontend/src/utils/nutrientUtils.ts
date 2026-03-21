@@ -83,12 +83,21 @@ export const getTopNutrients = (
   constraints: Record<string, any> = {},
   species: string = "General"
 ): [string, number][] => {
-  // Only return targets explicitly requested in constraints that exist in nutrients data.
+  // Only return targets explicitly requested in constraints that have actual values.
   if (constraints && Object.keys(constraints).length > 0) {
-    const constraintKeys = Object.keys(constraints);
-    return constraintKeys
-      .filter(k => k in nutrients)
-      .map(k => [k, nutrients[k]]);
+    const validConstraintKeys = Object.keys(constraints).filter(k => {
+      const c = constraints[k];
+      if (!c) return false;
+      return (c.min !== undefined && c.min !== null && c.min !== "") || 
+             (c.max !== undefined && c.max !== null && c.max !== "") || 
+             (c.exact !== undefined && c.exact !== null && c.exact !== "");
+    });
+
+    if (validConstraintKeys.length > 0) {
+      return validConstraintKeys
+        .filter(k => k in nutrients)
+        .map(k => [k, nutrients[k]]);
+    }
   }
 
   const allKeys = Object.keys(nutrients);
