@@ -232,7 +232,13 @@ export default function RecipesPage() {
 
   const rmRec = async (masterId: number, targetId: number) => {
     try {
-      await fetch(`${API}/api/recipes/${targetId}`, { method: "DELETE" });
+      const res = await fetch(`${API}/api/recipes/${targetId}`, { method: "DELETE" });
+      if (!res.ok) {
+        const errorText = await res.text();
+        alert(`Erreur du serveur lors de la suppression : ${errorText}`);
+        return;
+      }
+
       setRecipes(prev => {
         if (masterId === targetId) {
           // Deleted the master recipe, remove the whole group
@@ -242,10 +248,13 @@ export default function RecipesPage() {
           return prev.map(m => m.id === masterId ? { ...m, versions: m.versions.filter(v => v.id !== targetId) } : m);
         }
       });
+      
       if (masterId !== targetId) {
         setActiveVersions(prev => ({ ...prev, [masterId]: masterId })); // Reset to master
       }
-    } catch { /* ignore */ }
+    } catch (e: any) {
+      alert(`Erreur de connexion lors de la suppression : ${e.message}`);
+    }
   };
 
   const askAIForBounds = async (masterId: number, targetId: number, recipeName: string) => {
