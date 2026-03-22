@@ -234,14 +234,12 @@ async def diagnose_infeasible_recipe(recipe_name: str, constraints: dict, ingred
 Le solveur mathématique a renvoyé une erreur "Infaisable" (Infeasible) pour cette recette.
 Cela signifie qu'il est mathématiquement IMPOSSIBLE de respecter toutes les contraintes Min/Max exigées en utilisant exclusivement les ingrédients fournis avec leurs limites d'incorporation actuelles.
 
-RÈGLES ABSOLUES :
-1. Analyse minutieusement les "Contraintes Exigées" (les Min/Max imposés par le Standard ou l'utilisateur).
-2. Regarde la liste des "Ingrédients Disponibles" et leurs profils nutritionnels.
-3. Identifie LA ou LES contraintes mathématiquement insolubles. (Par exemple, si la recette demande 2975 kcal d'énergie, mais que le Maïs plafonne à 2800 kcal et qu'il n'y a pas d'Huile dans la liste, c'est bloqué. Si la recette exige 1.32% de Lysine mais que le Soja n'y arrive pas sans dépasser la Protéine max, explique-le).
+RÈGLES ABSOLUES DU SOLVEUR (A LIRE ATTENTIVEMENT) :
+1. RÈGLE D'INCLUSION : Si des noms d'ingrédients apparaissent dans les "Contraintes Exigées", le solveur fonctionne en mode "Opt-in" : il est STRICTEMENT OBLIGÉ de n'utiliser **QUE** ces ingrédients-là. Tous les autres ingrédients de 'Ingrédients Disponibles' sont verrouillés à 0%. L'infaisabilité vient donc EXCLUSIVEMENT de l'incapacité de ce petit groupe d'ingrédients à atteindre les cibles nutritionnelles. Ne propose jamais d'utiliser un autre ingrédient s'il n'est pas dans la liste des contraintes.
+2. SENS DES CONTRAINTES : Fais extrêmement attention ! "min": 17.2 signifie "Au moins 17.2" (Plancher). "max": 15 signifie "Au maximum 15" (Plafond). Ne confonds jamais un min et un max dans tes explications.
+3. Analyse mathématique : Identifie LA ou LES contraintes mathématiquement insolubles entre elles. (Ex: "Il faut au moins 17% de protéine, mais le seul ingrédient protéique autorisé est limité à 5% max").
 4. Ne fais pas de longs paragraphes. Utilise 2 ou 3 puces claires.
-5. Termine toujours par une section **✅ Recommandation Pratique** : dis à l'utilisateur quel ingrédient précis ajouter à son inventaire (ex: "Ajoutez de l'Huile de Soja pour l'énergie", "Ajoutez de la L-Lysine synthétique", ou "Baissez l'exigence en protéine").
-
-Sois professionnel, précis, et explique comme un Ingénieur Nutritionniste à son directeur d'usine."""
+5. Termine toujours par une section **✅ Recommandation Pratique** : dis à l'utilisateur quelle contrainte précise modifier (ex: "Baissez l'exigence Minimum en Protéine", "Augmentez la limite Maximum du Soja", ou "Ajoutez un ingrédient riche en énergie")."""
     
     try:
         model = genai.GenerativeModel('gemini-2.5-flash')

@@ -214,6 +214,8 @@ def solve_multi_blend(ingredients, recipes):
     for r, rec in enumerate(recipes):
         yld = getattr(rec, 'process_yield_percent', 100.0) or 100.0
         raw_tons = rec.demand_tons / (yld / 100.0)
+        
+        trace_log = [f"TRACE RECIPE '{rec.name}' | Demand Raw Tons: {raw_tons}"]
 
         # Set of exact ingredient names to distinguish ingredient constraints from nutritional constraints
         ing_names = {ing.name: i for i, ing in enumerate(ingredients)}
@@ -228,9 +230,12 @@ def solve_multi_blend(ingredients, recipes):
         # allow ALL active ingredients to be used freely (the solver picks the best mix).
         has_ingredient_constraints = len(ingredient_constrained_keys) > 0
         if has_ingredient_constraints:
+            trace_log.append(f"  [LOCK] Mode INGREDIENTS. Seuls ces ingrédients sont autorisés : {list(ingredient_constrained_keys)}")
             for i, ing in enumerate(ingredients):
                 if ing.name not in ingredient_constrained_keys:
                     solver.Add(x[r, i] == 0)
+        else:
+            trace_log.append("  [LOCK] Mode NUTRITION. Tous les ingrédients actifs sont libres.")
 
         # Loop over every constrained parameter (can be a nutrient OR an ingredient) defined in the recipe
         for key, limit in rec.constraints.items():
@@ -240,7 +245,7 @@ def solve_multi_blend(ingredients, recipes):
                 i = ing_names[key]
                 # limit.min and limit.max are expressed as percentages (e.g., 60 for 60%).
                 # raw_tons is the total weight basis.
-                print(f"  [ING] {key}: min={limit.min}, max={limit.max}, exact={limit.exact}")
+                trace_log.append(f"  [ING] {key}: min={limit.min}, max={limit.max}, exact={limit.exact}")
                 if limit.exact is not None:
                     solver.Add(x[r, i] == (limit.exact / 100.0) * raw_tons)
                 else:
@@ -267,12 +272,7 @@ def solve_multi_blend(ingredients, recipes):
                 )
                 scale = (1.0 / 10.0) if (is_gkg and is_pct_constraint) else 1.0
 
-                # DEBUG: print nutrient values for each ingredient
-                print(f"  [NUT] key='{key}' → canonical='{canonical_key}' | scale={scale} | min={limit.min} max={limit.max} exact={limit.exact}")
-                for i, ing in enumerate(ingredients):
-                    raw_val = _get_nutrient(ing.nutrients or {}, key)
-                    if raw_val > 0:
-                        print(f"        {ing.name}: raw={raw_val} → scaled={raw_val * scale}")
+                trace_log.append(f"  [NUT] key='{key}' -> canonical='{canonical_key}' | scale={scale} | min={limit.min} max={limit.max} exact={limit.exact}")
 
                 # Linear expression for the total amount of this nutrient from all ingredients
                 nutr_expr = sum(
@@ -290,13 +290,13 @@ def solve_multi_blend(ingredients, recipes):
                         solver.Add(nutr_expr <= limit.max * raw_tons)
 
     # ── Solve ──────────────────────────────────────────────────────
-    print(f"=== SOLVER: {solver.NumVariables()} vars, {solver.NumConstraints()} constraints ===")
+    trace_log.append(f"=== SOLVER: {solver.NumVariables()} vars, {solver.NumConstraints()} constraints ===")
     status = solver.Solve()
     if status != pywraplp.Solver.OPTIMAL:
-        print(f"=== SOLVER RESULT: INFEASIBLE (status={status}) ===")
+        trace_log.append(f"=== SOLVER RESULT: INFEASIBLE (status={status}) ===")
         raise Exception(
-            "Pas de solution réalisable — les contraintes de stock, "
-            "rendement ou nutrition sont trop restrictives."
+            "Pas de solution réalisable — les contraintes de stock, rendement ou nutrition sont trop restrictives.\n\n" +
+            "\n".join(trace_log)
         )
 
     # ── Build response ─────────────────────────────────────────────
