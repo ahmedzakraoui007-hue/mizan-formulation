@@ -1,5 +1,85 @@
 from ortools.linear_solver import pywraplp
 
+# ═══════════════════════════════════════════════════════════════════════
+# Nutrient key alias map: French/legacy recipe keys → exact INRAE keys
+# This ensures the solver can find nutrient values regardless of the
+# naming convention used in the recipe constraints.
+# ═══════════════════════════════════════════════════════════════════════
+NUTRIENT_KEY_ALIASES: dict[str, list[str]] = {
+    # Protein
+    "Crude protein (%)": ["Protéine %", "Proteine %", "Protein %", "Protein", "Protéine", "Crude Protein (%)"],
+    # Energy - poultry AMEn
+    "AMEn broiler (kcal) (kcal/kg)": [
+        "Énergie (kcal/kg)", "Energie (kcal/kg)", "Énergie Volaille KCal/Kg",
+        "Energie Volaille KCal/Kg", "AMEn broiler (kcal/kg)", "Energy (kcal/kg)",
+        "ME poultry (kcal/kg)", "Énergie KCal/Kg", "Energie KCal/Kg"
+    ],
+    # Energy - pig ME
+    "ME growing pig (kcal) (kcal/kg)": [
+        "Énergie Porc KCal/Kg", "Energie Porc KCal/Kg", "ME pig (kcal/kg)"
+    ],
+    # Amino acids - total (g/kg)
+    "Lysine (g/kg)": ["Lysine %", "Lysine"],
+    "Methionine (g/kg)": ["Méthionine %", "Methionine %", "Méthionine"],
+    "Methionine + cystine (g/kg)": ["M+C %", "Méthionine+Cystine %", "Met+Cys %", "cys"],
+    "Cystine (g/kg)": ["Cystine %"],
+    "Threonine (g/kg)": ["Thréonine %", "Threonine %", "Thréonine"],
+    "Valine (g/kg)": ["Valine %", "Valine"],
+    "Isoleucine (g/kg)": ["Isoleucine %", "Isoleucine"],
+    "Arginine (g/kg)": ["Arginine %", "Arginine"],
+    "Tryptophan (g/kg)": ["Tryptophan %", "Tryptophane %", "Tryptophan"],
+    "Leucine (g/kg)": ["Leucine %", "Leucine"],
+    # Amino acids - poultry ileal standardized (g/kg)
+    "Lysine, ileal standardized, poultry (g/kg)": ["Lysine Dig. Volaille %"],
+    "Methionine, ileal standardized, poultry (g/kg)": ["Méthionine Dig. Volaille %", "Methionine Dig. Volaille %"],
+    "Methionine + cystine, ileal standardized, poultry (g/kg)": ["M+C Dig. Volaille %"],
+    "Threonine, ileal standardized, poultry (g/kg)": ["Thréonine Dig. Volaille %"],
+    "Valine, ileal standardized, poultry (g/kg)": ["Valine Dig. Volaille %"],
+    "Isoleucine, ileal standardized, poultry (g/kg)": ["Isoleucine Dig. Volaille %"],
+    "Arginine, ileal standardized, poultry (g/kg)": ["Arginine Dig. Volaille %"],
+    "Tryptophan, ileal standardized, poultry (g/kg)": ["Tryptophan Dig. Volaille %"],
+    "Leucine, ileal standardized, poultry (g/kg)": ["Leucine Dig. Volaille %"],
+    # Minerals (g/kg)
+    "Calcium (g/kg)": ["Calcium %", "Calcium", "Ca %"],
+    "Phosphorus (g/kg)": ["Phosphore %", "Phosphorus %", "Phosphore", "P %"],
+    "Magnesium (g/kg)": ["Magnesium %", "Magnésium %", "Mg %", "Magnesium"],
+    "Sodium (g/kg)": ["Sodium %", "Na %", "Na g/kg", "Sodium", "Sodium g/kg"],
+    "Chlorine (g/kg)": ["Chlorine %", "Chlorure %", "Cl %", "Chloride %"],
+    "Potassium (g/kg)": ["Potassium %", "K %", "Potassium"],
+    # Fiber
+    "Crude fibre (%)": ["Fibre %", "Fiber %", "Fibre brute %", "Crude Fibre (%)", "CF %"],
+    # Fat
+    "Crude fat (%)": ["Matière Grasse %", "MG %", "Fat %", "Lipides %"],
+    # Dry matter
+    "Dry matter (%)": ["Matière Sèche %", "MS %", "DM %"],
+}
+
+# Build reverse map: alias → canonical INRAE key
+_ALIAS_TO_CANONICAL: dict[str, str] = {}
+for canonical, aliases in NUTRIENT_KEY_ALIASES.items():
+    for alias in aliases:
+        _ALIAS_TO_CANONICAL[alias] = canonical
+    # Also normalize the canonical key itself
+    _ALIAS_TO_CANONICAL[canonical] = canonical
+
+def _resolve_nutrient_key(key: str) -> str:
+    """Return the canonical INRAE key for any known alias, or the key itself."""
+    return _ALIAS_TO_CANONICAL.get(key, key)
+
+def _get_nutrient(nutrients: dict, key: str) -> float:
+    """Look up key in nutrients dict, trying the canonical INRAE key first, then the raw key."""
+    canonical = _resolve_nutrient_key(key)
+    val = nutrients.get(canonical)
+    if val is not None:
+        return float(val)
+    # Fallback: try the original key unchanged (handles ingredient-specific user-named keys)
+    val = nutrients.get(key)
+    if val is not None:
+        return float(val)
+    return 0.0
+
+
+
 
 # ═══════════════════════════════════════════════════════════════════════
 #  Single-Blend Solver  (backward compatible — unchanged)
@@ -161,8 +241,27 @@ def solve_multi_blend(ingredients, recipes):
             
             else:
                 # ── NUTRITIONAL CONSTRAINT ──
+                # Resolve the canonical INRAE key from any French/legacy alias
+                canonical_key = _resolve_nutrient_key(key)
+                
+                # Unit scaling: INRAE stores minerals/amino acids in g/kg but
+                # legacy recipe constraints may be in % (1% = 10 g/kg).
+                is_gkg = canonical_key.endswith("(g/kg)")
+                is_pct_constraint = key.endswith("%") or key in (
+                    "Calcium %", "Phosphore %", "Magnesium %", "Sodium %",
+                    "Chloride %", "Chlorine %", "Potassium %",
+                    "Lysine %", "Méthionine %", "Methionine %",
+                    "Thréonine %", "Threonine %", "Valine %",
+                    "Isoleucine %", "Arginine %", "Tryptophan %",
+                    "Leucine %", "Cystine %", "M+C %", "cys", "Na %"
+                )
+                scale = (1.0 / 10.0) if (is_gkg and is_pct_constraint) else 1.0
+
                 # Linear expression for the total amount of this nutrient from all ingredients
-                nutr_expr = sum(ingredients[i].nutrients.get(key, 0.0) * x[r, i] for i in range(n_ings))
+                nutr_expr = sum(
+                    _get_nutrient(ingredients[i].nutrients or {}, key) * scale * x[r, i]
+                    for i in range(n_ings)
+                )
                 
                 # Use exact target if provided
                 if limit.exact is not None:
