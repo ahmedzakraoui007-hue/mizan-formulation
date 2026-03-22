@@ -100,6 +100,9 @@ class IngredientOut(MultiBlendIngredient):
 
 class RecipeOut(RecipeDemand):
     id: int
+    parent_id: Optional[int] = None
+    version_tag: str = "V1"
+    
     class Config:
         from_attributes = True
 
