@@ -285,6 +285,19 @@ def list_recipes(db: Session = Depends(get_db)):
     return result
 
 
+@app.get("/api/standards")
+def list_standards():
+    """Returns the internal catalog of genetic nutrition standards."""
+    import os
+    import json
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(base_dir, "standards.json")
+    if os.path.exists(file_path):
+        with open(file_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return []
+
+
 @app.post("/api/recipes", response_model=RecipeOut)
 def create_recipe(data: RecipeDemand, db: Session = Depends(get_db)):
     row = RecipeDB(**data.model_dump())

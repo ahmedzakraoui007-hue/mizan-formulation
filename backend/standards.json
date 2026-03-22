@@ -1,0 +1,72 @@
+[
+  {
+    "id": "arbor_acres_broiler_starter",
+    "name": "Arbor Acres Broiler - Starter (0-10 days)",
+    "species": "Volaille",
+    "constraints": {
+      "Énergie (kcal/kg)": { "min": 2975 },
+      "Protéine %": { "min": 23.0 },
+      "Lysine %": { "min": 1.32 },
+      "Méthionine %": { "min": 0.55 },
+      "cys": { "min": 0.45 }, 
+      "Thréonine %": { "min": 0.88 },
+      "Valine %": { "min": 1.00 },
+      "Isoleucine %": { "min": 0.88 },
+      "Arginine %": { "min": 1.40 },
+      "Tryptophan %": { "min": 0.21 },
+      "Leucine %": { "min": 1.45 },
+      "Calcium %": { "min": 0.95 },
+      "Phosphore %": { "min": 0.50 },
+      "Magnesium %": { "min": 0.05, "max": 0.30 },
+      "Sodium %": { "min": 0.18, "max": 0.23 },
+      "Chloride %": { "min": 0.18, "max": 0.23 },
+      "Potassium %": { "min": 0.60, "max": 0.90 }
+    }
+  },
+  {
+    "id": "arbor_acres_broiler_grower",
+    "name": "Arbor Acres Broiler - Grower (11-24 days)",
+    "species": "Volaille",
+    "constraints": {
+      "Énergie (kcal/kg)": { "min": 3050 },
+      "Protéine %": { "min": 21.5 },
+      "Lysine %": { "min": 1.18 },
+      "Méthionine %": { "min": 0.51 },
+      "Thréonine %": { "min": 0.79 },
+      "Valine %": { "min": 0.91 },
+      "Isoleucine %": { "min": 0.80 },
+      "Arginine %": { "min": 1.27 },
+      "Tryptophan %": { "min": 0.19 },
+      "Leucine %": { "min": 1.30 },
+      "Calcium %": { "min": 0.75 },
+      "Phosphore %": { "min": 0.42 },
+      "Magnesium %": { "min": 0.05, "max": 0.30 },
+      "Sodium %": { "min": 0.18, "max": 0.23 },
+      "Chloride %": { "min": 0.18, "max": 0.23 },
+      "Potassium %": { "min": 0.60, "max": 0.90 }
+    }
+  },
+  {
+    "id": "arbor_acres_broiler_finisher1",
+    "name": "Arbor Acres Broiler - Finisher 1 (25-39 days)",
+    "species": "Volaille",
+    "constraints": {
+      "Énergie (kcal/kg)": { "min": 3100 },
+      "Protéine %": { "min": 19.5 },
+      "Lysine %": { "min": 1.08 },
+      "Méthionine %": { "min": 0.48 },
+      "Thréonine %": { "min": 0.72 },
+      "Valine %": { "min": 0.84 },
+      "Isoleucine %": { "min": 0.75 },
+      "Arginine %": { "min": 1.17 },
+      "Tryptophan %": { "min": 0.17 },
+      "Leucine %": { "min": 1.19 },
+      "Calcium %": { "min": 0.65 },
+      "Phosphore %": { "min": 0.36 },
+      "Magnesium %": { "min": 0.05, "max": 0.30 },
+      "Sodium %": { "min": 0.18, "max": 0.23 },
+      "Chloride %": { "min": 0.18, "max": 0.23 },
+      "Potassium %": { "min": 0.60, "max": 0.90 }
+    }
+  }
+]
