@@ -172,15 +172,11 @@ export const getTopNutrients = (
   species: string = "General"
 ): [string, number][] => {
   if (constraints && Object.keys(constraints).length > 0) {
-    const validConstraintKeys = Object.keys(constraints).filter(k => {
-      const c = constraints[k];
-      if (!c) return false;
-      return (c.min !== undefined && c.min !== null && c.min !== "") ||
-             (c.max !== undefined && c.max !== null && c.max !== "") ||
-             (c.exact !== undefined && c.exact !== null && c.exact !== "");
-    });
-    if (validConstraintKeys.length > 0) {
-      return validConstraintKeys
+    // Show ALL nutrients explicitly added to the recipe's nutritional targets list,
+    // even if Min/Max/Exact are left blank (the user still wants to track them).
+    const recipeConstraintKeys = Object.keys(constraints);
+    if (recipeConstraintKeys.length > 0) {
+      return recipeConstraintKeys
         .map(k => _findNutrientValue(k, nutrients))
         .filter((v): v is [string, number] => v !== null);
     }
