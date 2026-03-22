@@ -167,7 +167,7 @@ export default function IngredientsPage() {
     const res = await fetch(`${API}/api/ingredients`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: "Nouvelle Matière", cost: 0, transport_cost: 0, dm: 0, inventory_limit_tons: 0, nutrients: {}, is_active: true }),
+      body: JSON.stringify({ name: "Nouvelle Matière", cost: 0, transport_cost: 0, dm: 88, inventory_limit_tons: 99999, nutrients: {}, is_active: true }),
     });
     if (res.ok) {
       const row: Ingredient = await res.json();

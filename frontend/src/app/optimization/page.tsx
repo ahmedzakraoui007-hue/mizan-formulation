@@ -132,9 +132,10 @@ export default function OptimizationPage() {
   const runFactory = async () => {
     setLoading(true); setError(null); setResult(null); setDiagnoseResult(null);
     try {
-      const allowedNames = new Set<string>();
-      recipes.forEach(r => Object.keys(r.constraints || {}).forEach(k => allowedNames.add(k)));
-      const ingredientIds = ingredients.filter(i => allowedNames.has(i.name)).map(i => i.id);
+      // Send ALL active ingredients to the solver.
+      // The solver will figure out the least-cost blend from the entire inventory,
+      // and will lock unselected ingredients to 0 if the user provided specific ingredient constraints in opt-in mode.
+      const ingredientIds = ingredients.filter(i => i.is_active !== false).map(i => i.id);
 
       const res = await fetch(`${API}/api/optimize-multi`, {
         method: "POST",
