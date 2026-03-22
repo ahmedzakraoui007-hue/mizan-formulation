@@ -110,33 +110,81 @@ export const isNutrientSpecificToSpecies = (key: string, species: string): boole
   // Even if it matches regex, if it's very obscure, we might want to skip.
   return regex.test(key);
 };
+// Bidirectional alias map: French/legacy recipe keys ↔ INRAE English keys
+const NUTRIENT_ALIAS_MAP: Record<string, string[]> = {
+  "Crude protein (%)": ["Protéine %", "Proteine %", "Protein %"],
+  "AMEn broiler (kcal) (kcal/kg)": ["Énergie (kcal/kg)", "Energie (kcal/kg)", "Énergie Volaille KCal/Kg", "Énergie KCal/Kg"],
+  "ME growing pig (kcal) (kcal/kg)": ["Énergie Porc KCal/Kg"],
+  "Crude fibre (%)": ["Fibre %", "Fiber %"],
+  "Crude fat (%)": ["Matière Grasse %"],
+  "Dry matter (%)": ["Matière Sèche %"],
+  "Calcium (g/kg)": ["Calcium %"],
+  "Phosphorus (g/kg)": ["Phosphore %", "Phosphorus %"],
+  "Magnesium (g/kg)": ["Magnesium %", "Magnésium %"],
+  "Sodium (g/kg)": ["Sodium %", "Na %", "Na g/kg"],
+  "Chlorine (g/kg)": ["Chlorine %", "Chloride %"],
+  "Potassium (g/kg)": ["Potassium %"],
+  "Lysine (g/kg)": ["Lysine %"],
+  "Lysine, ileal standardized, poultry (g/kg)": ["Lysine Dig. Volaille %"],
+  "Methionine (g/kg)": ["Méthionine %", "Methionine %"],
+  "Methionine, ileal standardized, poultry (g/kg)": ["Méthionine Dig. Volaille %"],
+  "Methionine + cystine (g/kg)": ["M+C %", "cys"],
+  "Methionine + cystine, ileal standardized, poultry (g/kg)": ["M+C Dig. Volaille %"],
+  "Threonine (g/kg)": ["Thréonine %", "Threonine %"],
+  "Threonine, ileal standardized, poultry (g/kg)": ["Thréonine Dig. Volaille %"],
+  "Valine (g/kg)": ["Valine %"],
+  "Valine, ileal standardized, poultry (g/kg)": ["Valine Dig. Volaille %"],
+  "Isoleucine (g/kg)": ["Isoleucine %"],
+  "Isoleucine, ileal standardized, poultry (g/kg)": ["Isoleucine Dig. Volaille %"],
+  "Arginine (g/kg)": ["Arginine %"],
+  "Arginine, ileal standardized, poultry (g/kg)": ["Arginine Dig. Volaille %"],
+  "Tryptophan (g/kg)": ["Tryptophan %", "Tryptophane %"],
+  "Tryptophan, ileal standardized, poultry (g/kg)": ["Tryptophan Dig. Volaille %"],
+  "Leucine (g/kg)": ["Leucine %"],
+  "Leucine, ileal standardized, poultry (g/kg)": ["Leucine Dig. Volaille %"],
+  "Cystine (g/kg)": ["Cystine %"],
+};
+const _alias2canonical: Record<string, string> = {};
+for (const [canonical, aliases] of Object.entries(NUTRIENT_ALIAS_MAP)) {
+  _alias2canonical[canonical] = canonical;
+  for (const alias of aliases) _alias2canonical[alias] = canonical;
+}
+const _findNutrientValue = (
+  constraintKey: string, nutrients: Record<string, number>
+): [string, number] | null => {
+  if (constraintKey in nutrients) return [constraintKey, nutrients[constraintKey]];
+  const canonical = _alias2canonical[constraintKey];
+  if (canonical && canonical in nutrients) return [constraintKey, nutrients[canonical]];
+  for (const alias of (NUTRIENT_ALIAS_MAP[constraintKey] ?? [])) {
+    if (alias in nutrients) return [constraintKey, nutrients[alias]];
+  }
+  return null;
+};
 
 /**
- * Returns the top 10 most important nutrients for a report.
- * Priority: 1. Recipe Constraints, 2. Species-specific Primary Nutrients.
+ * Returns nutrients to display in reports.
+ * STRICT MODE: Only shows nutrients explicitly constrained in the recipe (with a Min/Max/Exact value).
+ * If no constraints, falls back to species-specific primary nutrients.
  */
 export const getTopNutrients = (
   nutrients: Record<string, number>,
   constraints: Record<string, any> = {},
   species: string = "General"
 ): [string, number][] => {
-  // Only return targets explicitly requested in constraints that have actual values.
   if (constraints && Object.keys(constraints).length > 0) {
     const validConstraintKeys = Object.keys(constraints).filter(k => {
       const c = constraints[k];
       if (!c) return false;
-      return (c.min !== undefined && c.min !== null && c.min !== "") || 
-             (c.max !== undefined && c.max !== null && c.max !== "") || 
+      return (c.min !== undefined && c.min !== null && c.min !== "") ||
+             (c.max !== undefined && c.max !== null && c.max !== "") ||
              (c.exact !== undefined && c.exact !== null && c.exact !== "");
     });
-
     if (validConstraintKeys.length > 0) {
       return validConstraintKeys
-        .filter(k => k in nutrients)
-        .map(k => [k, nutrients[k]]);
+        .map(k => _findNutrientValue(k, nutrients))
+        .filter((v): v is [string, number] => v !== null);
     }
   }
-
   const allKeys = Object.keys(nutrients);
   const mapped = mapSpecies(species);
   const primaryNutrients: Record<string, string[]> = {
@@ -144,29 +192,18 @@ export const getTopNutrients = (
     Porc: ["Protéine %", "EMs Porc (kcal/kg)", "Lysine %", "Thréonine %", "Tryptophane %", "Phosphore %", "Cellulose brute %"],
     Ruminant: ["Protéine %", "UFL (par kg MS)", "UFV (par kg MS)", "PDIN (g/kg MS)", "PDIE (g/kg MS)", "Calcium %", "Phosphore %", "Cellulose brute %"],
   };
-
   const speciesPrimary = primaryNutrients[mapped] || [];
-  
   let selected: string[] = [];
-  
-  // Fill with species primary until we hit 10
   for (const p of speciesPrimary) {
     if (selected.length >= 10) break;
     const match = allKeys.find(k => k.toLowerCase().includes(p.toLowerCase()) || p.toLowerCase().includes(k.toLowerCase()));
-    if (match && !selected.includes(match)) {
-      selected.push(match);
-    }
+    if (match && !selected.includes(match)) selected.push(match);
   }
-
-  // If still under 10, fill with other nutrients that match species regex
   if (selected.length < 10) {
     for (const k of allKeys) {
       if (selected.length >= 10) break;
-      if (!selected.includes(k) && isNutrientSpecificToSpecies(k, species)) {
-        selected.push(k);
-      }
+      if (!selected.includes(k) && isNutrientSpecificToSpecies(k, species)) selected.push(k);
     }
   }
-
   return selected.slice(0, 10).map(k => [k, nutrients[k] ?? 0]);
 };
