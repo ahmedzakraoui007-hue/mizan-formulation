@@ -223,3 +223,31 @@ Exemple de réponse attendue si les éléments sont ["Protéine %", "Calcium %",
     except Exception as e:
         print(f"Gemini Bound Suggestion API Error: {e}")
         raise ValueError("Impossible de joindre l'IA Mizan pour les suggestions.")
+
+
+async def diagnose_infeasible_recipe(recipe_name: str, constraints: dict, ingredients: list) -> str:
+    import json
+    if not GEMINI_API_KEY:
+        return "⚠️ Erreur : La clé API Google Gemini n'est pas configurée dans .env"
+    
+    system_instruction = """Tu es un expert en formulation d'aliments de bétail et en programmation linéaire (Solver GLOP).
+Le solveur mathématique a renvoyé une erreur "Infaisable" (Infeasible) pour cette recette.
+Cela signifie qu'il est mathématiquement IMPOSSIBLE de respecter toutes les contraintes Min/Max exigées en utilisant exclusivement les ingrédients fournis avec leurs limites d'incorporation actuelles.
+
+RÈGLES ABSOLUES :
+1. Analyse minutieusement les "Contraintes Exigées" (les Min/Max imposés par le Standard ou l'utilisateur).
+2. Regarde la liste des "Ingrédients Disponibles" et leurs profils nutritionnels.
+3. Identifie LA ou LES contraintes mathématiquement insolubles. (Par exemple, si la recette demande 2975 kcal d'énergie, mais que le Maïs plafonne à 2800 kcal et qu'il n'y a pas d'Huile dans la liste, c'est bloqué. Si la recette exige 1.32% de Lysine mais que le Soja n'y arrive pas sans dépasser la Protéine max, explique-le).
+4. Ne fais pas de longs paragraphes. Utilise 2 ou 3 puces claires.
+5. Termine toujours par une section **✅ Recommandation Pratique** : dis à l'utilisateur quel ingrédient précis ajouter à son inventaire (ex: "Ajoutez de l'Huile de Soja pour l'énergie", "Ajoutez de la L-Lysine synthétique", ou "Baissez l'exigence en protéine").
+
+Sois professionnel, précis, et explique comme un Ingénieur Nutritionniste à son directeur d'usine."""
+    
+    try:
+        model = genai.GenerativeModel('gemini-2.5-flash')
+        prompt = f"{system_instruction}\n\nRecette : {recipe_name}\n\nContraintes Exigées :\n{json.dumps(constraints, indent=2, ensure_ascii=False)}\n\nIngrédients Disponibles (Inventaire Actif) :\n{json.dumps(ingredients, indent=2, ensure_ascii=False)}"
+        response = model.generate_content(prompt)
+        return response.text
+    except Exception as e:
+        print(f"Gemini Diagnose Error: {e}")
+        return f"❌ Impossible de joindre l'IA Mizan pour le diagnostic : {str(e)}"

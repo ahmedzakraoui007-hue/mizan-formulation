@@ -430,6 +430,25 @@ async def get_ai_audit(recipe_result_json: dict):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+class DiagnoseInfeasibleRequest(BaseModel):
+    recipe_name: str
+    constraints: dict
+    ingredients: list
+
+@app.post("/api/recipes/diagnose-infeasible")
+async def api_diagnose_infeasible(request: DiagnoseInfeasibleRequest):
+    try:
+        from ai_service import diagnose_infeasible_recipe
+        diagnosis_markdown = await diagnose_infeasible_recipe(
+            request.recipe_name,
+            request.constraints,
+            request.ingredients
+        )
+        return {"markdown": diagnosis_markdown}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 class ParametricRequest(BaseModel):
     nutrient_key: str
     start_value: float

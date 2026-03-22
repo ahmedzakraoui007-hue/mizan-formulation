@@ -49,6 +49,10 @@ export default function OptimizationPage() {
   const [auditResult, setAuditResult] = useState<string | null>(null);
   const [auditLoading, setAuditLoading] = useState(false);
 
+  // Diagnosis AI State
+  const [diagnoseLoading, setDiagnoseLoading] = useState(false);
+  const [diagnoseResult, setDiagnoseResult] = useState<string | null>(null);
+
   // Parametric Analysis State
   const [paramModalOpen, setParamModalOpen] = useState(false);
   const [paramNutrient, setParamNutrient] = useState("");
@@ -126,7 +130,7 @@ export default function OptimizationPage() {
   };
 
   const runFactory = async () => {
-    setLoading(true); setError(null); setResult(null);
+    setLoading(true); setError(null); setResult(null); setDiagnoseResult(null);
     try {
       const allowedNames = new Set<string>();
       recipes.forEach(r => Object.keys(r.constraints || {}).forEach(k => allowedNames.add(k)));
@@ -264,6 +268,31 @@ export default function OptimizationPage() {
     }
   };
 
+  const askAIWhy = async () => {
+    if (!error) return;
+    setDiagnoseLoading(true); setDiagnoseResult(null);
+    let failedName = recipes[0]?.name || "Recette Inconnue";
+    const match = error.match(/Recette '(.*?)'/);
+    if (match) failedName = match[1];
+    const failedRec = recipes.find(r => r.name === failedName) || recipes[0];
+
+    try {
+      const res = await fetch(`${API}/api/recipes/diagnose-infeasible`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          recipe_name: failedRec.name,
+          constraints: failedRec.constraints || {},
+          ingredients: ingredients.filter(i => i.is_active)
+        }),
+      });
+      const data = await res.json();
+      setDiagnoseResult(data.markdown);
+    } catch {
+      setDiagnoseResult("❌ Impossible de joindre l'IA.");
+    } finally { setDiagnoseLoading(false); }
+  };
+
   if (fetching) {
     return (
       <div className="flex items-center justify-center py-20 min-h-screen">
@@ -303,8 +332,30 @@ export default function OptimizationPage() {
 
         {error && (
           <div className="mt-8 bg-red-50 border border-red-200 rounded-2xl p-6">
-            <p className="text-red-700 text-lg font-bold">⚠ Échec du Solveur</p>
-            <p className="text-red-600 mt-2">{error}</p>
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div>
+                <p className="text-red-700 text-lg font-bold flex items-center gap-2">
+                  <span>⚠</span> Échec Logique du Solveur Mathématique
+                </p>
+                <p className="text-red-600 mt-2 font-medium">{error}</p>
+                <p className="text-red-500 text-xs mt-1">Les ingrédients disponibles ne permettent pas de satisfaire les contraintes Minimales et Maximales simultanément.</p>
+              </div>
+              <button onClick={askAIWhy} disabled={diagnoseLoading}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-5 rounded-xl text-sm transition-colors shadow-sm flex items-center gap-2 flex-shrink-0">
+                {diagnoseLoading ? "⏳ Résolution en cours..." : "🤖 Demander à l'IA pourquoi ?"}
+              </button>
+            </div>
+
+            {diagnoseResult && (
+              <div className="mt-6 bg-white border border-red-100 rounded-xl p-6 shadow-sm animate-in fade-in duration-300">
+                <div className="flex items-center gap-2 mb-4 border-b border-gray-100 pb-3">
+                   <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2"><span>🧠</span> Diagnostic IA Mizan</h3>
+                </div>
+                <div className="prose prose-sm max-w-none text-gray-700">
+                  <ReactMarkdown>{diagnoseResult}</ReactMarkdown>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
