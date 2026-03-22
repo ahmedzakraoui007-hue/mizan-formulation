@@ -218,10 +218,19 @@ def solve_multi_blend(ingredients, recipes):
         # Set of exact ingredient names to distinguish ingredient constraints from nutritional constraints
         ing_names = {ing.name: i for i, ing in enumerate(ingredients)}
 
-        # Lock out any ingredients that are not explicitly part of this recipe's constraints
-        for i, ing in enumerate(ingredients):
-            if ing.name not in rec.constraints:
-                solver.Add(x[r, i] == 0)
+        # Identify ingredient-level constraints (keys that are ingredient names)
+        # These are ingredients explicitly referenced in the recipe constraints dict
+        ingredient_constrained_keys = {key for key in rec.constraints.keys() if key in ing_names}
+
+        # If ANY ingredient-level constraints exist in this recipe, lock all
+        # unconstrained active ingredients to 0 (opt-in mode: user picks exact ingredients).
+        # If ONLY nutritional constraints exist (no ingredient names in constraints),
+        # allow ALL active ingredients to be used freely (the solver picks the best mix).
+        has_ingredient_constraints = len(ingredient_constrained_keys) > 0
+        if has_ingredient_constraints:
+            for i, ing in enumerate(ingredients):
+                if ing.name not in ingredient_constrained_keys:
+                    solver.Add(x[r, i] == 0)
 
         # Loop over every constrained parameter (can be a nutrient OR an ingredient) defined in the recipe
         for key, limit in rec.constraints.items():
