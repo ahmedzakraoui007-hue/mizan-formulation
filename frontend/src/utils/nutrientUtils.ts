@@ -34,11 +34,15 @@ export const getFilteredNutrients = (keys: string[], species: string): string[] 
  */
 export const getNutrientUnit = (key: string): string => {
   const k = key.toLowerCase();
+  
+  // Explicitly check for MJ first so it doesn't get caught by 'energy' returning kcal/kg
+  if (k.includes("(mj/kg)") || k.includes("energy (mj)")) return "MJ/kg";
+  
   if (k.includes("énergie") || k.includes("energy") || k.includes("kcal") || k.includes("emc") || k.includes("ems") || k.includes("ame") || k.includes("ne ")) return "kcal/kg";
-  if (k.includes("dm") || k.includes("ms") || k.includes("matière sèche")) return "%";
+  if (k.includes("dm") || k.includes("ms") || k.includes("matière sèche") || k.includes("dry matter")) return "%";
   if (k.includes("ufl") || k.includes("ufv")) return "/kg MS";
   if (k.includes("pdi") || k.includes("g/kg")) return "g/kg";
-  if (k.includes("%") || k.includes("protéine") || k.includes("fibre") || k.includes("cellulose") || k.includes("matière grasse") || k.includes("amidon") || k.includes("sucres")) return "%";
+  if (k.includes("%") || k.includes("protéine") || k.includes("fibre") || k.includes("cellulose") || k.includes("matière grasse") || k.includes("amidon") || k.includes("sucres") || k.includes("crude protein") || k.includes("crude fat") || k.includes("crude fibre") || k.includes("ash") || k.includes("starch") || k.includes("sugars") || k.includes("ndf") || k.includes("adf") || k.includes("adl")) return "%";
   if (k.includes("ca ") || k.includes("p ") || k.includes("na ") || k.includes("cl ") || k.includes("lys") || k.includes("met") || k.includes("cys") || k.includes("thr") || k.includes("trp")) return "%";
   return ""; 
 };
