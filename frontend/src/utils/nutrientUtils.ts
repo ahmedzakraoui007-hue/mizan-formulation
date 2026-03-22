@@ -44,6 +44,7 @@ export const getNutrientUnit = (key: string): string => {
   if (k.includes("pdi") || k.includes("g/kg")) return "g/kg";
   if (k.includes("%") || k.includes("protéine") || k.includes("fibre") || k.includes("cellulose") || k.includes("matière grasse") || k.includes("amidon") || k.includes("sucres") || k.includes("crude protein") || k.includes("crude fat") || k.includes("crude fibre") || k.includes("ash") || k.includes("starch") || k.includes("sugars") || k.includes("ndf") || k.includes("adf") || k.includes("adl")) return "%";
   if (k.includes("ca ") || k.includes("p ") || k.includes("na ") || k.includes("cl ") || k.includes("lys") || k.includes("met") || k.includes("cys") || k.includes("thr") || k.includes("trp")) return "%";
+  if (k.includes("zinc") || k.includes("copper") || k.includes("iron") || k.includes("selenium") || k.includes("molybdenum") || k.includes("iodine") || k.includes("manganese") || k.includes("cobalt")) return "mg/kg";
   return ""; 
 };
 
