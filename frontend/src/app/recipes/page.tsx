@@ -332,20 +332,22 @@ export default function RecipesPage() {
   };
 
   const applyStandard = (masterId: number, targetId: number, standardId: string) => {
-    const std = standards.find(s => s.id === standardId);
-    if (!std) return;
-    if (!confirm(`Attention, l'application du standard "${std.name}" va écraser les contraintes actuelles. Continuer ?`)) return;
-    
-    setRecipes(prev => prev.map(master => {
-      if (master.id !== masterId) return master;
+    try {
+      const std = standards.find(s => s.id === standardId);
+      if (!std) { alert("Standard introuvable !"); return; }
       
-      if (targetId === master.id) {
-        const updated = { ...master, constraints: std.constraints, species: std.species } as unknown as RecipeGrouped;
-        scheduleSave(updated);
-        return updated;
+      const newConstraints = JSON.parse(JSON.stringify(std.constraints));
+      
+      setRecipes(prev => prev.map(master => {
+        if (master.id !== masterId) return master;
+        
+        if (targetId === master.id) {
+          const updated = { ...master, constraints: newConstraints, species: std.species } as unknown as RecipeGrouped;
+          scheduleSave(updated);
+          return updated;
       } else {
         const updatedVersions = master.versions.map(ver =>
-          ver.id === targetId ? { ...ver, constraints: std.constraints, species: std.species } as unknown as Recipe : ver
+          ver.id === targetId ? { ...ver, constraints: newConstraints, species: std.species } as unknown as Recipe : ver
         );
         const updatedVersion = updatedVersions.find(v => v.id === targetId)!;
         scheduleSave(updatedVersion);
@@ -355,11 +357,15 @@ export default function RecipesPage() {
     // Make sure new columns are visible
     setNutrientCols(prev => {
        const newCols = [...prev];
-       Object.keys(std.constraints).forEach(k => { 
+       Object.keys(newConstraints).forEach(k => { 
            if (!newCols.includes(k) && !globalIngredientNames.includes(k)) newCols.push(k); 
        });
        return newCols;
     });
+    alert(`Standard "${std.name}" appliqué avec succès !`);
+    } catch (e: any) {
+      alert("Erreur lors de l'application: " + e.message);
+    }
   };
 
   const createRevision = async (masterId: number, sourceId: number) => {
@@ -503,9 +509,10 @@ export default function RecipesPage() {
                     
                     <select
                        onChange={(e) => {
-                         if (e.target.value) {
-                           applyStandard(masterRec.id, activeItem.id, e.target.value);
-                           e.target.value = ""; 
+                         const val = e.target.value;
+                         if (val) {
+                           applyStandard(masterRec.id, activeItem.id, val);
+                           setTimeout(() => { e.target.value = ""; }, 10);
                          }
                        }}
                        className="text-emerald-700 hover:text-emerald-900 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold shadow-sm outline-none"
