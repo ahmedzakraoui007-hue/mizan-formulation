@@ -240,6 +240,7 @@ def solve_multi_blend(ingredients, recipes):
                 i = ing_names[key]
                 # limit.min and limit.max are expressed as percentages (e.g., 60 for 60%).
                 # raw_tons is the total weight basis.
+                print(f"  [ING] {key}: min={limit.min}, max={limit.max}, exact={limit.exact}")
                 if limit.exact is not None:
                     solver.Add(x[r, i] == (limit.exact / 100.0) * raw_tons)
                 else:
@@ -266,6 +267,13 @@ def solve_multi_blend(ingredients, recipes):
                 )
                 scale = (1.0 / 10.0) if (is_gkg and is_pct_constraint) else 1.0
 
+                # DEBUG: print nutrient values for each ingredient
+                print(f"  [NUT] key='{key}' → canonical='{canonical_key}' | scale={scale} | min={limit.min} max={limit.max} exact={limit.exact}")
+                for i, ing in enumerate(ingredients):
+                    raw_val = _get_nutrient(ing.nutrients or {}, key)
+                    if raw_val > 0:
+                        print(f"        {ing.name}: raw={raw_val} → scaled={raw_val * scale}")
+
                 # Linear expression for the total amount of this nutrient from all ingredients
                 nutr_expr = sum(
                     _get_nutrient(ingredients[i].nutrients or {}, key) * scale * x[r, i]
@@ -282,8 +290,10 @@ def solve_multi_blend(ingredients, recipes):
                         solver.Add(nutr_expr <= limit.max * raw_tons)
 
     # ── Solve ──────────────────────────────────────────────────────
+    print(f"=== SOLVER: {solver.NumVariables()} vars, {solver.NumConstraints()} constraints ===")
     status = solver.Solve()
     if status != pywraplp.Solver.OPTIMAL:
+        print(f"=== SOLVER RESULT: INFEASIBLE (status={status}) ===")
         raise Exception(
             "Pas de solution réalisable — les contraintes de stock, "
             "rendement ou nutrition sont trop restrictives."
