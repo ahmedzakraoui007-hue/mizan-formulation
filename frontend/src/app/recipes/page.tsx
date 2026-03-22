@@ -38,6 +38,7 @@ export default function RecipesPage() {
   const [fetching, setFetching] = useState(true);
   const [aiLoadingFor, setAiLoadingFor] = useState<number | null>(null);
   const [standards, setStandards] = useState<any[]>([]);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
   const fetchRecipes = useCallback(async () => {
     setFetching(true);
@@ -252,6 +253,7 @@ export default function RecipesPage() {
       if (masterId !== targetId) {
         setActiveVersions(prev => ({ ...prev, [masterId]: masterId })); // Reset to master
       }
+      setConfirmDeleteId(null);
     } catch (e: any) {
       alert(`Erreur de connexion lors de la suppression : ${e.message}`);
     }
@@ -545,10 +547,19 @@ export default function RecipesPage() {
                         ✏️ Renommer
                       </button>
                     )}
-                    <button onClick={() => { if(confirm("Supprimer cette version ? Attention, supprimer le Master supprime tout l'historique !")) rmRec(masterRec.id, activeItem.id) }} title="Supprimer"
-                      className="ml-auto text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-100 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold shadow-sm">
-                      ✕ Supprimer {isMasterActive ? "Master" : "Version"}
-                    </button>
+                    
+                    {confirmDeleteId === activeItem.id ? (
+                      <button onClick={() => rmRec(masterRec.id, activeItem.id)}
+                        className="ml-auto text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold shadow-md animate-pulse">
+                        ⚠️ Confirmer la suppression ?
+                      </button>
+                    ) : (
+                      <button onClick={() => setConfirmDeleteId(activeItem.id)}
+                        className="ml-auto text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-100 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold shadow-sm">
+                        ✕ Supprimer {isMasterActive ? "Master" : "Version"}
+                      </button>
+                    )}
+                    
                   </div>
                 </div>
               </div>
