@@ -107,7 +107,9 @@ export default function OptimizationPage() {
         setIngredients(ings);
         setRecipes(recs);
         
-        let tStock = ings.reduce((s:number, i:any) => s + i.inventory_limit_tons, 0);
+        // Active = explicitly true, OR null/undefined (legacy rows from before the column was added)
+        const activeIngs = ings.filter((i: any) => i.is_active !== false);
+        let tStock = activeIngs.reduce((s: number, i: any) => s + (i.inventory_limit_tons || 0), 0);
         let tDemand = recs.reduce((s:number, r:any) => s + r.demand_tons, 0);
         setStockStats({ total_stock: tStock, total_demand: tDemand });
       }
@@ -133,9 +135,11 @@ export default function OptimizationPage() {
     setLoading(true); setError(null); setResult(null); setDiagnoseResult(null);
     try {
       // Send ALL active ingredients to the solver.
-      // The solver will figure out the least-cost blend from the entire inventory,
-      // and will lock unselected ingredients to 0 if the user provided specific ingredient constraints in opt-in mode.
-      const ingredientIds = ingredients.filter(i => i.is_active !== false).map(i => i.id);
+      // 'Active' means: explicitly is_active=true, OR is_active=null/undefined (legacy INRAE rows
+      // seeded before the is_active column existed — they are all active by default).
+      const ingredientIds = ingredients
+        .filter((i: any) => i.is_active !== false)  // includes null/undefined (treat as active)
+        .map((i: any) => i.id);
 
       const res = await fetch(`${API}/api/optimize-multi`, {
         method: "POST",

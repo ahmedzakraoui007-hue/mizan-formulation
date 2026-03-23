@@ -155,6 +155,17 @@ def seed_database():
                     print("⚙️  Migrating: adding 'is_active' to ingredients…")
                     with engine.begin() as conn:
                         conn.execute(text("ALTER TABLE ingredients ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT TRUE"))
+                else:
+                    # Data migration: any row with is_active=FALSE that was never
+                    # explicitly deactivated by the user should be set to TRUE.
+                    # This fixes rows inserted by seed_inrae.py or DEFAULT_INGREDIENTS
+                    # before this column existed.
+                    with engine.begin() as conn:
+                        result = conn.execute(text(
+                            "UPDATE ingredients SET is_active = TRUE WHERE is_active IS NULL OR is_active = FALSE"
+                        ))
+                        if result.rowcount > 0:
+                            print(f"⚙️  Data migration: set is_active=TRUE for {result.rowcount} ingredient(s)")
 
         except Exception as e:
             print(f"Migration warning: {e}")
