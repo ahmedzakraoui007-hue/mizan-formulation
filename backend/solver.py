@@ -211,11 +211,12 @@ def solve_multi_blend(ingredients, recipes):
         )
 
     # ── C3  Per-recipe nutritional constraints ───────────────
+    trace_log = []  # initialized once, accumulates entries across all recipes
     for r, rec in enumerate(recipes):
         yld = getattr(rec, 'process_yield_percent', 100.0) or 100.0
         raw_tons = rec.demand_tons / (yld / 100.0)
         
-        trace_log = [f"TRACE RECIPE '{rec.name}' | Demand Raw Tons: {raw_tons}"]
+        trace_log.append(f"TRACE RECIPE '{rec.name}' | Demand Raw Tons: {raw_tons}")
 
         # Set of exact ingredient names to distinguish ingredient constraints from nutritional constraints
         ing_names = {ing.name: i for i, ing in enumerate(ingredients)}
@@ -294,9 +295,11 @@ def solve_multi_blend(ingredients, recipes):
     status = solver.Solve()
     if status != pywraplp.Solver.OPTIMAL:
         trace_log.append(f"=== SOLVER RESULT: INFEASIBLE (status={status}) ===")
+        trace_str = "\n".join(trace_log)
+        print(trace_str)   # goes to server log (Render)
         raise Exception(
             "Pas de solution réalisable — les contraintes de stock, rendement ou nutrition sont trop restrictives.\n\n" +
-            "\n".join(trace_log)
+            trace_str
         )
 
     # ── Build response ─────────────────────────────────────────────

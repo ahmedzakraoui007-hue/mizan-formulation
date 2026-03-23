@@ -142,7 +142,9 @@ export default function OptimizationPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ingredient_ids: ingredientIds,
-          recipes: recipes.map(({ id, ...rest }) => rest),
+          // Strip 'id' and 'versions' from each recipe before sending to the solver.
+          // 'id' is not part of RecipeDemand, and 'versions' must not be included.
+          recipes: recipes.map(({ id, versions, ...rest }) => rest),
         }),
       });
       if (!res.ok) { const e = await res.json(); throw new Error(e.detail || "Échec de l'optimisation"); }

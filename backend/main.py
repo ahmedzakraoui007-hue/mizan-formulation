@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 from database import engine, get_db, Base
 from db_models import IngredientDB, RecipeDB
 from solver import solve_least_cost_formulation, solve_multi_blend
-from solver import solve_least_cost_formulation, solve_multi_blend
 from ai_service import generate_financial_insights, generate_formulator_audit, suggest_best_practice_bounds
 
 # ─── Create tables on startup ────────────────────────────────────────
@@ -84,9 +83,6 @@ class RecipeDemand(BaseModel):
     parent_id: Optional[int] = None
     version_tag: str = "V1"
     species: str = "General"
-    process_yield_percent: float = 100.0
-    bag_size_kg: float = 50.0
-    constraints: Dict[str, ConstraintConfig] = Field(default_factory=dict)
 
 class MultiBlendRequest(BaseModel):
     ingredient_ids: List[int]
