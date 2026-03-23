@@ -254,6 +254,41 @@ def delete_ingredient(ingredient_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"ok": True}
 
+@app.post("/api/admin/restore-nutrients")
+def restore_nutrients(db: Session = Depends(get_db)):
+    """
+    Safely restores missing nutrient profiles from the INRAE JSON file
+    without overwriting user-modified costs or inventory limits.
+    """
+    import os
+    import json
+    
+    json_path = os.path.join(os.path.dirname(__file__), "inrae_scraped_data_full.json")
+    if not os.path.exists(json_path):
+        raise HTTPException(status_code=404, detail="INRAE data file not found on server")
+        
+    try:
+        with open(json_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            
+        # Create a lookup dictionary by name
+        inrae_dict = {item["name"]: item.get("nutrients", {}) for item in data}
+        
+        updated_count = 0
+        all_ingredients = db.query(IngredientDB).all()
+        for ing in all_ingredients:
+            if ing.name in inrae_dict:
+                # Only update if the DB nutrients are empty or very small (meaning they were wiped by the lite=true bug)
+                if not ing.nutrients or len(ing.nutrients) < 5:
+                    ing.nutrients = inrae_dict[ing.name]
+                    updated_count += 1
+                    
+        db.commit()
+        return {"ok": True, "restored_count": updated_count}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 # ═══════════════════  CRUD — RECIPES  ═════════════════════════════════
 

@@ -90,10 +90,23 @@ export default function IngredientsPage() {
     try {
       const toSave = ingredients.filter(ing => modifiedIds.has(ing.id));
       await Promise.all(toSave.map(async ing => {
+        // Fetch the full original ingredient from DB to not lose hidden nutrients (since table uses lite=true)
+        let originalNutrients = ing.nutrients;
+        try {
+            const dbRes = await fetch(`${API}/api/ingredients/${ing.id}`);
+            if (dbRes.ok) {
+                const dbIng = await dbRes.json();
+                // If the user modified nutrients in the panel, ing.nutrients has the changes.
+                // We merge them: keep all dbIng.nutrients, overwrite with any currently loaded ing.nutrients
+                originalNutrients = { ...dbIng.nutrients, ...ing.nutrients };
+            }
+        } catch (e) { console.error("Could not fetch original nutrients before save", e); }
+
         const payload: any = {
             name: ing.name, cost: ing.cost, transport_cost: ing.transport_cost,
             dm: ing.dm, inventory_limit_tons: ing.inventory_limit_tons,
-            nutrients: ing.nutrients
+            nutrients: originalNutrients,
+            is_active: ing.is_active
         };
 
         const res = await fetch(`${API}/api/ingredients/${ing.id}`, {
