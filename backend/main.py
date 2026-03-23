@@ -162,7 +162,7 @@ def seed_database():
                     # before this column existed.
                     with engine.begin() as conn:
                         result = conn.execute(text(
-                            "UPDATE ingredients SET is_active = TRUE WHERE is_active IS NULL OR is_active = FALSE"
+                            "UPDATE ingredients SET is_active = 1 WHERE is_active IS NULL OR is_active = 0"
                         ))
                         if result.rowcount > 0:
                             print(f"⚙️  Data migration: set is_active=TRUE for {result.rowcount} ingredient(s)")
