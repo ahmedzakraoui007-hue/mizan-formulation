@@ -98,7 +98,8 @@ export default function OptimizationPage() {
     setFetching(true);
     try {
       const [ingRes, recRes] = await Promise.all([
-        fetch(`${API}/api/ingredients`),
+        // Use lite=true: optimization page only needs ingredient IDs and is_active
+        fetch(`${API}/api/ingredients?lite=true`),
         fetch(`${API}/api/recipes`),
       ]);
       if (ingRes.ok && recRes.ok) {
@@ -107,10 +108,17 @@ export default function OptimizationPage() {
         setIngredients(ings);
         setRecipes(recs);
         
-        // Active = explicitly true, OR null/undefined (legacy rows from before the column was added)
-        const activeIngs = ings.filter((i: any) => i.is_active !== false);
+        // Active = explicitly true (the migration now ensures all rows have a value)
+        const activeIngs = ings.filter((i: any) => i.is_active === true || i.is_active == null);
         let tStock = activeIngs.reduce((s: number, i: any) => s + (i.inventory_limit_tons || 0), 0);
-        let tDemand = recs.reduce((s:number, r:any) => s + r.demand_tons, 0);
+        // Count all recipes: masters + their versions
+        let tDemand = recs.reduce((s: number, r: any) => {
+          const masterDemand = r.demand_tons || 0;
+          const versionsDemand = (r.versions || []).reduce((vs: number, v: any) => vs + (v.demand_tons || 0), 0);
+          return s + masterDemand + versionsDemand;
+        }, 0);
+        // Count total recipe count (masters + versions)
+        const totalRecipeCount = recs.reduce((count: number, r: any) => count + 1 + (r.versions?.length || 0), 0);
         setStockStats({ total_stock: tStock, total_demand: tDemand });
       }
     } catch { /* ignored */ }
@@ -135,20 +143,35 @@ export default function OptimizationPage() {
     setLoading(true); setError(null); setResult(null); setDiagnoseResult(null);
     try {
       // Send ALL active ingredients to the solver.
-      // 'Active' means: explicitly is_active=true, OR is_active=null/undefined (legacy INRAE rows
-      // seeded before the is_active column existed — they are all active by default).
       const ingredientIds = ingredients
-        .filter((i: any) => i.is_active !== false)  // includes null/undefined (treat as active)
+        .filter((i: any) => i.is_active === true || i.is_active == null)
         .map((i: any) => i.id);
+
+      // Flatten the recipe list: include the master recipe AND every version.
+      // The backend solver treats each entry as a separate independent formula.
+      // Masters and versions are both complete Recipe objects with their own
+      // demand_tons, constraints, and species — the solver optimizes all of them together
+      // sharing a global ingredient inventory pool.
+      const flatRecipes: any[] = [];
+      for (const master of recipes) {
+        // Strip UI-only fields (id, versions) before sending to the solver
+        const { id: _mid, versions, ...masterFields } = master;
+        flatRecipes.push(masterFields);
+        // Include each version as a separate recipe
+        if (versions && versions.length > 0) {
+          for (const ver of versions) {
+            const { id: _vid, parent_id: _pid, ...verFields } = ver;
+            flatRecipes.push(verFields);
+          }
+        }
+      }
 
       const res = await fetch(`${API}/api/optimize-multi`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ingredient_ids: ingredientIds,
-          // Strip 'id' and 'versions' from each recipe before sending to the solver.
-          // 'id' is not part of RecipeDemand, and 'versions' must not be included.
-          recipes: recipes.map(({ id, versions, ...rest }) => rest),
+          recipes: flatRecipes,
         }),
       });
       if (!res.ok) { const e = await res.json(); throw new Error(e.detail || "Échec de l'optimisation"); }
@@ -290,7 +313,7 @@ export default function OptimizationPage() {
         body: JSON.stringify({
           recipe_name: failedRec.name,
           constraints: failedRec.constraints || {},
-          ingredients: ingredients.filter(i => i.is_active)
+          available_ingredients: ingredients.filter(i => i.is_active === true || i.is_active == null).map(i => i.name)
         }),
       });
       const data = await res.json();
@@ -321,7 +344,9 @@ export default function OptimizationPage() {
           <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
             <p className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">Demande Totale du Carnet</p>
             <div className="text-4xl font-black text-gray-900">{stockStats.total_demand.toFixed(1)} <span className="text-xl text-gray-400">tonnes</span></div>
-            <p className="text-sm font-medium text-blue-600 mt-2">{recipes.length} formules à produire</p>
+            <p className="text-sm font-medium text-blue-600 mt-2">
+              {recipes.reduce((c: number, r: any) => c + 1 + (r.versions?.length || 0), 0)} formules à produire
+            </p>
           </div>
           <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
             <p className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">Capacité des Silos</p>

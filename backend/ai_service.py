@@ -225,7 +225,7 @@ Exemple de réponse attendue si les éléments sont ["Protéine %", "Calcium %",
         raise ValueError("Impossible de joindre l'IA Mizan pour les suggestions.")
 
 
-async def diagnose_infeasible_recipe(recipe_name: str, constraints: dict, ingredients: list) -> str:
+async def diagnose_infeasible_recipe(recipe_name: str, constraints: dict, available_ingredients: list) -> str:
     import json
     if not GEMINI_API_KEY:
         return "⚠️ Erreur : La clé API Google Gemini n'est pas configurée dans .env"
@@ -243,7 +243,7 @@ RÈGLES ABSOLUES DU SOLVEUR (A LIRE ATTENTIVEMENT) :
     
     try:
         model = genai.GenerativeModel('gemini-2.5-flash')
-        prompt = f"{system_instruction}\n\nRecette : {recipe_name}\n\nContraintes Exigées :\n{json.dumps(constraints, indent=2, ensure_ascii=False)}\n\nIngrédients Disponibles (Inventaire Actif) :\n{json.dumps(ingredients, indent=2, ensure_ascii=False)}"
+        prompt = f"{system_instruction}\n\nRecette : {recipe_name}\n\nContraintes Exigées :\n{json.dumps(constraints, indent=2, ensure_ascii=False)}\n\nIngrédients Disponibles (Inventaire Actif) :\n{json.dumps(available_ingredients, indent=2, ensure_ascii=False)}"
         response = model.generate_content(prompt)
         return response.text
     except Exception as e:

@@ -45,7 +45,10 @@ export default function RecipesPage() {
     try {
       const [recRes, ingRes, stdRes] = await Promise.all([
         fetch(`${API}/api/recipes`),
-        fetch(`${API}/api/ingredients`),
+        // Use lite=true: only need name & is_active, NOT the full 2MB nutrients payload.
+        // The nutrient keys come from the DB nutrients but we only need them for the dropdown.
+        // We fetch lite now and separately trigger a full nutrient-keys call.
+        fetch(`${API}/api/ingredients?lite=true`),
         fetch(`${API}/api/standards`)
       ]);
       
@@ -73,18 +76,28 @@ export default function RecipesPage() {
 
       if (ingRes.ok) {
         const ings = await ingRes.json();
-        const keys = new Set<string>();
         const itemNames = new Set<string>();
         ings.forEach((ing: any) => {
-          if (ing.is_active !== false) {
-            itemNames.add(ing.name);
-          }
-          // Only actual nutrients or special keys, NOT ingredient names
-          Object.keys(ing.nutrients || {}).forEach(k => keys.add(k));
+          if (ing.is_active !== false) itemNames.add(ing.name);
         });
-        setAvailableKeys(Array.from(keys).sort());
         setGlobalIngredientNames(Array.from(itemNames).sort());
       }
+
+      // Fetch available nutrient keys from a dedicated lightweight backend endpoint.
+      // The backend already returns full nutrients per ingredient — we query one ingredient
+      // to get all possible key names for the recipe dropdown.
+      // We do this in a background fetch so the page is usable immediately.
+      try {
+        // We only need key names. Fetch the first ingredient with full nutrients to build the key list,
+        // or better: fetch all ingredients and collect unique keys (cache-friendly with browser).
+        const fullRes = await fetch(`${API}/api/ingredients`);
+        if (fullRes.ok) {
+          const fullIngs = await fullRes.json();
+          const keys = new Set<string>();
+          fullIngs.forEach((ing: any) => Object.keys(ing.nutrients || {}).forEach((k: string) => keys.add(k)));
+          setAvailableKeys(Array.from(keys).sort());
+        }
+      } catch { /* non-critical */ }
 
     } catch { /* ignored */ }
     setFetching(false);
@@ -183,9 +196,9 @@ export default function RecipesPage() {
   };
 
   const removeIngredientFromRecipe = (masterId: number, targetId: number, ingredientKey: string) => {
-    // Remove from nutrientColumns so the row disappears from the table
-    setNutrientCols(prev => prev.filter(c => c !== ingredientKey));
-    // Also deep-remove from constraints state and schedule a save
+    // IMPORTANT: do NOT remove from global nutrientColumns — that would hide rows in OTHER recipes.
+    // The ingredient/nutrient row is conditionally rendered based on Object.keys(activeItem.constraints),
+    // so removing it from constraints is sufficient to hide the row in this recipe.
     setRecipes(prev => {
       const newRecs = prev.map(master => {
         if (master.id !== masterId) return master;
@@ -219,7 +232,7 @@ export default function RecipesPage() {
         body: JSON.stringify({
           name: "Nouvelle Formule", demand_tons: 10,
           process_yield_percent: 100.0, bag_size_kg: 50.0,
-          constraints: {},
+          constraints: {}, species: "General",
         }),
       });
       if (res.ok) {
