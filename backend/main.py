@@ -125,12 +125,14 @@ DEFAULT_RECIPES = [
 @app.on_event("startup")
 def seed_database():
     """Seed defaults if tables are empty, and run safe migrations."""
+    import os as _os, json as _json
     db = next(get_db())
     try:
-        # --- Migration: Add missing columns to recipes if needed ---
         from sqlalchemy import inspect as sa_inspect
         try:
             inspector = sa_inspect(engine)
+
+            # ── Recipe column migrations ──────────────────────────────────
             if inspector.has_table("recipes"):
                 existing_cols = [col["name"] for col in inspector.get_columns("recipes")]
 
@@ -142,36 +144,34 @@ def seed_database():
                 if "version_tag" not in existing_cols:
                     print("⚙️  Migrating: adding 'version_tag' to recipes…")
                     with engine.begin() as conn:
-                        conn.execute(text("ALTER TABLE recipes ADD COLUMN version_tag VARCHAR NOT NULL DEFAULT 'V1'"))
+                        conn.execute(text("ALTER TABLE recipes ADD COLUMN version_tag VARCHAR"))
+                        conn.execute(text("UPDATE recipes SET version_tag = 'V1' WHERE version_tag IS NULL"))
 
                 if "species" not in existing_cols:
                     print("⚙️  Migrating: adding 'species' to recipes…")
                     with engine.begin() as conn:
-                        conn.execute(text("ALTER TABLE recipes ADD COLUMN species VARCHAR DEFAULT 'General'"))
+                        conn.execute(text("ALTER TABLE recipes ADD COLUMN species VARCHAR"))
+                        conn.execute(text("UPDATE recipes SET species = 'General' WHERE species IS NULL"))
 
+            # ── Ingredient column migrations ───────────────────────────────
             if inspector.has_table("ingredients"):
                 existing_ing_cols = [col["name"] for col in inspector.get_columns("ingredients")]
+
                 if "is_active" not in existing_ing_cols:
                     print("⚙️  Migrating: adding 'is_active' to ingredients…")
                     with engine.begin() as conn:
-                        conn.execute(text("ALTER TABLE ingredients ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT TRUE"))
+                        # Use integer 1 for SQLite compatibility (avoids TRUE keyword on old SQLite)
+                        conn.execute(text("ALTER TABLE ingredients ADD COLUMN is_active BOOLEAN"))
+                        conn.execute(text("UPDATE ingredients SET is_active = 1"))
                 else:
-                    # Data migration: any row with is_active=FALSE that was never
-                    # explicitly deactivated by the user should be set to TRUE.
-                    # This fixes rows inserted by seed_inrae.py or DEFAULT_INGREDIENTS
-                    # before this column existed.
+                    # Fix any NULL rows (e.g. seeded before column existed)
                     with engine.begin() as conn:
-                        result = conn.execute(text(
-                            "UPDATE ingredients SET is_active = 1 WHERE is_active IS NULL OR is_active = 0"
-                        ))
-                        if result.rowcount > 0:
-                            print(f"⚙️  Data migration: set is_active=TRUE for {result.rowcount} ingredient(s)")
+                        conn.execute(text("UPDATE ingredients SET is_active = 1 WHERE is_active IS NULL"))
 
         except Exception as e:
             print(f"Migration warning: {e}")
-        # ------------------------------------------------------------
 
-
+        # ── Seed empty tables ────────────────────────────────────────────
         if db.query(IngredientDB).count() == 0:
             for row in DEFAULT_INGREDIENTS:
                 db.add(IngredientDB(**row))
@@ -181,6 +181,27 @@ def seed_database():
             for row in DEFAULT_RECIPES:
                 db.add(RecipeDB(**row))
             db.commit()
+
+        # ── Auto-restore missing nutrients from INRAE JSON ─────────────────
+        # If the JSON is on disk and some ingredients have < 5 nutrients,
+        # patch them silently to recover from the lite=true save bug.
+        try:
+            json_path = _os.path.join(_os.path.dirname(__file__), "inrae_scraped_data_full.json")
+            if _os.path.exists(json_path):
+                with open(json_path, "r", encoding="utf-8") as f:
+                    inrae_list = _json.load(f)
+                inrae_dict = {item["name"]: item.get("nutrients", {}) for item in inrae_list}
+                patched = 0
+                for ing in db.query(IngredientDB).all():
+                    if ing.name in inrae_dict and (not ing.nutrients or len(ing.nutrients) < 5):
+                        ing.nutrients = inrae_dict[ing.name]
+                        patched += 1
+                if patched > 0:
+                    db.commit()
+                    print(f"⚙️  Auto-restored nutrients for {patched} ingredient(s) from INRAE JSON")
+        except Exception as e:
+            print(f"Auto-restore warning: {e}")
+
     finally:
         db.close()
 
