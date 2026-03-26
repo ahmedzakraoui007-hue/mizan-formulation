@@ -37,6 +37,7 @@ export default function RecipesPage() {
   const [globalIngredientNames, setGlobalIngredientNames] = useState<string[]>([]);
   const [fetching, setFetching] = useState(true);
   const [aiLoadingFor, setAiLoadingFor] = useState<number | null>(null);
+  const [ocrLoadingFor, setOcrLoadingFor] = useState<number | null>(null);
   const [standards, setStandards] = useState<any[]>([]);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
@@ -386,9 +387,73 @@ export default function RecipesPage() {
        });
        return newCols;
     });
-    alert(`Standard "${std.name}" appliqué avec succès !`);
-    } catch (e: any) {
-      alert("Erreur lors de l'application: " + e.message);
+  };
+
+  const scanFiche = async (masterId: number, targetId: number, species: string, file: File) => {
+    setOcrLoadingFor(targetId);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      
+      const res = await fetch(`${API}/api/recipes/extract-bounds?species=${encodeURIComponent(species)}`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err.detail || "Erreur lors du scan.");
+        return;
+      }
+
+      const data = await res.json();
+      const suggestions = data.suggestions;
+
+      setRecipes(prev => prev.map(master => {
+        if (master.id !== masterId) return master;
+        
+        const applySuggestions = (rec: Recipe) => {
+          const updatedConstraints = { ...rec.constraints };
+          Object.entries(suggestions).forEach(([elementKey, bounds]: [string, any]) => {
+            if (bounds.min !== null || bounds.max !== null) {
+              if (!updatedConstraints[elementKey]) updatedConstraints[elementKey] = {};
+              if (bounds.min !== null) updatedConstraints[elementKey].min = bounds.min;
+              if (bounds.max !== null) updatedConstraints[elementKey].max = bounds.max;
+            }
+          });
+          return updatedConstraints;
+        };
+
+        if (targetId === master.id) {
+          const updated = { ...master, constraints: applySuggestions(master) };
+          scheduleSave(updated);
+          return updated;
+        } else {
+          const updatedVersions = master.versions.map(ver => 
+            ver.id === targetId ? { ...ver, constraints: applySuggestions(ver) } : ver
+          );
+          const updatedVersion = updatedVersions.find(v => v.id === targetId)!;
+          scheduleSave(updatedVersion);
+          return { ...master, versions: updatedVersions };
+        }
+      }));
+
+      setNutrientCols(prev => {
+        const newCols = [...prev];
+        Object.keys(suggestions).forEach(k => {
+          if (!newCols.includes(k) && !globalIngredientNames.includes(k)) {
+            newCols.push(k);
+          }
+        });
+        return newCols;
+      });
+
+      alert(`✅ Scan réussi ! ${Object.keys(suggestions).length} paramètres extraits.`);
+
+    } catch (e) {
+      alert("Erreur réseau lors du scan.");
+    } finally {
+      setOcrLoadingFor(null);
     }
   };
 
@@ -549,6 +614,27 @@ export default function RecipesPage() {
                       className="text-amber-700 hover:text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold flex items-center shadow-sm disabled:opacity-50">
                       {aiLoadingFor === activeItem.id ? "⏳ Analyse IA..." : "✨ Suggérer Best Practices"}
                     </button>
+
+                    <div className="relative">
+                      <button 
+                        onClick={() => document.getElementById(`file-upload-${activeItem.id}`)?.click()}
+                        disabled={ocrLoadingFor === activeItem.id}
+                        className="text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold flex items-center shadow-sm disabled:opacity-50"
+                      >
+                        {ocrLoadingFor === activeItem.id ? "⏳ Scan en cours..." : "📸 Scanner une Fiche"}
+                      </button>
+                      <input 
+                        id={`file-upload-${activeItem.id}`}
+                        type="file" 
+                        accept="image/*,.pdf" 
+                        className="hidden" 
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) scanFiche(masterRec.id, activeItem.id, activeItem.species || "General", file);
+                          e.target.value = ''; // Reset file input to allow re-uploading the same file
+                        }}
+                      />
+                    </div>
 
                     <button onClick={() => createRevision(masterRec.id, activeItem.id)} title="Nouvelle Version"
                       className="text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold flex items-center gap-1 shadow-sm">

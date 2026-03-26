@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Query, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict
@@ -383,6 +383,17 @@ async def api_suggest_bounds(request: SuggestBoundsRequest):
         raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
         raise HTTPException(status_code=500, detail="Erreur interne du serveur lors de l'appel à l'IA.")
+
+@app.post("/api/recipes/extract-bounds")
+async def api_extract_bounds(file: UploadFile = File(...), species: str = "Standard"):
+    try:
+        from ai_service import extract_bounds_from_image
+        contents = await file.read()
+        suggestions = await extract_bounds_from_image(contents, file.content_type, species)
+        return {"status": "ok", "suggestions": suggestions}
+    except Exception as e:
+        print(f"Error in extract-bounds API: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 class RevisionRequest(BaseModel):
     version_tag: str

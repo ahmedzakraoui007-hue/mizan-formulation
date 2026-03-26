@@ -249,3 +249,77 @@ RÈGLES ABSOLUES DU SOLVEUR (A LIRE ATTENTIVEMENT) :
     except Exception as e:
         print(f"Gemini Diagnose Error: {e}")
         return f"❌ Impossible de joindre l'IA Mizan pour le diagnostic : {str(e)}"
+
+
+async def extract_bounds_from_image(image_bytes: bytes, mime_type: str, species: str = "Standard") -> dict:
+    import json
+    if not GEMINI_API_KEY:
+        raise ValueError("GEMINI_API_KEY n'est pas configurée.")
+
+    allowed_keys = _build_allowed_keys(species)
+    allowed_keys_str = "\n".join(f'   - "{k}"' for k in allowed_keys)
+
+    system_instruction = f""""OCR Specialist & Animal Nutritionist": Your goal is to extract nutritional minimum (min) and maximum (max) constraints from an image of a technical datasheet (genetic specs).
+
+RÈGLES ABSOLUES :
+1. "Data Integrity": Extract values exactly as shown in the table. 
+2. "Unit Awareness": If the document says "18.5% Protein", min is 18.5. If it says "8 g/kg Lysine", and the target key is "Lysine %", convert it to 0.8%.
+3. "Strict Mapping": You MUST strictly map the extracted values to the following set of ERP nutrient keys for the species "{species}". If a nutrient in the image does not match any allowed key, skip it.
+   Allowed Keys:
+{allowed_keys_str}
+
+4. Tu DOIS renvoyer UNIQUEMENT un objet JSON brut et valide (AUCUN markdown, AUCUN texte).
+5. Format attendu : {{"Nom Element Exact": {{"min": float ou null, "max": float ou null}}}}
+
+Exemple :
+{{
+  "Protéine %": {{"min": 21.0, "max": null}},
+  "Énergie Volaille KCal/Kg": {{"min": 3000, "max": 3100}}
+}}"""
+
+    try:
+        model = genai.GenerativeModel('gemini-2.0-flash')
+        
+        # Prepare the multi-modal prompt
+        content = [
+            system_instruction,
+            {
+                "mime_type": mime_type,
+                "data": image_bytes
+            }
+        ]
+        
+        response = await model.generate_content_async(content)
+        
+        # Strip markdown wrapper
+        raw_text = response.text.strip()
+        if raw_text.startswith("```json"):
+            raw_text = raw_text[7:]
+        if raw_text.endswith("```"):
+            raw_text = raw_text[:-3]
+
+        parsed_json = json.loads(raw_text.strip())
+        
+        # Reuse the normalisation logic from suggest_best_practice_bounds
+        # (This handles LLM drift and ensures keys match perfectly)
+        energy_key = next((k for k in allowed_keys if "nergie" in k or "UFL" in k), "Énergie KCal/Kg")
+        lysine_key  = next((k for k in allowed_keys if "Lysine" in k), "Lysine %")
+        met_key     = next((k for k in allowed_keys if "thionine" in k), "Méthionine %")
+
+        key_mapping = {
+            "Énergie": energy_key, "Energie": energy_key, "UFL": energy_key,
+            "Lysine": lysine_key, "Methionine": met_key, "Méthionine": met_key,
+            "Proteine": "Protéine %", "Calcium": "Calcium %", "Phosphore": "Phosphore %"
+        }
+
+        normalized = {}
+        for key, bounds in parsed_json.items():
+            mapped_key = key_mapping.get(key, key)
+            if mapped_key in allowed_keys:
+                normalized[mapped_key] = bounds
+        
+        return normalized
+
+    except Exception as e:
+        print(f"Gemini OCR API Error: {e}")
+        raise ValueError(f"Erreur d'analyse OCR : {str(e)}")
