@@ -83,10 +83,9 @@ export const getNutrientUnit = (key: string): string => {
   return "";
 };
 
-
 export const isNutrientSpecificToSpecies = (key: string, species: string): boolean => {
   const mapped = mapSpecies(species);
-  
+
   // Important primary nutrients per species (whitelist)
   const primaryNutrients: Record<string, string[]> = {
     Volaille: ["Protéine %", "EMc Volaille (kcal/kg)", "Lysine %", "Méthionine %", "Calcium %", "Phosphore %", "Amidon %"],
@@ -103,13 +102,13 @@ export const isNutrientSpecificToSpecies = (key: string, species: string): boole
     Porc: /pig|porc|pork|swine|sow|piglet/i,
     Ruminant: /ruminant|bovine|bull|cow|calf|sheep|lamb|goat|ufl|ufv|pdi[aeim]|uem|inra 2018/i,
   };
-  
+
   const regex = positiveAffinity[mapped];
   if (!regex) return false;
-  
-  // Even if it matches regex, if it's very obscure, we might want to skip.
+
   return regex.test(key);
 };
+
 // Bidirectional alias map: French/legacy recipe keys ↔ INRAE English keys
 const NUTRIENT_ALIAS_MAP: Record<string, string[]> = {
   "Crude protein (%)": ["Protéine %", "Proteine %", "Protein %"],
@@ -163,7 +162,7 @@ const _findNutrientValue = (
 
 /**
  * Returns nutrients to display in reports.
- * STRICT MODE: Only shows nutrients explicitly constrained in the recipe (with a Min/Max/Exact value).
+ * Shows ALL nutrients explicitly added to the recipe's nutritional targets list.
  * If no constraints, falls back to species-specific primary nutrients.
  */
 export const getTopNutrients = (

@@ -387,6 +387,9 @@ export default function RecipesPage() {
        });
        return newCols;
     });
+  } catch (e) {
+    console.error("Erreur lors de l'application du standard:", e);
+  }
   };
 
   const scanFiche = async (masterId: number, targetId: number, species: string, file: File) => {

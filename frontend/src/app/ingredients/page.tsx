@@ -264,6 +264,12 @@ export default function IngredientsPage() {
   ) : {};
 
   const totalNutrients = panel ? Object.keys(panel.nutrients).length : 0;
+
+  // Strip trailing unit from a nutrient key for display (unit is shown separately)
+  // e.g. "Dry matter (%)" → "Dry matter", "Lysine (g/kg)" → "Lysine", "Protéine %" → "Protéine"
+  const formatNutrientLabel = (key: string): string =>
+    key.replace(/\s*\([^)]*\)\s*$/, '').replace(/\s+%\s*$/, '').trim();
+
   const cell = "bg-white border border-gray-200 rounded-lg px-3 py-2 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm transition-all";
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -484,7 +490,7 @@ export default function IngredientsPage() {
                         <div key={key}
                           className={`flex items-center justify-between px-3 py-2 rounded-xl border ${cat.badge} transition-all hover:shadow-sm`}>
                           <div className="flex-1">
-                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{key}</p>
+                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{formatNutrientLabel(key)}</p>
                             <div className="flex items-center gap-2">
                               <input
                                 type="number"

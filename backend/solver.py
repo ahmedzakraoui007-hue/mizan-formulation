@@ -10,8 +10,9 @@ NUTRIENT_KEY_ALIASES: dict[str, list[str]] = {
     "Crude protein (%)": ["Protéine %", "Proteine %", "Protein %", "Protein", "Protéine", "Crude Protein (%)"],
     # Energy - poultry AMEn
     "AMEn broiler (kcal) (kcal/kg)": [
-        "Énergie (kcal/kg)", "Energie (kcal/kg)", "Énergie Volaille KCal/Kg",
-        "Energie Volaille KCal/Kg", "AMEn broiler (kcal/kg)", "Energy (kcal/kg)",
+        "Énergie", "Energie", "Énergie (kcal/kg)", "Energie (kcal/kg)",
+        "Énergie Volaille KCal/Kg", "Energie Volaille KCal/Kg",
+        "AMEn broiler (kcal/kg)", "Energy (kcal/kg)",
         "ME poultry (kcal/kg)", "Énergie KCal/Kg", "Energie KCal/Kg"
     ],
     # Energy - pig ME
@@ -62,21 +63,32 @@ for canonical, aliases in NUTRIENT_KEY_ALIASES.items():
     # Also normalize the canonical key itself
     _ALIAS_TO_CANONICAL[canonical] = canonical
 
+# Build forward map: canonical → all known forms (canonical + all aliases)
+# Used by _get_nutrient to try every variant when the primary lookup fails.
+_CANONICAL_TO_ALL_KEYS: dict[str, list[str]] = {}
+for canonical, aliases in NUTRIENT_KEY_ALIASES.items():
+    _CANONICAL_TO_ALL_KEYS[canonical] = [canonical] + aliases
+
 def _resolve_nutrient_key(key: str) -> str:
     """Return the canonical INRAE key for any known alias, or the key itself."""
     return _ALIAS_TO_CANONICAL.get(key, key)
 
 def _get_nutrient(nutrients: dict, key: str) -> float:
-    """Look up key in nutrients dict, trying the canonical INRAE key first, then the raw key."""
+    """Look up a nutrient value, trying the canonical key then all known aliases.
+
+    This handles mismatches between how INRAE stores keys (e.g. 'AMEn broiler (kcal/kg)')
+    and the canonical form used internally (e.g. 'AMEn broiler (kcal) (kcal/kg)'),
+    as well as legacy recipe keys like 'Énergie' that are not stored verbatim in INRAE data.
+    """
     canonical = _resolve_nutrient_key(key)
-    val = nutrients.get(canonical)
-    if val is not None:
-        return float(val)
-    # Fallback: try the original key unchanged (handles ingredient-specific user-named keys)
+    # Try every known form for this canonical (canonical + all aliases)
+    for try_key in _CANONICAL_TO_ALL_KEYS.get(canonical, [canonical]):
+        val = nutrients.get(try_key)
+        if val is not None:
+            return float(val)
+    # Final fallback: the original raw key (handles user-defined nutrient names)
     val = nutrients.get(key)
-    if val is not None:
-        return float(val)
-    return 0.0
+    return float(val) if val is not None else 0.0
 
 
 
@@ -349,10 +361,13 @@ def solve_multi_blend(ingredients, recipes):
         achieved_nutrients = {}
         all_nutr_keys = set()
         for ing in ingredients:
-            all_nutr_keys.update(ing.nutrients.keys())
-            
+            if ing.nutrients:
+                all_nutr_keys.update(ing.nutrients.keys())
+
         for nutr_key in all_nutr_keys:
-            achieved = sum(ing.nutrients.get(nutr_key, 0.0) * x[r, i].solution_value() for i, ing in enumerate(ingredients)) / raw_tons
+            achieved = (
+                sum((ing.nutrients or {}).get(nutr_key, 0.0) * x[r, i].solution_value() for i, ing in enumerate(ingredients)) / raw_tons
+            ) if raw_tons > 0 else 0.0
             achieved_nutrients[nutr_key] = round(achieved, 2)
             
         # Cost per bag
