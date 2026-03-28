@@ -1,5 +1,97 @@
 from ortools.linear_solver import pywraplp
 
+# ═══════════════════════════════════════════════════════════════════════
+# Nutrient key alias map: French/legacy recipe keys → exact INRAE keys
+# This ensures the solver can find nutrient values regardless of the
+# naming convention used in the recipe constraints.
+# ═══════════════════════════════════════════════════════════════════════
+NUTRIENT_KEY_ALIASES: dict[str, list[str]] = {
+    # Protein
+    "Crude protein (%)": ["Protéine %", "Proteine %", "Protein %", "Protein", "Protéine", "Crude Protein (%)"],
+    # Energy - poultry AMEn
+    "AMEn broiler (kcal) (kcal/kg)": [
+        "Énergie", "Energie", "Énergie (kcal/kg)", "Energie (kcal/kg)",
+        "Énergie Volaille KCal/Kg", "Energie Volaille KCal/Kg",
+        "AMEn broiler (kcal/kg)", "Energy (kcal/kg)",
+        "ME poultry (kcal/kg)", "Énergie KCal/Kg", "Energie KCal/Kg"
+    ],
+    # Energy - pig ME
+    "ME growing pig (kcal) (kcal/kg)": [
+        "Énergie Porc KCal/Kg", "Energie Porc KCal/Kg", "ME pig (kcal/kg)"
+    ],
+    # Amino acids - total (g/kg)
+    "Lysine (g/kg)": ["Lysine %", "Lysine"],
+    "Methionine (g/kg)": ["Méthionine %", "Methionine %", "Méthionine"],
+    "Methionine + cystine (g/kg)": ["M+C %", "Méthionine+Cystine %", "Met+Cys %", "cys"],
+    "Cystine (g/kg)": ["Cystine %"],
+    "Threonine (g/kg)": ["Thréonine %", "Threonine %", "Thréonine"],
+    "Valine (g/kg)": ["Valine %", "Valine"],
+    "Isoleucine (g/kg)": ["Isoleucine %", "Isoleucine"],
+    "Arginine (g/kg)": ["Arginine %", "Arginine"],
+    "Tryptophan (g/kg)": ["Tryptophan %", "Tryptophane %", "Tryptophan"],
+    "Leucine (g/kg)": ["Leucine %", "Leucine"],
+    # Amino acids - poultry ileal standardized (g/kg)
+    "Lysine, ileal standardized, poultry (g/kg)": ["Lysine Dig. Volaille %"],
+    "Methionine, ileal standardized, poultry (g/kg)": ["Méthionine Dig. Volaille %", "Methionine Dig. Volaille %"],
+    "Methionine + cystine, ileal standardized, poultry (g/kg)": ["M+C Dig. Volaille %"],
+    "Threonine, ileal standardized, poultry (g/kg)": ["Thréonine Dig. Volaille %"],
+    "Valine, ileal standardized, poultry (g/kg)": ["Valine Dig. Volaille %"],
+    "Isoleucine, ileal standardized, poultry (g/kg)": ["Isoleucine Dig. Volaille %"],
+    "Arginine, ileal standardized, poultry (g/kg)": ["Arginine Dig. Volaille %"],
+    "Tryptophan, ileal standardized, poultry (g/kg)": ["Tryptophan Dig. Volaille %"],
+    "Leucine, ileal standardized, poultry (g/kg)": ["Leucine Dig. Volaille %"],
+    # Minerals (g/kg)
+    "Calcium (g/kg)": ["Calcium %", "Calcium", "Ca %"],
+    "Phosphorus (g/kg)": ["Phosphore %", "Phosphorus %", "Phosphore", "P %"],
+    "Magnesium (g/kg)": ["Magnesium %", "Magnésium %", "Mg %", "Magnesium"],
+    "Sodium (g/kg)": ["Sodium %", "Na %", "Na g/kg", "Sodium", "Sodium g/kg"],
+    "Chlorine (g/kg)": ["Chlorine %", "Chlorure %", "Cl %", "Chloride %"],
+    "Potassium (g/kg)": ["Potassium %", "K %", "Potassium"],
+    # Fiber
+    "Crude fibre (%)": ["Fibre %", "Fiber %", "Fibre brute %", "Crude Fibre (%)", "CF %"],
+    # Fat
+    "Crude fat (%)": ["Matière Grasse %", "MG %", "Fat %", "Lipides %"],
+    # Dry matter
+    "Dry matter (%)": ["Matière Sèche %", "MS %", "DM %"],
+}
+
+# Build reverse map: alias → canonical INRAE key
+_ALIAS_TO_CANONICAL: dict[str, str] = {}
+for canonical, aliases in NUTRIENT_KEY_ALIASES.items():
+    for alias in aliases:
+        _ALIAS_TO_CANONICAL[alias] = canonical
+    # Also normalize the canonical key itself
+    _ALIAS_TO_CANONICAL[canonical] = canonical
+
+# Build forward map: canonical → all known forms (canonical + all aliases)
+# Used by _get_nutrient to try every variant when the primary lookup fails.
+_CANONICAL_TO_ALL_KEYS: dict[str, list[str]] = {}
+for canonical, aliases in NUTRIENT_KEY_ALIASES.items():
+    _CANONICAL_TO_ALL_KEYS[canonical] = [canonical] + aliases
+
+def _resolve_nutrient_key(key: str) -> str:
+    """Return the canonical INRAE key for any known alias, or the key itself."""
+    return _ALIAS_TO_CANONICAL.get(key, key)
+
+def _get_nutrient(nutrients: dict, key: str) -> float:
+    """Look up a nutrient value, trying the canonical key then all known aliases.
+
+    This handles mismatches between how INRAE stores keys (e.g. 'AMEn broiler (kcal/kg)')
+    and the canonical form used internally (e.g. 'AMEn broiler (kcal) (kcal/kg)'),
+    as well as legacy recipe keys like 'Énergie' that are not stored verbatim in INRAE data.
+    """
+    canonical = _resolve_nutrient_key(key)
+    # Try every known form for this canonical (canonical + all aliases)
+    for try_key in _CANONICAL_TO_ALL_KEYS.get(canonical, [canonical]):
+        val = nutrients.get(try_key)
+        if val is not None:
+            return float(val)
+    # Final fallback: the original raw key (handles user-defined nutrient names)
+    val = nutrients.get(key)
+    return float(val) if val is not None else 0.0
+
+
+
 
 # ═══════════════════════════════════════════════════════════════════════
 #  Single-Blend Solver  (backward compatible — unchanged)
@@ -131,17 +223,32 @@ def solve_multi_blend(ingredients, recipes):
         )
 
     # ── C3  Per-recipe nutritional constraints ───────────────
+    trace_log = []  # initialized once, accumulates entries across all recipes
     for r, rec in enumerate(recipes):
         yld = getattr(rec, 'process_yield_percent', 100.0) or 100.0
         raw_tons = rec.demand_tons / (yld / 100.0)
+        
+        trace_log.append(f"TRACE RECIPE '{rec.name}' | Demand Raw Tons: {raw_tons}")
 
         # Set of exact ingredient names to distinguish ingredient constraints from nutritional constraints
         ing_names = {ing.name: i for i, ing in enumerate(ingredients)}
 
-        # Lock out any ingredients that are not explicitly part of this recipe's constraints
-        for i, ing in enumerate(ingredients):
-            if ing.name not in rec.constraints:
-                solver.Add(x[r, i] == 0)
+        # Identify ingredient-level constraints (keys that are ingredient names)
+        # These are ingredients explicitly referenced in the recipe constraints dict
+        ingredient_constrained_keys = {key for key in rec.constraints.keys() if key in ing_names}
+
+        # If ANY ingredient-level constraints exist in this recipe, lock all
+        # unconstrained active ingredients to 0 (opt-in mode: user picks exact ingredients).
+        # If ONLY nutritional constraints exist (no ingredient names in constraints),
+        # allow ALL active ingredients to be used freely (the solver picks the best mix).
+        has_ingredient_constraints = len(ingredient_constrained_keys) > 0
+        if has_ingredient_constraints:
+            trace_log.append(f"  [LOCK] Mode INGREDIENTS. Seuls ces ingrédients sont autorisés : {list(ingredient_constrained_keys)}")
+            for i, ing in enumerate(ingredients):
+                if ing.name not in ingredient_constrained_keys:
+                    solver.Add(x[r, i] == 0)
+        else:
+            trace_log.append("  [LOCK] Mode NUTRITION. Tous les ingrédients actifs sont libres.")
 
         # Loop over every constrained parameter (can be a nutrient OR an ingredient) defined in the recipe
         for key, limit in rec.constraints.items():
@@ -151,6 +258,7 @@ def solve_multi_blend(ingredients, recipes):
                 i = ing_names[key]
                 # limit.min and limit.max are expressed as percentages (e.g., 60 for 60%).
                 # raw_tons is the total weight basis.
+                trace_log.append(f"  [ING] {key}: min={limit.min}, max={limit.max}, exact={limit.exact}")
                 if limit.exact is not None:
                     solver.Add(x[r, i] == (limit.exact / 100.0) * raw_tons)
                 else:
@@ -161,8 +269,29 @@ def solve_multi_blend(ingredients, recipes):
             
             else:
                 # ── NUTRITIONAL CONSTRAINT ──
+                # Resolve the canonical INRAE key from any French/legacy alias
+                canonical_key = _resolve_nutrient_key(key)
+                
+                # Unit scaling: INRAE stores minerals/amino acids in g/kg but
+                # legacy recipe constraints may be in % (1% = 10 g/kg).
+                is_gkg = canonical_key.endswith("(g/kg)")
+                is_pct_constraint = key.endswith("%") or key in (
+                    "Calcium %", "Phosphore %", "Magnesium %", "Sodium %",
+                    "Chloride %", "Chlorine %", "Potassium %",
+                    "Lysine %", "Méthionine %", "Methionine %",
+                    "Thréonine %", "Threonine %", "Valine %",
+                    "Isoleucine %", "Arginine %", "Tryptophan %",
+                    "Leucine %", "Cystine %", "M+C %", "cys", "Na %"
+                )
+                scale = (1.0 / 10.0) if (is_gkg and is_pct_constraint) else 1.0
+
+                trace_log.append(f"  [NUT] key='{key}' -> canonical='{canonical_key}' | scale={scale} | min={limit.min} max={limit.max} exact={limit.exact}")
+
                 # Linear expression for the total amount of this nutrient from all ingredients
-                nutr_expr = sum(ingredients[i].nutrients.get(key, 0.0) * x[r, i] for i in range(n_ings))
+                nutr_expr = sum(
+                    _get_nutrient(ingredients[i].nutrients or {}, key) * scale * x[r, i]
+                    for i in range(n_ings)
+                )
                 
                 # Use exact target if provided
                 if limit.exact is not None:
@@ -174,11 +303,15 @@ def solve_multi_blend(ingredients, recipes):
                         solver.Add(nutr_expr <= limit.max * raw_tons)
 
     # ── Solve ──────────────────────────────────────────────────────
+    trace_log.append(f"=== SOLVER: {solver.NumVariables()} vars, {solver.NumConstraints()} constraints ===")
     status = solver.Solve()
     if status != pywraplp.Solver.OPTIMAL:
+        trace_log.append(f"=== SOLVER RESULT: INFEASIBLE (status={status}) ===")
+        trace_str = "\n".join(trace_log)
+        print(trace_str)   # goes to server log (Render)
         raise Exception(
-            "Pas de solution réalisable — les contraintes de stock, "
-            "rendement ou nutrition sont trop restrictives."
+            "Pas de solution réalisable — les contraintes de stock, rendement ou nutrition sont trop restrictives.\n\n" +
+            trace_str
         )
 
     # ── Build response ─────────────────────────────────────────────
@@ -228,10 +361,13 @@ def solve_multi_blend(ingredients, recipes):
         achieved_nutrients = {}
         all_nutr_keys = set()
         for ing in ingredients:
-            all_nutr_keys.update(ing.nutrients.keys())
-            
+            if ing.nutrients:
+                all_nutr_keys.update(ing.nutrients.keys())
+
         for nutr_key in all_nutr_keys:
-            achieved = sum(ing.nutrients.get(nutr_key, 0.0) * x[r, i].solution_value() for i, ing in enumerate(ingredients)) / raw_tons
+            achieved = (
+                sum((ing.nutrients or {}).get(nutr_key, 0.0) * x[r, i].solution_value() for i, ing in enumerate(ingredients)) / raw_tons
+            ) if raw_tons > 0 else 0.0
             achieved_nutrients[nutr_key] = round(achieved, 2)
             
         # Cost per bag

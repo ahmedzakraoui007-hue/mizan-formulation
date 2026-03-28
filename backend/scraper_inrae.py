@@ -129,7 +129,7 @@ def parse_nutrient_table(page_source: str) -> dict[str, float]:
                         if parsed != 0.0 or "0" in raw_val_str:
                             val = parsed
                             break
-                            
+
             # Extract unit from column 3 or 5
             unit = ""
             for col_idx in [3, 5]:

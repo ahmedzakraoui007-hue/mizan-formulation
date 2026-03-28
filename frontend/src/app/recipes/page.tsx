@@ -37,14 +37,26 @@ export default function RecipesPage() {
   const [globalIngredientNames, setGlobalIngredientNames] = useState<string[]>([]);
   const [fetching, setFetching] = useState(true);
   const [aiLoadingFor, setAiLoadingFor] = useState<number | null>(null);
+  const [ocrLoadingFor, setOcrLoadingFor] = useState<number | null>(null);
+  const [standards, setStandards] = useState<any[]>([]);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
   const fetchRecipes = useCallback(async () => {
     setFetching(true);
     try {
-      const [recRes, ingRes] = await Promise.all([
+      const [recRes, ingRes, stdRes] = await Promise.all([
         fetch(`${API}/api/recipes`),
-        fetch(`${API}/api/ingredients`)
+        // Use lite=true: only need name & is_active, NOT the full 2MB nutrients payload.
+        // The nutrient keys come from the DB nutrients but we only need them for the dropdown.
+        // We fetch lite now and separately trigger a full nutrient-keys call.
+        fetch(`${API}/api/ingredients?lite=true`),
+        fetch(`${API}/api/standards`)
       ]);
+      
+      if (stdRes.ok) {
+        const stds = await stdRes.json();
+        setStandards(stds);
+      }
       
       if (recRes.ok) {
         const recs: RecipeGrouped[] = await recRes.json();
@@ -65,18 +77,28 @@ export default function RecipesPage() {
 
       if (ingRes.ok) {
         const ings = await ingRes.json();
-        const keys = new Set<string>();
         const itemNames = new Set<string>();
         ings.forEach((ing: any) => {
-          if (ing.is_active !== false) {
-            itemNames.add(ing.name);
-          }
-          // Only actual nutrients or special keys, NOT ingredient names
-          Object.keys(ing.nutrients || {}).forEach(k => keys.add(k));
+          if (ing.is_active !== false) itemNames.add(ing.name);
         });
-        setAvailableKeys(Array.from(keys).sort());
         setGlobalIngredientNames(Array.from(itemNames).sort());
       }
+
+      // Fetch available nutrient keys from a dedicated lightweight backend endpoint.
+      // The backend already returns full nutrients per ingredient — we query one ingredient
+      // to get all possible key names for the recipe dropdown.
+      // We do this in a background fetch so the page is usable immediately.
+      try {
+        // We only need key names. Fetch the first ingredient with full nutrients to build the key list,
+        // or better: fetch all ingredients and collect unique keys (cache-friendly with browser).
+        const fullRes = await fetch(`${API}/api/ingredients`);
+        if (fullRes.ok) {
+          const fullIngs = await fullRes.json();
+          const keys = new Set<string>();
+          fullIngs.forEach((ing: any) => Object.keys(ing.nutrients || {}).forEach((k: string) => keys.add(k)));
+          setAvailableKeys(Array.from(keys).sort());
+        }
+      } catch { /* non-critical */ }
 
     } catch { /* ignored */ }
     setFetching(false);
@@ -175,9 +197,9 @@ export default function RecipesPage() {
   };
 
   const removeIngredientFromRecipe = (masterId: number, targetId: number, ingredientKey: string) => {
-    // Remove from nutrientColumns so the row disappears from the table
-    setNutrientCols(prev => prev.filter(c => c !== ingredientKey));
-    // Also deep-remove from constraints state and schedule a save
+    // IMPORTANT: do NOT remove from global nutrientColumns — that would hide rows in OTHER recipes.
+    // The ingredient/nutrient row is conditionally rendered based on Object.keys(activeItem.constraints),
+    // so removing it from constraints is sufficient to hide the row in this recipe.
     setRecipes(prev => {
       const newRecs = prev.map(master => {
         if (master.id !== masterId) return master;
@@ -211,7 +233,7 @@ export default function RecipesPage() {
         body: JSON.stringify({
           name: "Nouvelle Formule", demand_tons: 10,
           process_yield_percent: 100.0, bag_size_kg: 50.0,
-          constraints: {},
+          constraints: {}, species: "General",
         }),
       });
       if (res.ok) {
@@ -225,7 +247,13 @@ export default function RecipesPage() {
 
   const rmRec = async (masterId: number, targetId: number) => {
     try {
-      await fetch(`${API}/api/recipes/${targetId}`, { method: "DELETE" });
+      const res = await fetch(`${API}/api/recipes/${targetId}`, { method: "DELETE" });
+      if (!res.ok) {
+        const errorText = await res.text();
+        alert(`Erreur du serveur lors de la suppression : ${errorText}`);
+        return;
+      }
+
       setRecipes(prev => {
         if (masterId === targetId) {
           // Deleted the master recipe, remove the whole group
@@ -235,10 +263,14 @@ export default function RecipesPage() {
           return prev.map(m => m.id === masterId ? { ...m, versions: m.versions.filter(v => v.id !== targetId) } : m);
         }
       });
+      
       if (masterId !== targetId) {
         setActiveVersions(prev => ({ ...prev, [masterId]: masterId })); // Reset to master
       }
-    } catch { /* ignore */ }
+      setConfirmDeleteId(null);
+    } catch (e: any) {
+      alert(`Erreur de connexion lors de la suppression : ${e.message}`);
+    }
   };
 
   const askAIForBounds = async (masterId: number, targetId: number, recipeName: string) => {
@@ -321,6 +353,110 @@ export default function RecipesPage() {
       alert("Impossible de joindre le service IA.");
     } finally {
       setAiLoadingFor(null);
+    }
+  };
+
+  const applyStandard = (masterId: number, targetId: number, standardId: string) => {
+    try {
+      const std = standards.find(s => s.id === standardId);
+      if (!std) { alert("Standard introuvable !"); return; }
+      
+      const newConstraints = JSON.parse(JSON.stringify(std.constraints));
+      
+      setRecipes(prev => prev.map(master => {
+        if (master.id !== masterId) return master;
+        
+        if (targetId === master.id) {
+          const updated = { ...master, constraints: newConstraints, species: std.species } as unknown as RecipeGrouped;
+          scheduleSave(updated);
+          return updated;
+      } else {
+        const updatedVersions = master.versions.map(ver =>
+          ver.id === targetId ? { ...ver, constraints: newConstraints, species: std.species } as unknown as Recipe : ver
+        );
+        const updatedVersion = updatedVersions.find(v => v.id === targetId)!;
+        scheduleSave(updatedVersion);
+        return { ...master, versions: updatedVersions };
+      }
+    }));
+    // Make sure new columns are visible
+    setNutrientCols(prev => {
+       const newCols = [...prev];
+       Object.keys(newConstraints).forEach(k => { 
+           if (!newCols.includes(k) && !globalIngredientNames.includes(k)) newCols.push(k); 
+       });
+       return newCols;
+    });
+  } catch (e) {
+    console.error("Erreur lors de l'application du standard:", e);
+  }
+  };
+
+  const scanFiche = async (masterId: number, targetId: number, species: string, file: File) => {
+    setOcrLoadingFor(targetId);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      
+      const res = await fetch(`${API}/api/recipes/extract-bounds?species=${encodeURIComponent(species)}`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err.detail || "Erreur lors du scan.");
+        return;
+      }
+
+      const data = await res.json();
+      const suggestions = data.suggestions;
+
+      setRecipes(prev => prev.map(master => {
+        if (master.id !== masterId) return master;
+        
+        const applySuggestions = (rec: Recipe) => {
+          const updatedConstraints = { ...rec.constraints };
+          Object.entries(suggestions).forEach(([elementKey, bounds]: [string, any]) => {
+            if (bounds.min !== null || bounds.max !== null) {
+              if (!updatedConstraints[elementKey]) updatedConstraints[elementKey] = {};
+              if (bounds.min !== null) updatedConstraints[elementKey].min = bounds.min;
+              if (bounds.max !== null) updatedConstraints[elementKey].max = bounds.max;
+            }
+          });
+          return updatedConstraints;
+        };
+
+        if (targetId === master.id) {
+          const updated = { ...master, constraints: applySuggestions(master) };
+          scheduleSave(updated);
+          return updated;
+        } else {
+          const updatedVersions = master.versions.map(ver => 
+            ver.id === targetId ? { ...ver, constraints: applySuggestions(ver) } : ver
+          );
+          const updatedVersion = updatedVersions.find(v => v.id === targetId)!;
+          scheduleSave(updatedVersion);
+          return { ...master, versions: updatedVersions };
+        }
+      }));
+
+      setNutrientCols(prev => {
+        const newCols = [...prev];
+        Object.keys(suggestions).forEach(k => {
+          if (!newCols.includes(k) && !globalIngredientNames.includes(k)) {
+            newCols.push(k);
+          }
+        });
+        return newCols;
+      });
+
+      alert(`✅ Scan réussi ! ${Object.keys(suggestions).length} paramètres extraits.`);
+
+    } catch (e) {
+      alert("Erreur réseau lors du scan.");
+    } finally {
+      setOcrLoadingFor(null);
     }
   };
 
@@ -461,12 +597,47 @@ export default function RecipesPage() {
                   </div>
                   
                   {/* Actions Row */}
-                  <div className="flex items-center gap-2 opacity-50 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center gap-2 flex-wrap opacity-50 group-hover:opacity-100 transition-opacity">
                     
+                    <select
+                       onChange={(e) => {
+                         const val = e.target.value;
+                         if (val) {
+                           applyStandard(masterRec.id, activeItem.id, val);
+                           setTimeout(() => { e.target.value = ""; }, 10);
+                         }
+                       }}
+                       className="text-emerald-700 hover:text-emerald-900 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold shadow-sm outline-none"
+                     >
+                       <option value="">📚 Appliquer une Norme</option>
+                       {standards.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                     </select>
+
                     <button onClick={() => askAIForBounds(masterRec.id, activeItem.id, activeItem.name)} disabled={aiLoadingFor === activeItem.id}
                       className="text-amber-700 hover:text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold flex items-center shadow-sm disabled:opacity-50">
                       {aiLoadingFor === activeItem.id ? "⏳ Analyse IA..." : "✨ Suggérer Best Practices"}
                     </button>
+
+                    <div className="relative">
+                      <button 
+                        onClick={() => document.getElementById(`file-upload-${activeItem.id}`)?.click()}
+                        disabled={ocrLoadingFor === activeItem.id}
+                        className="text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold flex items-center shadow-sm disabled:opacity-50"
+                      >
+                        {ocrLoadingFor === activeItem.id ? "⏳ Scan en cours..." : "📸 Scanner une Fiche"}
+                      </button>
+                      <input 
+                        id={`file-upload-${activeItem.id}`}
+                        type="file" 
+                        accept="image/*,.pdf" 
+                        className="hidden" 
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) scanFiche(masterRec.id, activeItem.id, activeItem.species || "General", file);
+                          e.target.value = ''; // Reset file input to allow re-uploading the same file
+                        }}
+                      />
+                    </div>
 
                     <button onClick={() => createRevision(masterRec.id, activeItem.id)} title="Nouvelle Version"
                       className="text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold flex items-center gap-1 shadow-sm">
@@ -478,10 +649,19 @@ export default function RecipesPage() {
                         ✏️ Renommer
                       </button>
                     )}
-                    <button onClick={() => { if(confirm("Supprimer cette version ? Attention, supprimer le Master supprime tout l'historique !")) rmRec(masterRec.id, activeItem.id) }} title="Supprimer"
-                      className="ml-auto text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-100 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold shadow-sm">
-                      ✕ Supprimer {isMasterActive ? "Master" : "Version"}
-                    </button>
+                    
+                    {confirmDeleteId === activeItem.id ? (
+                      <button onClick={() => rmRec(masterRec.id, activeItem.id)}
+                        className="ml-auto text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold shadow-md animate-pulse">
+                        ⚠️ Confirmer la suppression ?
+                      </button>
+                    ) : (
+                      <button onClick={() => setConfirmDeleteId(activeItem.id)}
+                        className="ml-auto text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-100 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold shadow-sm">
+                        ✕ Supprimer {isMasterActive ? "Master" : "Version"}
+                      </button>
+                    )}
+                    
                   </div>
                 </div>
               </div>

@@ -49,6 +49,10 @@ export default function OptimizationPage() {
   const [auditResult, setAuditResult] = useState<string | null>(null);
   const [auditLoading, setAuditLoading] = useState(false);
 
+  // Diagnosis AI State
+  const [diagnoseLoading, setDiagnoseLoading] = useState(false);
+  const [diagnoseResult, setDiagnoseResult] = useState<string | null>(null);
+
   // Parametric Analysis State
   const [paramModalOpen, setParamModalOpen] = useState(false);
   const [paramNutrient, setParamNutrient] = useState("");
@@ -94,7 +98,8 @@ export default function OptimizationPage() {
     setFetching(true);
     try {
       const [ingRes, recRes] = await Promise.all([
-        fetch(`${API}/api/ingredients`),
+        // Use lite=true: optimization page only needs ingredient IDs and is_active
+        fetch(`${API}/api/ingredients?lite=true`),
         fetch(`${API}/api/recipes`),
       ]);
       if (ingRes.ok && recRes.ok) {
@@ -103,8 +108,17 @@ export default function OptimizationPage() {
         setIngredients(ings);
         setRecipes(recs);
         
-        let tStock = ings.reduce((s:number, i:any) => s + i.inventory_limit_tons, 0);
-        let tDemand = recs.reduce((s:number, r:any) => s + r.demand_tons, 0);
+        // Active = explicitly true (the migration now ensures all rows have a value)
+        const activeIngs = ings.filter((i: any) => i.is_active === true || i.is_active == null);
+        let tStock = activeIngs.reduce((s: number, i: any) => s + (i.inventory_limit_tons || 0), 0);
+        // Count all recipes: masters + their versions
+        let tDemand = recs.reduce((s: number, r: any) => {
+          const masterDemand = r.demand_tons || 0;
+          const versionsDemand = (r.versions || []).reduce((vs: number, v: any) => vs + (v.demand_tons || 0), 0);
+          return s + masterDemand + versionsDemand;
+        }, 0);
+        // Count total recipe count (masters + versions)
+        const totalRecipeCount = recs.reduce((count: number, r: any) => count + 1 + (r.versions?.length || 0), 0);
         setStockStats({ total_stock: tStock, total_demand: tDemand });
       }
     } catch { /* ignored */ }
@@ -126,18 +140,38 @@ export default function OptimizationPage() {
   };
 
   const runFactory = async () => {
-    setLoading(true); setError(null); setResult(null);
+    setLoading(true); setError(null); setResult(null); setDiagnoseResult(null);
     try {
-      const allowedNames = new Set<string>();
-      recipes.forEach(r => Object.keys(r.constraints || {}).forEach(k => allowedNames.add(k)));
-      const ingredientIds = ingredients.filter(i => allowedNames.has(i.name)).map(i => i.id);
+      // Send ALL active ingredients to the solver.
+      const ingredientIds = ingredients
+        .filter((i: any) => i.is_active === true || i.is_active == null)
+        .map((i: any) => i.id);
+
+      // Flatten the recipe list: include the master recipe AND every version.
+      // The backend solver treats each entry as a separate independent formula.
+      // Masters and versions are both complete Recipe objects with their own
+      // demand_tons, constraints, and species — the solver optimizes all of them together
+      // sharing a global ingredient inventory pool.
+      const flatRecipes: any[] = [];
+      for (const master of recipes) {
+        // Strip UI-only fields (id, versions) before sending to the solver
+        const { id: _mid, versions, ...masterFields } = master;
+        flatRecipes.push(masterFields);
+        // Include each version as a separate recipe
+        if (versions && versions.length > 0) {
+          for (const ver of versions) {
+            const { id: _vid, parent_id: _pid, ...verFields } = ver;
+            flatRecipes.push(verFields);
+          }
+        }
+      }
 
       const res = await fetch(`${API}/api/optimize-multi`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ingredient_ids: ingredientIds,
-          recipes: recipes.map(({ id, ...rest }) => rest),
+          recipes: flatRecipes,
         }),
       });
       if (!res.ok) { const e = await res.json(); throw new Error(e.detail || "Échec de l'optimisation"); }
@@ -264,6 +298,31 @@ export default function OptimizationPage() {
     }
   };
 
+  const askAIWhy = async () => {
+    if (!error) return;
+    setDiagnoseLoading(true); setDiagnoseResult(null);
+    let failedName = recipes[0]?.name || "Recette Inconnue";
+    const match = error.match(/Recette '(.*?)'/);
+    if (match) failedName = match[1];
+    const failedRec = recipes.find(r => r.name === failedName) || recipes[0];
+
+    try {
+      const res = await fetch(`${API}/api/recipes/diagnose-infeasible`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          recipe_name: failedRec.name,
+          constraints: failedRec.constraints || {},
+          available_ingredients: ingredients.filter(i => i.is_active === true || i.is_active == null).map(i => i.name)
+        }),
+      });
+      const data = await res.json();
+      setDiagnoseResult(data.markdown);
+    } catch {
+      setDiagnoseResult("❌ Impossible de joindre l'IA.");
+    } finally { setDiagnoseLoading(false); }
+  };
+
   if (fetching) {
     return (
       <div className="flex items-center justify-center py-20 min-h-screen">
@@ -285,7 +344,9 @@ export default function OptimizationPage() {
           <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
             <p className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">Demande Totale du Carnet</p>
             <div className="text-4xl font-black text-gray-900">{stockStats.total_demand.toFixed(1)} <span className="text-xl text-gray-400">tonnes</span></div>
-            <p className="text-sm font-medium text-blue-600 mt-2">{recipes.length} formules à produire</p>
+            <p className="text-sm font-medium text-blue-600 mt-2">
+              {recipes.reduce((c: number, r: any) => c + 1 + (r.versions?.length || 0), 0)} formules à produire
+            </p>
           </div>
           <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
             <p className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">Capacité des Silos</p>
@@ -303,8 +364,30 @@ export default function OptimizationPage() {
 
         {error && (
           <div className="mt-8 bg-red-50 border border-red-200 rounded-2xl p-6">
-            <p className="text-red-700 text-lg font-bold">⚠ Échec du Solveur</p>
-            <p className="text-red-600 mt-2">{error}</p>
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div>
+                <p className="text-red-700 text-lg font-bold flex items-center gap-2">
+                  <span>⚠</span> Échec Logique du Solveur Mathématique
+                </p>
+                <p className="text-red-600 mt-2 font-medium">{error}</p>
+                <p className="text-red-500 text-xs mt-1">Les ingrédients disponibles ne permettent pas de satisfaire les contraintes Minimales et Maximales simultanément.</p>
+              </div>
+              <button onClick={askAIWhy} disabled={diagnoseLoading}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-5 rounded-xl text-sm transition-colors shadow-sm flex items-center gap-2 flex-shrink-0">
+                {diagnoseLoading ? "⏳ Résolution en cours..." : "🤖 Demander à l'IA pourquoi ?"}
+              </button>
+            </div>
+
+            {diagnoseResult && (
+              <div className="mt-6 bg-white border border-red-100 rounded-xl p-6 shadow-sm animate-in fade-in duration-300">
+                <div className="flex items-center gap-2 mb-4 border-b border-gray-100 pb-3">
+                   <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2"><span>🧠</span> Diagnostic IA Mizan</h3>
+                </div>
+                <div className="prose prose-sm max-w-none text-gray-700">
+                  <ReactMarkdown>{diagnoseResult}</ReactMarkdown>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

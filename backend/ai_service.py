@@ -223,3 +223,103 @@ Exemple de réponse attendue si les éléments sont ["Protéine %", "Calcium %",
     except Exception as e:
         print(f"Gemini Bound Suggestion API Error: {e}")
         raise ValueError("Impossible de joindre l'IA Mizan pour les suggestions.")
+
+
+async def diagnose_infeasible_recipe(recipe_name: str, constraints: dict, available_ingredients: list) -> str:
+    import json
+    if not GEMINI_API_KEY:
+        return "⚠️ Erreur : La clé API Google Gemini n'est pas configurée dans .env"
+    
+    system_instruction = """Tu es un expert en formulation d'aliments de bétail et en programmation linéaire (Solver GLOP).
+Le solveur mathématique a renvoyé une erreur "Infaisable" (Infeasible) pour cette recette.
+Cela signifie qu'il est mathématiquement IMPOSSIBLE de respecter toutes les contraintes Min/Max exigées en utilisant exclusivement les ingrédients fournis avec leurs limites d'incorporation actuelles.
+
+RÈGLES ABSOLUES DU SOLVEUR (A LIRE ATTENTIVEMENT) :
+1. RÈGLE D'INCLUSION : Si des noms d'ingrédients apparaissent dans les "Contraintes Exigées", le solveur fonctionne en mode "Opt-in" : il est STRICTEMENT OBLIGÉ de n'utiliser **QUE** ces ingrédients-là. Tous les autres ingrédients de 'Ingrédients Disponibles' sont verrouillés à 0%. L'infaisabilité vient donc EXCLUSIVEMENT de l'incapacité de ce petit groupe d'ingrédients à atteindre les cibles nutritionnelles. Ne propose jamais d'utiliser un autre ingrédient s'il n'est pas dans la liste des contraintes.
+2. SENS DES CONTRAINTES : Fais extrêmement attention ! "min": 17.2 signifie "Au moins 17.2" (Plancher). "max": 15 signifie "Au maximum 15" (Plafond). Ne confonds jamais un min et un max dans tes explications.
+3. Analyse mathématique : Identifie LA ou LES contraintes mathématiquement insolubles entre elles. (Ex: "Il faut au moins 17% de protéine, mais le seul ingrédient protéique autorisé est limité à 5% max").
+4. Ne fais pas de longs paragraphes. Utilise 2 ou 3 puces claires.
+5. Termine toujours par une section **✅ Recommandation Pratique** : dis à l'utilisateur quelle contrainte précise modifier (ex: "Baissez l'exigence Minimum en Protéine", "Augmentez la limite Maximum du Soja", ou "Ajoutez un ingrédient riche en énergie")."""
+    
+    try:
+        model = genai.GenerativeModel('gemini-2.5-flash')
+        prompt = f"{system_instruction}\n\nRecette : {recipe_name}\n\nContraintes Exigées :\n{json.dumps(constraints, indent=2, ensure_ascii=False)}\n\nIngrédients Disponibles (Inventaire Actif) :\n{json.dumps(available_ingredients, indent=2, ensure_ascii=False)}"
+        response = model.generate_content(prompt)
+        return response.text
+    except Exception as e:
+        print(f"Gemini Diagnose Error: {e}")
+        return f"❌ Impossible de joindre l'IA Mizan pour le diagnostic : {str(e)}"
+
+
+async def extract_bounds_from_image(image_bytes: bytes, mime_type: str, species: str = "Standard") -> dict:
+    import json
+    if not GEMINI_API_KEY:
+        raise ValueError("GEMINI_API_KEY n'est pas configurée.")
+
+    allowed_keys = _build_allowed_keys(species)
+    allowed_keys_str = "\n".join(f'   - "{k}"' for k in allowed_keys)
+
+    system_instruction = f""""OCR Specialist & Animal Nutritionist": Your goal is to extract nutritional minimum (min) and maximum (max) constraints from an image of a technical datasheet (genetic specs).
+
+RÈGLES ABSOLUES :
+1. "Data Integrity": Extract values exactly as shown in the table. 
+2. "Unit Awareness": If the document says "18.5% Protein", min is 18.5. If it says "8 g/kg Lysine", and the target key is "Lysine %", convert it to 0.8%.
+3. "Strict Mapping": You MUST strictly map the extracted values to the following set of ERP nutrient keys for the species "{species}". If a nutrient in the image does not match any allowed key, skip it.
+   Allowed Keys:
+{allowed_keys_str}
+
+4. Tu DOIS renvoyer UNIQUEMENT un objet JSON brut et valide (AUCUN markdown, AUCUN texte).
+5. Format attendu : {{"Nom Element Exact": {{"min": float ou null, "max": float ou null}}}}
+
+Exemple :
+{{
+  "Protéine %": {{"min": 21.0, "max": null}},
+  "Énergie Volaille KCal/Kg": {{"min": 3000, "max": 3100}}
+}}"""
+
+    try:
+        model = genai.GenerativeModel('gemini-2.0-flash')
+        
+        # Prepare the multi-modal prompt
+        content = [
+            system_instruction,
+            {
+                "mime_type": mime_type,
+                "data": image_bytes
+            }
+        ]
+        
+        response = await model.generate_content_async(content)
+        
+        # Strip markdown wrapper
+        raw_text = response.text.strip()
+        if raw_text.startswith("```json"):
+            raw_text = raw_text[7:]
+        if raw_text.endswith("```"):
+            raw_text = raw_text[:-3]
+
+        parsed_json = json.loads(raw_text.strip())
+        
+        # Reuse the normalisation logic from suggest_best_practice_bounds
+        # (This handles LLM drift and ensures keys match perfectly)
+        energy_key = next((k for k in allowed_keys if "nergie" in k or "UFL" in k), "Énergie KCal/Kg")
+        lysine_key  = next((k for k in allowed_keys if "Lysine" in k), "Lysine %")
+        met_key     = next((k for k in allowed_keys if "thionine" in k), "Méthionine %")
+
+        key_mapping = {
+            "Énergie": energy_key, "Energie": energy_key, "UFL": energy_key,
+            "Lysine": lysine_key, "Methionine": met_key, "Méthionine": met_key,
+            "Proteine": "Protéine %", "Calcium": "Calcium %", "Phosphore": "Phosphore %"
+        }
+
+        normalized = {}
+        for key, bounds in parsed_json.items():
+            mapped_key = key_mapping.get(key, key)
+            if mapped_key in allowed_keys:
+                normalized[mapped_key] = bounds
+        
+        return normalized
+
+    except Exception as e:
+        print(f"Gemini OCR API Error: {e}")
+        raise ValueError(f"Erreur d'analyse OCR : {str(e)}")

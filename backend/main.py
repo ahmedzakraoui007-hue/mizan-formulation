@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Query, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict
@@ -6,7 +6,6 @@ from sqlalchemy.orm import Session
 
 from database import engine, get_db, Base
 from db_models import IngredientDB, RecipeDB
-from solver import solve_least_cost_formulation, solve_multi_blend
 from solver import solve_least_cost_formulation, solve_multi_blend
 from ai_service import generate_financial_insights, generate_formulator_audit, suggest_best_practice_bounds
 
@@ -84,9 +83,6 @@ class RecipeDemand(BaseModel):
     parent_id: Optional[int] = None
     version_tag: str = "V1"
     species: str = "General"
-    process_yield_percent: float = 100.0
-    bag_size_kg: float = 50.0
-    constraints: Dict[str, ConstraintConfig] = Field(default_factory=dict)
 
 class MultiBlendRequest(BaseModel):
     ingredient_ids: List[int]
@@ -100,6 +96,9 @@ class IngredientOut(MultiBlendIngredient):
 
 class RecipeOut(RecipeDemand):
     id: int
+    parent_id: Optional[int] = None
+    version_tag: str = "V1"
+    
     class Config:
         from_attributes = True
 
@@ -126,12 +125,14 @@ DEFAULT_RECIPES = [
 @app.on_event("startup")
 def seed_database():
     """Seed defaults if tables are empty, and run safe migrations."""
+    import os as _os, json as _json
     db = next(get_db())
     try:
-        # --- Migration: Add missing columns to recipes if needed ---
         from sqlalchemy import inspect as sa_inspect
         try:
             inspector = sa_inspect(engine)
+
+            # ── Recipe column migrations ──────────────────────────────────
             if inspector.has_table("recipes"):
                 existing_cols = [col["name"] for col in inspector.get_columns("recipes")]
 
@@ -143,25 +144,34 @@ def seed_database():
                 if "version_tag" not in existing_cols:
                     print("⚙️  Migrating: adding 'version_tag' to recipes…")
                     with engine.begin() as conn:
-                        conn.execute(text("ALTER TABLE recipes ADD COLUMN version_tag VARCHAR NOT NULL DEFAULT 'V1'"))
+                        conn.execute(text("ALTER TABLE recipes ADD COLUMN version_tag VARCHAR"))
+                        conn.execute(text("UPDATE recipes SET version_tag = 'V1' WHERE version_tag IS NULL"))
 
                 if "species" not in existing_cols:
                     print("⚙️  Migrating: adding 'species' to recipes…")
                     with engine.begin() as conn:
-                        conn.execute(text("ALTER TABLE recipes ADD COLUMN species VARCHAR DEFAULT 'General'"))
+                        conn.execute(text("ALTER TABLE recipes ADD COLUMN species VARCHAR"))
+                        conn.execute(text("UPDATE recipes SET species = 'General' WHERE species IS NULL"))
 
+            # ── Ingredient column migrations ───────────────────────────────
             if inspector.has_table("ingredients"):
                 existing_ing_cols = [col["name"] for col in inspector.get_columns("ingredients")]
+
                 if "is_active" not in existing_ing_cols:
                     print("⚙️  Migrating: adding 'is_active' to ingredients…")
                     with engine.begin() as conn:
-                        conn.execute(text("ALTER TABLE ingredients ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT TRUE"))
+                        # Use integer 1 for SQLite compatibility (avoids TRUE keyword on old SQLite)
+                        conn.execute(text("ALTER TABLE ingredients ADD COLUMN is_active BOOLEAN"))
+                        conn.execute(text("UPDATE ingredients SET is_active = 1"))
+                else:
+                    # Fix any NULL rows (e.g. seeded before column existed)
+                    with engine.begin() as conn:
+                        conn.execute(text("UPDATE ingredients SET is_active = 1 WHERE is_active IS NULL"))
 
         except Exception as e:
             print(f"Migration warning: {e}")
-        # ------------------------------------------------------------
 
-
+        # ── Seed empty tables ────────────────────────────────────────────
         if db.query(IngredientDB).count() == 0:
             for row in DEFAULT_INGREDIENTS:
                 db.add(IngredientDB(**row))
@@ -171,6 +181,27 @@ def seed_database():
             for row in DEFAULT_RECIPES:
                 db.add(RecipeDB(**row))
             db.commit()
+
+        # ── Auto-restore missing nutrients from INRAE JSON ─────────────────
+        # If the JSON is on disk and some ingredients have < 5 nutrients,
+        # patch them silently to recover from the lite=true save bug.
+        try:
+            json_path = _os.path.join(_os.path.dirname(__file__), "inrae_scraped_data_full.json")
+            if _os.path.exists(json_path):
+                with open(json_path, "r", encoding="utf-8") as f:
+                    inrae_list = _json.load(f)
+                inrae_dict = {item["name"]: item.get("nutrients", {}) for item in inrae_list}
+                patched = 0
+                for ing in db.query(IngredientDB).all():
+                    if ing.name in inrae_dict and (not ing.nutrients or len(ing.nutrients) < 5):
+                        ing.nutrients = inrae_dict[ing.name]
+                        patched += 1
+                if patched > 0:
+                    db.commit()
+                    print(f"⚙️  Auto-restored nutrients for {patched} ingredient(s) from INRAE JSON")
+        except Exception as e:
+            print(f"Auto-restore warning: {e}")
+
     finally:
         db.close()
 
@@ -193,6 +224,12 @@ def list_ingredients(lite: bool = False, db: Session = Depends(get_db)):
                 "is_active": row.is_active,
                 "nutrients": {}
             }
+            # Preserve essential macros for UI main table
+            if row.nutrients:
+                for tk in ["Crude protein (%)", "Crude protein", "Protéine %"]:
+                    if tk in row.nutrients:
+                        data["nutrients"][tk] = row.nutrients[tk]
+                        break
             result.append(data)
         return result
     return rows
@@ -238,6 +275,41 @@ def delete_ingredient(ingredient_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"ok": True}
 
+@app.post("/api/admin/restore-nutrients")
+def restore_nutrients(db: Session = Depends(get_db)):
+    """
+    Safely restores missing nutrient profiles from the INRAE JSON file
+    without overwriting user-modified costs or inventory limits.
+    """
+    import os
+    import json
+    
+    json_path = os.path.join(os.path.dirname(__file__), "inrae_scraped_data_full.json")
+    if not os.path.exists(json_path):
+        raise HTTPException(status_code=404, detail="INRAE data file not found on server")
+        
+    try:
+        with open(json_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            
+        # Create a lookup dictionary by name
+        inrae_dict = {item["name"]: item.get("nutrients", {}) for item in data}
+        
+        updated_count = 0
+        all_ingredients = db.query(IngredientDB).all()
+        for ing in all_ingredients:
+            if ing.name in inrae_dict:
+                # Only update if the DB nutrients are empty or very small (meaning they were wiped by the lite=true bug)
+                if not ing.nutrients or len(ing.nutrients) < 5:
+                    ing.nutrients = inrae_dict[ing.name]
+                    updated_count += 1
+                    
+        db.commit()
+        return {"ok": True, "restored_count": updated_count}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 # ═══════════════════  CRUD — RECIPES  ═════════════════════════════════
 
@@ -276,6 +348,19 @@ def list_recipes(db: Session = Depends(get_db)):
     return result
 
 
+@app.get("/api/standards")
+def list_standards():
+    """Returns the internal catalog of genetic nutrition standards."""
+    import os
+    import json
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(base_dir, "standards.json")
+    if os.path.exists(file_path):
+        with open(file_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return []
+
+
 @app.post("/api/recipes", response_model=RecipeOut)
 def create_recipe(data: RecipeDemand, db: Session = Depends(get_db)):
     row = RecipeDB(**data.model_dump())
@@ -298,6 +383,17 @@ async def api_suggest_bounds(request: SuggestBoundsRequest):
         raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
         raise HTTPException(status_code=500, detail="Erreur interne du serveur lors de l'appel à l'IA.")
+
+@app.post("/api/recipes/extract-bounds")
+async def api_extract_bounds(file: UploadFile = File(...), species: str = "Standard"):
+    try:
+        from ai_service import extract_bounds_from_image
+        contents = await file.read()
+        suggestions = await extract_bounds_from_image(contents, file.content_type, species)
+        return {"status": "ok", "suggestions": suggestions}
+    except Exception as e:
+        print(f"Error in extract-bounds API: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 class RevisionRequest(BaseModel):
     version_tag: str
@@ -404,6 +500,25 @@ async def get_ai_audit(recipe_result_json: dict):
     try:
         audit_markdown = await generate_formulator_audit(recipe_result_json)
         return {"markdown": audit_markdown}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class DiagnoseRequest(BaseModel):
+    recipe_name: str
+    constraints: dict
+    available_ingredients: List[str]
+
+@app.post("/api/recipes/diagnose-infeasible")
+async def api_diagnose_recipe(request: DiagnoseRequest):
+    try:
+        from ai_service import diagnose_infeasible_recipe
+        markdown = await diagnose_infeasible_recipe(
+            request.recipe_name, 
+            request.constraints, 
+            request.available_ingredients
+        )
+        return {"status": "ok", "markdown": markdown}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
