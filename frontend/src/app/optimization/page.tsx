@@ -267,7 +267,8 @@ export default function OptimizationPage() {
       csv += `${key};${val.toFixed(2)};${cibleStr}\n`;
     }
     csv += `\n`;
-    csv += `Coût Total (TND/Tonne);${rec.cost_tnd.toFixed(2)}\n`;
+    csv += `Coût Total (TND);${rec.cost_tnd.toFixed(2)}\n`;
+    csv += `Coût par Tonne (TND/T);${(rec.cost_tnd / rec.demand_tons).toFixed(2)}\n`;
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -603,7 +604,7 @@ export default function OptimizationPage() {
                         {/* Footer */}
                         <div style={{ paddingTop: '20px', borderTop: '2px solid #111', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <p style={{ margin: 0, fontSize: '12px', color: '#9ca3af' }}>Document généré automatiquement par Mizan Formulation Engine.</p>
-                          <p style={{ margin: 0, fontSize: '18px', fontWeight: '900', color: '#111827' }}>Coût Total : <span style={{ color: '#2563eb' }}>{rec.cost_tnd.toFixed(2)} TND / Tonne</span></p>
+                          <p style={{ margin: 0, fontSize: '18px', fontWeight: '900', color: '#111827' }}>Coût Total : <span style={{ color: '#2563eb' }}>{rec.cost_tnd.toFixed(2)} TND</span> · <span style={{ color: '#059669' }}>{(rec.cost_tnd / rec.demand_tons).toFixed(2)} TND/T</span></p>
                         </div>
                       </div>
                     </div>

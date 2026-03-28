@@ -232,7 +232,7 @@ def scrape(max_items: int | None = MAX_INGREDIENTS) -> list[dict]:
             record = {
                 "name":                name,
                 "cost":                1.0,
-                "transport_cost":      0.05,
+                "transport_cost":      0.0,
                 "dm":                  dm_value,
                 "inventory_limit_tons": 50.0,
                 "nutrients":           nutrients,
