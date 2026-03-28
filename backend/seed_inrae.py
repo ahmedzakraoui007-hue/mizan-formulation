@@ -58,6 +58,9 @@ def seed():
                 except ValueError:
                     pass
             
+            # INRAE is a nutritional database — transport cost is user-configured, not scraped.
+            # Reset to 0 so we don't silently add cost to every ingredient.
+            ing_data['transport_cost'] = 0.0
             row = IngredientDB(**ing_data)
             db.add(row)
             print(f"   ✅ Ajout : {ing_data['name']} ({len(ing_data.get('nutrients', {}))} paramètres)")

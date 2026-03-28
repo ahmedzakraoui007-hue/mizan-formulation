@@ -341,7 +341,7 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
 
             <div style={{ paddingTop: '20px', borderTop: '2px solid #111', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <p style={{ margin: 0, fontSize: '12px', color: '#9ca3af' }}>Document généré automatiquement par Mizan Formulation Engine.</p>
-              <p style={{ margin: 0, fontSize: '18px', fontWeight: '900', color: '#111827' }}>Coût Total : <span style={{ color: '#2563eb' }}>{report.cost_tnd.toFixed(2)} TND / Tonne</span></p>
+              <p style={{ margin: 0, fontSize: '18px', fontWeight: '900', color: '#111827' }}>Coût Total : <span style={{ color: '#2563eb' }}>{report.cost_tnd.toFixed(2)} TND</span> · <span style={{ color: '#059669' }}>{(report.cost_tnd / report.demand_tons).toFixed(2)} TND/T</span></p>
             </div>
           </div>
         </div>

@@ -7,7 +7,7 @@ from ortools.linear_solver import pywraplp
 # ═══════════════════════════════════════════════════════════════════════
 NUTRIENT_KEY_ALIASES: dict[str, list[str]] = {
     # Protein
-    "Crude protein (%)": ["Protéine %", "Proteine %", "Protein %", "Protein", "Protéine", "Crude Protein (%)"],
+    "Crude protein (%)": ["Crude protein", "Protéine %", "Proteine %", "Protein %", "Protein", "Protéine", "Crude Protein (%)"],
     # Energy - poultry AMEn
     "AMEn broiler (kcal) (kcal/kg)": [
         "Énergie", "Energie", "Énergie (kcal/kg)", "Energie (kcal/kg)",
@@ -48,11 +48,11 @@ NUTRIENT_KEY_ALIASES: dict[str, list[str]] = {
     "Chlorine (g/kg)": ["Chlorine %", "Chlorure %", "Cl %", "Chloride %"],
     "Potassium (g/kg)": ["Potassium %", "K %", "Potassium"],
     # Fiber
-    "Crude fibre (%)": ["Fibre %", "Fiber %", "Fibre brute %", "Crude Fibre (%)", "CF %"],
+    "Crude fibre (%)": ["Crude fibre", "Fibre %", "Fiber %", "Fibre brute %", "Crude Fibre (%)", "CF %"],
     # Fat
-    "Crude fat (%)": ["Matière Grasse %", "MG %", "Fat %", "Lipides %"],
+    "Crude fat (%)": ["Crude fat", "Matière Grasse %", "MG %", "Fat %", "Lipides %"],
     # Dry matter
-    "Dry matter (%)": ["Matière Sèche %", "MS %", "DM %"],
+    "Dry matter (%)": ["Dry matter", "Matière Sèche %", "MS %", "DM %"],
 }
 
 # Build reverse map: alias → canonical INRAE key
