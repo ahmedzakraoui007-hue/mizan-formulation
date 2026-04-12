@@ -40,6 +40,7 @@ export default function RecipesPage() {
   const [ocrLoadingFor, setOcrLoadingFor] = useState<number | null>(null);
   const [standards, setStandards] = useState<any[]>([]);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const [expandedRecipeId, setExpandedRecipeId] = useState<number | null>(null);
 
   const fetchRecipes = useCallback(async () => {
     setFetching(true);
@@ -52,16 +53,16 @@ export default function RecipesPage() {
         fetch(`${API}/api/ingredients?lite=true`),
         fetch(`${API}/api/standards`)
       ]);
-      
+
       if (stdRes.ok) {
         const stds = await stdRes.json();
         setStandards(stds);
       }
-      
+
       if (recRes.ok) {
         const recs: RecipeGrouped[] = await recRes.json();
         setRecipes(recs);
-        
+
         // Initialize active versions to the Master ID
         const initialActive: Record<number, number> = {};
         recs.forEach(r => { initialActive[r.id] = r.id; });
@@ -134,7 +135,7 @@ export default function RecipesPage() {
     setRecipes(prev => {
       const newRecs = prev.map(master => {
         if (master.id !== masterId) return master;
-        
+
         if (targetId === master.id) {
           // Editing the master
           const updated = { ...master, [key]: v } as unknown as RecipeGrouped;
@@ -142,7 +143,7 @@ export default function RecipesPage() {
           return updated;
         } else {
           // Editing a version
-          const updatedVersions = master.versions.map(ver => 
+          const updatedVersions = master.versions.map(ver =>
             ver.id === targetId ? { ...ver, [key]: v } as unknown as Recipe : ver
           );
           const updatedVersion = updatedVersions.find(v => v.id === targetId)!;
@@ -166,14 +167,14 @@ export default function RecipesPage() {
           const val = v === "" ? undefined : (parseFloat(v) || 0);
           const updated = { ...rec.constraints };
           if (!updated[nutrKey]) updated[nutrKey] = {};
-          
+
           const config = { ...updated[nutrKey] };
           if (val === undefined) delete config[field];
           else config[field] = val;
-          
+
           if (Object.keys(config).length === 0) delete updated[nutrKey];
           else updated[nutrKey] = config;
-          
+
           return updated;
         };
 
@@ -184,7 +185,7 @@ export default function RecipesPage() {
           return updated;
         } else {
           // Editing version
-          const updatedVersions = master.versions.map(ver => 
+          const updatedVersions = master.versions.map(ver =>
             ver.id === targetId ? { ...ver, constraints: updateConstraints(ver) } : ver
           );
           const updatedVersion = updatedVersions.find(v => v.id === targetId)!;
@@ -263,7 +264,7 @@ export default function RecipesPage() {
           return prev.map(m => m.id === masterId ? { ...m, versions: m.versions.filter(v => v.id !== targetId) } : m);
         }
       });
-      
+
       if (masterId !== targetId) {
         setActiveVersions(prev => ({ ...prev, [masterId]: masterId })); // Reset to master
       }
@@ -278,13 +279,13 @@ export default function RecipesPage() {
     try {
       // 1. Gather all elements currently active in the form (nutrients + manually added ingredient constraints)
       const elementsToAsk = [...nutrientColumns];
-      const activeRecipe = recipes.find(r => r.id === masterId)?.versions.find(v => v.id === targetId) 
+      const activeRecipe = recipes.find(r => r.id === masterId)?.versions.find(v => v.id === targetId)
         || recipes.find(r => r.id === masterId);
-        
+
       if (activeRecipe?.constraints) {
-         Object.keys(activeRecipe.constraints).forEach(k => {
-             if (!elementsToAsk.includes(k)) elementsToAsk.push(k);
-         });
+        Object.keys(activeRecipe.constraints).forEach(k => {
+          if (!elementsToAsk.includes(k)) elementsToAsk.push(k);
+        });
       }
 
       const res = await fetch(`${API}/api/recipes/suggest-bounds`, {
@@ -302,14 +303,14 @@ export default function RecipesPage() {
 
       const data = await res.json();
       const suggestions = data.suggestions; // The raw JSON from Gemini
-      
+
       // 2. Patch the constraints deeply
       setRecipes(prev => prev.map(master => {
         if (master.id !== masterId) return master;
-        
+
         const applySuggestions = (rec: Recipe) => {
           const updatedConstraints = { ...rec.constraints };
-          
+
           Object.entries(suggestions).forEach(([elementKey, bounds]: [string, any]) => {
             if (bounds.min !== null || bounds.max !== null) {
               if (!updatedConstraints[elementKey]) updatedConstraints[elementKey] = {};
@@ -317,7 +318,7 @@ export default function RecipesPage() {
               if (bounds.max !== null) updatedConstraints[elementKey].max = bounds.max;
             }
           });
-          
+
           return updatedConstraints;
         };
 
@@ -326,7 +327,7 @@ export default function RecipesPage() {
           scheduleSave(updated);
           return updated;
         } else {
-          const updatedVersions = master.versions.map(ver => 
+          const updatedVersions = master.versions.map(ver =>
             ver.id === targetId ? { ...ver, constraints: applySuggestions(ver) } : ver
           );
           const updatedVersion = updatedVersions.find(v => v.id === targetId)!;
@@ -334,18 +335,18 @@ export default function RecipesPage() {
           return { ...master, versions: updatedVersions };
         }
       }));
-      
+
       // Force any suggested elements that are not in nutrientColumns to be visible
-       setNutrientCols(prev => {
-          const newCols = [...prev];
-          Object.keys(suggestions).forEach(k => {
-             // If the suggested key isn't currently tracked, track it.
-             if (!newCols.includes(k) && !globalIngredientNames.includes(k)) {
-                 newCols.push(k);
-             }
-          });
-          return newCols;
-       });
+      setNutrientCols(prev => {
+        const newCols = [...prev];
+        Object.keys(suggestions).forEach(k => {
+          // If the suggested key isn't currently tracked, track it.
+          if (!newCols.includes(k) && !globalIngredientNames.includes(k)) {
+            newCols.push(k);
+          }
+        });
+        return newCols;
+      });
 
       alert(`✅ L'IA a suggéré des limites pour: ${Object.keys(suggestions).join(', ')}`);
 
@@ -360,36 +361,36 @@ export default function RecipesPage() {
     try {
       const std = standards.find(s => s.id === standardId);
       if (!std) { alert("Standard introuvable !"); return; }
-      
+
       const newConstraints = JSON.parse(JSON.stringify(std.constraints));
-      
+
       setRecipes(prev => prev.map(master => {
         if (master.id !== masterId) return master;
-        
+
         if (targetId === master.id) {
           const updated = { ...master, constraints: newConstraints, species: std.species } as unknown as RecipeGrouped;
           scheduleSave(updated);
           return updated;
-      } else {
-        const updatedVersions = master.versions.map(ver =>
-          ver.id === targetId ? { ...ver, constraints: newConstraints, species: std.species } as unknown as Recipe : ver
-        );
-        const updatedVersion = updatedVersions.find(v => v.id === targetId)!;
-        scheduleSave(updatedVersion);
-        return { ...master, versions: updatedVersions };
-      }
-    }));
-    // Make sure new columns are visible
-    setNutrientCols(prev => {
-       const newCols = [...prev];
-       Object.keys(newConstraints).forEach(k => { 
-           if (!newCols.includes(k) && !globalIngredientNames.includes(k)) newCols.push(k); 
-       });
-       return newCols;
-    });
-  } catch (e) {
-    console.error("Erreur lors de l'application du standard:", e);
-  }
+        } else {
+          const updatedVersions = master.versions.map(ver =>
+            ver.id === targetId ? { ...ver, constraints: newConstraints, species: std.species } as unknown as Recipe : ver
+          );
+          const updatedVersion = updatedVersions.find(v => v.id === targetId)!;
+          scheduleSave(updatedVersion);
+          return { ...master, versions: updatedVersions };
+        }
+      }));
+      // Make sure new columns are visible
+      setNutrientCols(prev => {
+        const newCols = [...prev];
+        Object.keys(newConstraints).forEach(k => {
+          if (!newCols.includes(k) && !globalIngredientNames.includes(k)) newCols.push(k);
+        });
+        return newCols;
+      });
+    } catch (e) {
+      console.error("Erreur lors de l'application du standard:", e);
+    }
   };
 
   const scanFiche = async (masterId: number, targetId: number, species: string, file: File) => {
@@ -397,7 +398,7 @@ export default function RecipesPage() {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      
+
       const res = await fetch(`${API}/api/recipes/extract-bounds?species=${encodeURIComponent(species)}`, {
         method: "POST",
         body: formData,
@@ -414,7 +415,7 @@ export default function RecipesPage() {
 
       setRecipes(prev => prev.map(master => {
         if (master.id !== masterId) return master;
-        
+
         const applySuggestions = (rec: Recipe) => {
           const updatedConstraints = { ...rec.constraints };
           Object.entries(suggestions).forEach(([elementKey, bounds]: [string, any]) => {
@@ -432,7 +433,7 @@ export default function RecipesPage() {
           scheduleSave(updated);
           return updated;
         } else {
-          const updatedVersions = master.versions.map(ver => 
+          const updatedVersions = master.versions.map(ver =>
             ver.id === targetId ? { ...ver, constraints: applySuggestions(ver) } : ver
           );
           const updatedVersion = updatedVersions.find(v => v.id === targetId)!;
@@ -551,14 +552,15 @@ export default function RecipesPage() {
       </div>
 
       <div className="flex flex-col gap-8">
-        {recipes.map(masterRec => {
+        {recipes.map((masterRec, index) => {
           const activeId = activeVersions[masterRec.id] || masterRec.id;
           const isMasterActive = activeId === masterRec.id;
           const activeItem = isMasterActive ? masterRec : masterRec.versions.find(v => v.id === activeId)!;
+          const isExpanded = expandedRecipeId === masterRec.id || (expandedRecipeId === null && index === 0);
 
           return (
             <div key={masterRec.id} className={`bg-white border rounded-2xl p-6 shadow-sm relative group transition-colors ${!isMasterActive ? 'border-indigo-400 bg-indigo-50/10 ring-2 ring-indigo-50/50' : 'border-gray-200 hover:border-blue-300'}`}>
-              
+
               {/* Card Header & Controls */}
               <div className="flex items-start justify-between mb-6">
                 <div className="flex-1 w-full">
@@ -575,43 +577,42 @@ export default function RecipesPage() {
                             <button
                               key={opt.value}
                               onClick={() => editRec(masterRec.id, activeItem.id, "species", opt.value)}
-                              className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all ${
-                                isActive
+                              className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all ${isActive
                                   ? "bg-white text-gray-900 shadow-sm"
                                   : "text-gray-400 hover:text-gray-700"
-                              }`}
+                                }`}
                             >
                               {opt.label}
                             </button>
                           );
                         })}
                       </div>
-                       <select value={activeId} onChange={e => setActiveVersions(prev => ({ ...prev, [masterRec.id]: parseInt(e.target.value) }))}
-                         className="bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-bold px-3 py-1.5 rounded-lg outline-none cursor-pointer">
-                         <option value={masterRec.id}>🗂️ {masterRec.version_tag} (Master)</option>
-                         {masterRec.versions.map(v => (
-                           <option key={v.id} value={v.id}>🔀 {v.version_tag}</option>
-                         ))}
-                       </select>
+                      <select value={activeId} onChange={e => setActiveVersions(prev => ({ ...prev, [masterRec.id]: parseInt(e.target.value) }))}
+                        className="bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-bold px-3 py-1.5 rounded-lg outline-none cursor-pointer">
+                        <option value={masterRec.id}>🗂️ {masterRec.version_tag} (Master)</option>
+                        {masterRec.versions.map(v => (
+                          <option key={v.id} value={v.id}>🔀 {v.version_tag}</option>
+                        ))}
+                      </select>
                     </div>
                   </div>
-                  
+
                   {/* Actions Row */}
                   <div className="flex items-center gap-2 flex-wrap opacity-50 group-hover:opacity-100 transition-opacity">
-                    
+
                     <select
-                       onChange={(e) => {
-                         const val = e.target.value;
-                         if (val) {
-                           applyStandard(masterRec.id, activeItem.id, val);
-                           setTimeout(() => { e.target.value = ""; }, 10);
-                         }
-                       }}
-                       className="text-emerald-700 hover:text-emerald-900 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold shadow-sm outline-none"
-                     >
-                       <option value="">📚 Appliquer une Norme</option>
-                       {standards.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                     </select>
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val) {
+                          applyStandard(masterRec.id, activeItem.id, val);
+                          setTimeout(() => { e.target.value = ""; }, 10);
+                        }
+                      }}
+                      className="text-emerald-700 hover:text-emerald-900 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold shadow-sm outline-none"
+                    >
+                      <option value="">📚 Appliquer une Norme</option>
+                      {standards.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    </select>
 
                     <button onClick={() => askAIForBounds(masterRec.id, activeItem.id, activeItem.name)} disabled={aiLoadingFor === activeItem.id}
                       className="text-amber-700 hover:text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold flex items-center shadow-sm disabled:opacity-50">
@@ -619,18 +620,18 @@ export default function RecipesPage() {
                     </button>
 
                     <div className="relative">
-                      <button 
+                      <button
                         onClick={() => document.getElementById(`file-upload-${activeItem.id}`)?.click()}
                         disabled={ocrLoadingFor === activeItem.id}
                         className="text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold flex items-center shadow-sm disabled:opacity-50"
                       >
                         {ocrLoadingFor === activeItem.id ? "⏳ Scan en cours..." : "📸 Scanner une Fiche"}
                       </button>
-                      <input 
+                      <input
                         id={`file-upload-${activeItem.id}`}
-                        type="file" 
-                        accept="image/*,.pdf" 
-                        className="hidden" 
+                        type="file"
+                        accept="image/*,.pdf"
+                        className="hidden"
                         onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (file) scanFiche(masterRec.id, activeItem.id, activeItem.species || "General", file);
@@ -649,7 +650,7 @@ export default function RecipesPage() {
                         ✏️ Renommer
                       </button>
                     )}
-                    
+
                     {confirmDeleteId === activeItem.id ? (
                       <button onClick={() => rmRec(masterRec.id, activeItem.id)}
                         className="ml-auto text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold shadow-md animate-pulse">
@@ -661,7 +662,7 @@ export default function RecipesPage() {
                         ✕ Supprimer {isMasterActive ? "Master" : "Version"}
                       </button>
                     )}
-                    
+
                   </div>
                 </div>
               </div>
@@ -685,229 +686,237 @@ export default function RecipesPage() {
                 </div>
               </div>
 
+              {/* Expand Toggle Button */}
+              <button
+                onClick={() => setExpandedRecipeId(isExpanded ? -1 : masterRec.id)}
+                className="w-full flex items-center justify-center py-2 bg-gray-50 hover:bg-gray-100 border border-t-0 border-gray-100 rounded-b-xl text-xs font-bold text-gray-500 transition-colors uppercase tracking-widest focus:outline-none mb-4"
+              >
+                {isExpanded ? "▲ Masquer la Formule" : "▼ Ouvrir la Fiche Technique (Matières & Nutrition)"}
+              </button>
+
               {/* UI Segregation logic */}
-              {(() => {
-                  const activeNutritionalCols = nutrientColumns.filter(c => !globalIngredientNames.includes(c));
-                  const activeIngredientCols = nutrientColumns.filter(c => globalIngredientNames.includes(c));
+              {isExpanded && (() => {
+                const activeNutritionalCols = nutrientColumns.filter(c => !globalIngredientNames.includes(c));
+                const activeIngredientCols = nutrientColumns.filter(c => globalIngredientNames.includes(c));
 
-                  return (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      {/* CARD 1: Cibles Nutritionnelles */}
-                      <div className="border border-blue-100 bg-blue-50/10 rounded-xl overflow-hidden shadow-sm flex flex-col">
-                        <div className="bg-blue-50/50 border-b border-blue-100 px-4 py-3 flex items-center justify-between">
-                            <h3 className="text-blue-900 font-bold text-sm tracking-tight flex items-center gap-2">
-                                <span>🧬</span> Cibles Nutritionnelles
-                            </h3>
-                        </div>
-                        <div className="overflow-x-auto p-4 flex flex-col">
-                          <table className="w-full text-left text-sm mb-3">
-                            <thead>
-                              <tr className="text-blue-800 text-[10px] uppercase tracking-wider font-extrabold border-b border-blue-100 pb-2 block w-full table-row">
-                                <th className="pb-3 w-1/3">Nutriment</th>
-                                <th className="pb-3 w-20 text-right pr-2">Min</th>
-                                <th className="pb-3 w-20 text-right pr-2">Max</th>
-                                <th className="pb-3 w-24 text-right text-orange-600">Exact</th>
-                                <th className="pb-3 w-8"></th>
+                return (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* CARD 1: Cibles Nutritionnelles */}
+                    <div className="border border-blue-100 bg-blue-50/10 rounded-xl overflow-hidden shadow-sm flex flex-col">
+                      <div className="bg-blue-50/50 border-b border-blue-100 px-4 py-3 flex items-center justify-between">
+                        <h3 className="text-blue-900 font-bold text-sm tracking-tight flex items-center gap-2">
+                          <span>🧬</span> Cibles Nutritionnelles
+                        </h3>
+                      </div>
+                      <div className="overflow-x-auto p-4 flex flex-col">
+                        <table className="w-full text-left text-sm mb-3">
+                          <thead>
+                            <tr className="text-blue-800 text-[10px] uppercase tracking-wider font-extrabold border-b border-blue-100 pb-2 block w-full table-row">
+                              <th className="pb-3 w-1/3">Nutriment</th>
+                              <th className="pb-3 w-20 text-right pr-2">Min</th>
+                              <th className="pb-3 w-20 text-right pr-2">Max</th>
+                              <th className="pb-3 w-24 text-right text-orange-600">Exact</th>
+                              <th className="pb-3 w-8"></th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-blue-50/50">
+                            {activeNutritionalCols.length === 0 && (
+                              <tr><td colSpan={5} className="text-center py-4 text-xs text-blue-400 font-medium italic">Aucune cible définie...</td></tr>
+                            )}
+                            {/* Only show rows that are in THIS recipe's constraints */}
+                            {Object.keys(activeItem.constraints).filter(nc => !globalIngredientNames.includes(nc)).map(nc => (
+                              <tr key={nc} className="group/row hover:bg-white rounded-md transition-colors">
+                                <td className="py-2.5 text-blue-950 font-semibold">{nc}</td>
+                                <td className="py-2.5 pr-2">
+                                  <input type="number" step="0.1" placeholder="—" value={activeItem.constraints?.[nc]?.min ?? ""} onChange={e => editRecConstraint(masterRec.id, activeItem.id, nc, "min", e.target.value)} className={`${cell} w-full text-right bg-transparent group-hover/row:bg-white border-blue-100 focus:border-blue-400`} />
+                                </td>
+                                <td className="py-2.5 pr-2">
+                                  <input type="number" step="0.1" placeholder="—" value={activeItem.constraints?.[nc]?.max ?? ""} onChange={e => editRecConstraint(masterRec.id, activeItem.id, nc, "max", e.target.value)} className={`${cell} w-full text-right bg-transparent group-hover/row:bg-white border-blue-100 focus:border-blue-400`} />
+                                </td>
+                                <td className="py-2.5">
+                                  <input type="number" step="0.1" placeholder="—" value={activeItem.constraints?.[nc]?.exact ?? ""} onChange={e => editRecConstraint(masterRec.id, activeItem.id, nc, "exact", e.target.value)} className={`${cell} w-full text-right bg-transparent group-hover/row:bg-white border-blue-100 ${activeItem.constraints?.[nc]?.exact !== undefined ? "font-bold text-orange-700 !bg-orange-50 border-orange-300" : ""}`} />
+                                </td>
+                                <td className="py-2.5 pl-1">
+                                  <button
+                                    onClick={() => removeIngredientFromRecipe(masterRec.id, activeItem.id, nc)}
+                                    title="Retirer cette cible"
+                                    className="opacity-0 group-hover/row:opacity-100 transition-all text-red-400 hover:text-white hover:bg-red-500 w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold cursor-pointer border border-transparent hover:border-red-600"
+                                  >
+                                    ✕
+                                  </button>
+                                </td>
                               </tr>
-                            </thead>
-                            <tbody className="divide-y divide-blue-50/50">
-                              {activeNutritionalCols.length === 0 && (
-                                  <tr><td colSpan={5} className="text-center py-4 text-xs text-blue-400 font-medium italic">Aucune cible définie...</td></tr>
-                              )}
-                              {/* Only show rows that are in THIS recipe's constraints */}
-                              {Object.keys(activeItem.constraints).filter(nc => !globalIngredientNames.includes(nc)).map(nc => (
-                                <tr key={nc} className="group/row hover:bg-white rounded-md transition-colors">
-                                  <td className="py-2.5 text-blue-950 font-semibold">{nc}</td>
-                                  <td className="py-2.5 pr-2">
-                                    <input type="number" step="0.1" placeholder="—" value={activeItem.constraints?.[nc]?.min ?? ""} onChange={e => editRecConstraint(masterRec.id, activeItem.id, nc, "min", e.target.value)} className={`${cell} w-full text-right bg-transparent group-hover/row:bg-white border-blue-100 focus:border-blue-400`} />
-                                  </td>
-                                  <td className="py-2.5 pr-2">
-                                    <input type="number" step="0.1" placeholder="—" value={activeItem.constraints?.[nc]?.max ?? ""} onChange={e => editRecConstraint(masterRec.id, activeItem.id, nc, "max", e.target.value)} className={`${cell} w-full text-right bg-transparent group-hover/row:bg-white border-blue-100 focus:border-blue-400`} />
-                                  </td>
-                                  <td className="py-2.5">
-                                    <input type="number" step="0.1" placeholder="—" value={activeItem.constraints?.[nc]?.exact ?? ""} onChange={e => editRecConstraint(masterRec.id, activeItem.id, nc, "exact", e.target.value)} className={`${cell} w-full text-right bg-transparent group-hover/row:bg-white border-blue-100 ${activeItem.constraints?.[nc]?.exact !== undefined ? "font-bold text-orange-700 !bg-orange-50 border-orange-300" : ""}`} />
-                                  </td>
-                                  <td className="py-2.5 pl-1">
-                                    <button
-                                      onClick={() => removeIngredientFromRecipe(masterRec.id, activeItem.id, nc)}
-                                      title="Retirer cette cible"
-                                      className="opacity-0 group-hover/row:opacity-100 transition-all text-red-400 hover:text-white hover:bg-red-500 w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold cursor-pointer border border-transparent hover:border-red-600"
-                                    >
-                                      ✕
-                                    </button>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
+                            ))}
+                          </tbody>
+                        </table>
 
-                          {/* Smart Add Nutritional Target Dropdown */}
-                          <div className="mt-2">
-                            <select
-                              key={`nutrient-dropdown-${masterRec.id}-${activeItem.species}`}
-                              value=""
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                if (!val) return;
-                                // Add to global nutrientColumns so the row renders
-                                if (!nutrientColumns.includes(val)) setNutrientCols(prev => [...prev, val]);
-                                // Inject empty constraint into the active recipe
-                                setRecipes(prev => prev.map(master => {
-                                  if (master.id !== masterRec.id) return master;
-                                  const inject = (rec: Recipe): Recipe => ({
-                                    ...rec,
-                                    constraints: rec.constraints[val]
-                                      ? rec.constraints
-                                      : { ...rec.constraints, [val]: {} }
-                                  });
-                                  if (activeItem.id === master.id) {
-                                    const updated = inject(master) as RecipeGrouped;
-                                    scheduleSave(updated);
-                                    return updated;
-                                  } else {
-                                    const updatedVersions = master.versions.map(ver =>
-                                      ver.id === activeItem.id ? inject(ver) : ver
-                                    );
-                                    const updatedVersion = updatedVersions.find(v => v.id === activeItem.id)!;
-                                    scheduleSave(updatedVersion);
-                                    return { ...master, versions: updatedVersions };
-                                  }
-                                }));
-                              }}
-                              className="w-full bg-white border-2 border-dashed border-blue-200 text-blue-700 hover:border-blue-400 hover:bg-blue-50 px-3 py-2 rounded-lg text-xs font-bold transition-all outline-none cursor-pointer"
-                            >
-                              <option value="" disabled>🧬 Ajouter une cible nutritionnelle...</option>
-                              {Object.entries(
-                                groupNutrientKeys(
-                                  getFilteredNutrients(
-                                    availableKeys.filter(k =>
-                                      !globalIngredientNames.includes(k) &&
-                                      !Object.keys(activeItem.constraints).includes(k)
-                                    ),
-                                    activeItem.species ?? "General"
-                                  )
+                        {/* Smart Add Nutritional Target Dropdown */}
+                        <div className="mt-2">
+                          <select
+                            key={`nutrient-dropdown-${masterRec.id}-${activeItem.species}`}
+                            value=""
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (!val) return;
+                              // Add to global nutrientColumns so the row renders
+                              if (!nutrientColumns.includes(val)) setNutrientCols(prev => [...prev, val]);
+                              // Inject empty constraint into the active recipe
+                              setRecipes(prev => prev.map(master => {
+                                if (master.id !== masterRec.id) return master;
+                                const inject = (rec: Recipe): Recipe => ({
+                                  ...rec,
+                                  constraints: rec.constraints[val]
+                                    ? rec.constraints
+                                    : { ...rec.constraints, [val]: {} }
+                                });
+                                if (activeItem.id === master.id) {
+                                  const updated = inject(master) as RecipeGrouped;
+                                  scheduleSave(updated);
+                                  return updated;
+                                } else {
+                                  const updatedVersions = master.versions.map(ver =>
+                                    ver.id === activeItem.id ? inject(ver) : ver
+                                  );
+                                  const updatedVersion = updatedVersions.find(v => v.id === activeItem.id)!;
+                                  scheduleSave(updatedVersion);
+                                  return { ...master, versions: updatedVersions };
+                                }
+                              }));
+                            }}
+                            className="w-full bg-white border-2 border-dashed border-blue-200 text-blue-700 hover:border-blue-400 hover:bg-blue-50 px-3 py-2 rounded-lg text-xs font-bold transition-all outline-none cursor-pointer"
+                          >
+                            <option value="" disabled>🧬 Ajouter une cible nutritionnelle...</option>
+                            {Object.entries(
+                              groupNutrientKeys(
+                                getFilteredNutrients(
+                                  availableKeys.filter(k =>
+                                    !globalIngredientNames.includes(k) &&
+                                    !Object.keys(activeItem.constraints).includes(k)
+                                  ),
+                                  activeItem.species ?? "General"
                                 )
-                              ).map(([group, keys]) => {
-                                if (keys.length === 0) return null;
+                              )
+                            ).map(([group, keys]) => {
+                              if (keys.length === 0) return null;
 
-                                // Final check: Hide WRONG species groups entirely
-                                const s = (activeItem.species ?? "General").toLowerCase();
-                                const isVol = s.includes("volaille") || s.includes("poultry") || s.includes("chicken") || s.includes("broiler");
-                                const isPorc = s.includes("porc") || s.includes("pig") || s.includes("swine");
-                                const isRum = s.includes("ruminant") || s.includes("cow") || s.includes("bovine");
+                              // Final check: Hide WRONG species groups entirely
+                              const s = (activeItem.species ?? "General").toLowerCase();
+                              const isVol = s.includes("volaille") || s.includes("poultry") || s.includes("chicken") || s.includes("broiler");
+                              const isPorc = s.includes("porc") || s.includes("pig") || s.includes("swine");
+                              const isRum = s.includes("ruminant") || s.includes("cow") || s.includes("bovine");
 
-                                  if (isVol && (group.toLowerCase().includes("porc") || group.toLowerCase().includes("ruminant"))) return null;
-                                  if (isPorc && (group.toLowerCase().includes("volaille") || group.toLowerCase().includes("ruminant"))) return null;
-                                  if (isRum && (group.toLowerCase().includes("volaille") || group.toLowerCase().includes("porc"))) return null;
+                              if (isVol && (group.toLowerCase().includes("porc") || group.toLowerCase().includes("ruminant"))) return null;
+                              if (isPorc && (group.toLowerCase().includes("volaille") || group.toLowerCase().includes("ruminant"))) return null;
+                              if (isRum && (group.toLowerCase().includes("volaille") || group.toLowerCase().includes("porc"))) return null;
 
-                                return (
-                                  <optgroup key={group} label={group}>
-                                    {keys.map(k => (
-                                      <option key={k} value={k}>{k}</option>
-                                    ))}
-                                  </optgroup>
-                                );
-                              })}
-                            </select>
-                          </div>
+                              return (
+                                <optgroup key={group} label={group}>
+                                  {keys.map(k => (
+                                    <option key={k} value={k}>{k}</option>
+                                  ))}
+                                </optgroup>
+                              );
+                            })}
+                          </select>
                         </div>
                       </div>
-
-                      {/* CARD 2: Matières Premières */}
-                      <div className="border border-emerald-100 bg-emerald-50/10 rounded-xl overflow-hidden shadow-sm flex flex-col">
-                        <div className="bg-emerald-50/50 border-b border-emerald-100 px-4 py-3 flex items-center justify-between">
-                            <h3 className="text-emerald-900 font-bold text-sm tracking-tight flex items-center gap-2">
-                                <span>🌾</span> Matières Premières (Limites)
-                            </h3>
-                        </div>
-                        <div className="overflow-x-auto p-4 flex flex-col pt-2">
-                          <table className="w-full text-left text-sm mb-3">
-                            <thead>
-                              <tr className="text-emerald-800 text-[10px] uppercase tracking-wider font-extrabold border-b border-emerald-100 pb-2 block w-full table-row">
-                                <th className="pb-3 w-1/3">Ingrédient</th>
-                                <th className="pb-3 w-20 text-right pr-2">Min %</th>
-                                <th className="pb-3 w-20 text-right pr-2">Max %</th>
-                                <th className="pb-3 w-24 text-right text-emerald-700">Exact %</th>
-                                <th className="pb-3 w-8"></th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-emerald-50/50">
-                              {Object.keys(activeItem.constraints).filter(nc => globalIngredientNames.includes(nc)).length === 0 && (
-                                  <tr><td colSpan={5} className="text-center py-4 text-xs text-emerald-600/60 font-medium italic">Aucune limite d'incorporation...</td></tr>
-                              )}
-                              {Object.keys(activeItem.constraints).filter(nc => globalIngredientNames.includes(nc)).map(nc => (
-                                <tr key={nc} className="group/row hover:bg-white rounded-md transition-colors">
-                                  <td className="py-2.5 text-emerald-950 font-semibold">{nc}</td>
-                                  <td className="py-2.5 pr-2">
-                                    <input type="number" step="0.1" placeholder="—" value={activeItem.constraints?.[nc]?.min ?? ""} onChange={e => editRecConstraint(masterRec.id, activeItem.id, nc, "min", e.target.value)} className={`${cell} w-full text-right bg-transparent group-hover/row:bg-white border-emerald-100 focus:border-emerald-400`} />
-                                  </td>
-                                  <td className="py-2.5 pr-2">
-                                    <input type="number" step="0.1" placeholder="—" value={activeItem.constraints?.[nc]?.max ?? ""} onChange={e => editRecConstraint(masterRec.id, activeItem.id, nc, "max", e.target.value)} className={`${cell} w-full text-right bg-transparent group-hover/row:bg-white border-emerald-100 focus:border-emerald-400`} />
-                                  </td>
-                                  <td className="py-2.5">
-                                    <input type="number" step="0.1" placeholder="—" value={activeItem.constraints?.[nc]?.exact ?? ""} onChange={e => editRecConstraint(masterRec.id, activeItem.id, nc, "exact", e.target.value)} className={`${cell} w-full text-right bg-transparent group-hover/row:bg-white border-emerald-100 ${activeItem.constraints?.[nc]?.exact !== undefined ? "font-bold text-emerald-800 !bg-emerald-100 border-emerald-400" : ""}`} />
-                                  </td>
-                                  <td className="py-2.5 pl-1">
-                                    <button
-                                      onClick={() => removeIngredientFromRecipe(masterRec.id, activeItem.id, nc)}
-                                      title="Retirer cet ingrédient"
-                                      className="opacity-0 group-hover/row:opacity-100 transition-all text-red-400 hover:text-white hover:bg-red-500 w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold cursor-pointer border border-transparent hover:border-red-600"
-                                    >
-                                      ✕
-                                    </button>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                          
-                          {/* Smart Add Ingredient Dropdown — filtered per recipe */}
-                          <div className="mt-2">
-                            <select
-                              value=""
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                if (!val) return;
-                                // Add to nutrientColumns so the row renders
-                                if (!nutrientColumns.includes(val)) setNutrientCols(prev => [...prev, val]);
-                                // Immediately inject empty constraint so the row appears even without column
-                                setRecipes(prev => prev.map(master => {
-                                  if (master.id !== masterRec.id) return master;
-                                  const inject = (rec: Recipe): Recipe => ({
-                                    ...rec,
-                                    constraints: rec.constraints[val]
-                                      ? rec.constraints
-                                      : { ...rec.constraints, [val]: {} }
-                                  });
-                                  if (activeItem.id === master.id) {
-                                    const updated = inject(master) as RecipeGrouped;
-                                    scheduleSave(updated);
-                                    return updated;
-                                  } else {
-                                    const updatedVersions = master.versions.map(ver =>
-                                      ver.id === activeItem.id ? inject(ver) : ver
-                                    );
-                                    const updatedVersion = updatedVersions.find(v => v.id === activeItem.id)!;
-                                    scheduleSave(updatedVersion);
-                                    return { ...master, versions: updatedVersions };
-                                  }
-                                }));
-                              }}
-                              className="w-full bg-white border-2 border-dashed border-emerald-200 text-emerald-700 hover:border-emerald-400 hover:bg-emerald-50 px-3 py-2 rounded-lg text-xs font-bold transition-all outline-none cursor-pointer"
-                            >
-                              <option value="" disabled>＋ Ajouter une matière première...</option>
-                              {globalIngredientNames
-                                .filter(k => !Object.keys(activeItem.constraints).includes(k))
-                                .map(k => (
-                                  <option key={k} value={k}>{k}</option>
-                                ))}
-                            </select>
-                          </div>
-                        </div>
-                      </div>
-                      
                     </div>
-                  );
+
+                    {/* CARD 2: Matières Premières */}
+                    <div className="border border-emerald-100 bg-emerald-50/10 rounded-xl overflow-hidden shadow-sm flex flex-col">
+                      <div className="bg-emerald-50/50 border-b border-emerald-100 px-4 py-3 flex items-center justify-between">
+                        <h3 className="text-emerald-900 font-bold text-sm tracking-tight flex items-center gap-2">
+                          <span>🌾</span> Matières Premières (Limites)
+                        </h3>
+                      </div>
+                      <div className="overflow-x-auto p-4 flex flex-col pt-2">
+                        <table className="w-full text-left text-sm mb-3">
+                          <thead>
+                            <tr className="text-emerald-800 text-[10px] uppercase tracking-wider font-extrabold border-b border-emerald-100 pb-2 block w-full table-row">
+                              <th className="pb-3 w-1/3">Ingrédient</th>
+                              <th className="pb-3 w-20 text-right pr-2">Min %</th>
+                              <th className="pb-3 w-20 text-right pr-2">Max %</th>
+                              <th className="pb-3 w-24 text-right text-emerald-700">Exact %</th>
+                              <th className="pb-3 w-8"></th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-emerald-50/50">
+                            {Object.keys(activeItem.constraints).filter(nc => globalIngredientNames.includes(nc)).length === 0 && (
+                              <tr><td colSpan={5} className="text-center py-4 text-xs text-emerald-600/60 font-medium italic">Aucune limite d'incorporation...</td></tr>
+                            )}
+                            {Object.keys(activeItem.constraints).filter(nc => globalIngredientNames.includes(nc)).map(nc => (
+                              <tr key={nc} className="group/row hover:bg-white rounded-md transition-colors">
+                                <td className="py-2.5 text-emerald-950 font-semibold">{nc}</td>
+                                <td className="py-2.5 pr-2">
+                                  <input type="number" step="0.1" placeholder="—" value={activeItem.constraints?.[nc]?.min ?? ""} onChange={e => editRecConstraint(masterRec.id, activeItem.id, nc, "min", e.target.value)} className={`${cell} w-full text-right bg-transparent group-hover/row:bg-white border-emerald-100 focus:border-emerald-400`} />
+                                </td>
+                                <td className="py-2.5 pr-2">
+                                  <input type="number" step="0.1" placeholder="—" value={activeItem.constraints?.[nc]?.max ?? ""} onChange={e => editRecConstraint(masterRec.id, activeItem.id, nc, "max", e.target.value)} className={`${cell} w-full text-right bg-transparent group-hover/row:bg-white border-emerald-100 focus:border-emerald-400`} />
+                                </td>
+                                <td className="py-2.5">
+                                  <input type="number" step="0.1" placeholder="—" value={activeItem.constraints?.[nc]?.exact ?? ""} onChange={e => editRecConstraint(masterRec.id, activeItem.id, nc, "exact", e.target.value)} className={`${cell} w-full text-right bg-transparent group-hover/row:bg-white border-emerald-100 ${activeItem.constraints?.[nc]?.exact !== undefined ? "font-bold text-emerald-800 !bg-emerald-100 border-emerald-400" : ""}`} />
+                                </td>
+                                <td className="py-2.5 pl-1">
+                                  <button
+                                    onClick={() => removeIngredientFromRecipe(masterRec.id, activeItem.id, nc)}
+                                    title="Retirer cet ingrédient"
+                                    className="opacity-0 group-hover/row:opacity-100 transition-all text-red-400 hover:text-white hover:bg-red-500 w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold cursor-pointer border border-transparent hover:border-red-600"
+                                  >
+                                    ✕
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+
+                        {/* Smart Add Ingredient Dropdown — filtered per recipe */}
+                        <div className="mt-2">
+                          <select
+                            value=""
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (!val) return;
+                              // Add to nutrientColumns so the row renders
+                              if (!nutrientColumns.includes(val)) setNutrientCols(prev => [...prev, val]);
+                              // Immediately inject empty constraint so the row appears even without column
+                              setRecipes(prev => prev.map(master => {
+                                if (master.id !== masterRec.id) return master;
+                                const inject = (rec: Recipe): Recipe => ({
+                                  ...rec,
+                                  constraints: rec.constraints[val]
+                                    ? rec.constraints
+                                    : { ...rec.constraints, [val]: {} }
+                                });
+                                if (activeItem.id === master.id) {
+                                  const updated = inject(master) as RecipeGrouped;
+                                  scheduleSave(updated);
+                                  return updated;
+                                } else {
+                                  const updatedVersions = master.versions.map(ver =>
+                                    ver.id === activeItem.id ? inject(ver) : ver
+                                  );
+                                  const updatedVersion = updatedVersions.find(v => v.id === activeItem.id)!;
+                                  scheduleSave(updatedVersion);
+                                  return { ...master, versions: updatedVersions };
+                                }
+                              }));
+                            }}
+                            className="w-full bg-white border-2 border-dashed border-emerald-200 text-emerald-700 hover:border-emerald-400 hover:bg-emerald-50 px-3 py-2 rounded-lg text-xs font-bold transition-all outline-none cursor-pointer"
+                          >
+                            <option value="" disabled>＋ Ajouter une matière première...</option>
+                            {globalIngredientNames
+                              .filter(k => !Object.keys(activeItem.constraints).includes(k))
+                              .map(k => (
+                                <option key={k} value={k}>{k}</option>
+                              ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                );
               })()}
             </div>
           );

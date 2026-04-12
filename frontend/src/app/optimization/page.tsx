@@ -39,7 +39,8 @@ interface MultiBlendResult {
 export default function OptimizationPage() {
   const [ingredients, setIngredients] = useState<any[]>([]);
   const [recipes, setRecipes] = useState<any[]>([]);
-  
+  const [unselectedRecipeIds, setUnselectedRecipeIds] = useState<number[]>([]);
+
   const [result, setResult] = useState<MultiBlendResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +67,7 @@ export default function OptimizationPage() {
   // ─── Dynamic Parametric Bounds ──────────────────────────────────────────
   useEffect(() => {
     if (!paramNutrient || recipes.length === 0) return;
-    
+
     // Find the current constraint for this nutrient in any recipe
     // Since parametric analysis in backend overrides ALL recipes with this value,
     // we take the first recipe that has this constraint as a reference point.
@@ -107,7 +108,7 @@ export default function OptimizationPage() {
         const recs = await recRes.json();
         setIngredients(ings);
         setRecipes(recs);
-        
+
         // Active = explicitly true (the migration now ensures all rows have a value)
         const activeIngs = ings.filter((i: any) => i.is_active === true || i.is_active == null);
         let tStock = activeIngs.reduce((s: number, i: any) => s + (i.inventory_limit_tons || 0), 0);
@@ -156,12 +157,17 @@ export default function OptimizationPage() {
       for (const master of recipes) {
         // Strip UI-only fields (id, versions) before sending to the solver
         const { id: _mid, versions, ...masterFields } = master;
-        flatRecipes.push(masterFields);
-        // Include each version as a separate recipe
+        if (!unselectedRecipeIds.includes(master.id)) {
+          flatRecipes.push(masterFields);
+        }
+
+        // Include each version as a separate recipe if it is not unselected
         if (versions && versions.length > 0) {
           for (const ver of versions) {
-            const { id: _vid, parent_id: _pid, ...verFields } = ver;
-            flatRecipes.push(verFields);
+            if (!unselectedRecipeIds.includes(ver.id)) {
+              const { id: _vid, parent_id: _pid, ...verFields } = ver;
+              flatRecipes.push(verFields);
+            }
           }
         }
       }
@@ -189,7 +195,7 @@ export default function OptimizationPage() {
         let cible = 0;
         if (c?.exact !== undefined) cible = c.exact;
         else if (c?.min !== undefined) cible = c.min;
-        const factor = val > 1000 ? 100 : 1; 
+        const factor = val > 1000 ? 100 : 1;
         const displayName = val > 1000 ? `${key} (/100)` : key;
         return { name: displayName, cible: cible / factor, atteint: val / factor };
       });
@@ -200,35 +206,35 @@ export default function OptimizationPage() {
     try {
       const el = document.getElementById(`pdf-template-${rec.name}`);
       if (!el) return;
-      
+
       const canvas = await html2canvas(el, { scale: 2, useCORS: true });
       const imgData = canvas.toDataURL("image/png");
-      
+
       const pdf = new jsPDF({
         orientation: "portrait",
         unit: "mm",
         format: "a4"
       });
-      
+
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
-      
+
       const imgWidth = pdfWidth;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      
+
       let heightLeft = imgHeight;
       let position = 0;
-      
+
       pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
       heightLeft -= pdfHeight;
-      
+
       while (heightLeft >= 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
         heightLeft -= pdfHeight;
       }
-      
+
       pdf.save(`Fiche_Technique_${rec.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`);
     } catch (err) {
       console.error(err);
@@ -356,10 +362,43 @@ export default function OptimizationPage() {
           </div>
         </div>
 
+        <div className="mb-6 bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <span>🎯</span> Sélectionner les Formules à Optimiser
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+            {recipes.map((master: any) => (
+              <div key={master.id} className="flex flex-col gap-2">
+                <label className="flex items-center gap-3 cursor-pointer p-3 bg-gray-50 hover:bg-gray-100 rounded-xl border border-gray-200 transition-colors shadow-sm">
+                  <input type="checkbox" className="w-5 h-5 text-blue-600 rounded flex-shrink-0"
+                    checked={!unselectedRecipeIds.includes(master.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) setUnselectedRecipeIds(prev => prev.filter(id => id !== master.id));
+                      else setUnselectedRecipeIds(prev => [...prev, master.id]);
+                    }}
+                  />
+                  <span className="text-sm font-black text-gray-800 line-clamp-1">{master.name}</span>
+                </label>
+                {master.versions?.map((v: any) => (
+                  <label key={v.id} className="flex items-center gap-3 cursor-pointer p-2.5 pl-8 bg-white hover:bg-gray-50 rounded-lg border border-gray-100 transition-colors shadow-sm">
+                    <input type="checkbox" className="w-4 h-4 text-blue-600 rounded flex-shrink-0"
+                      checked={!unselectedRecipeIds.includes(v.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) setUnselectedRecipeIds(prev => prev.filter(id => id !== v.id));
+                        else setUnselectedRecipeIds(prev => [...prev, v.id]);
+                      }}
+                    />
+                    <span className="text-xs font-bold text-gray-600 line-clamp-1">↳ {v.version_tag}</span>
+                  </label>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+
         <button onClick={runFactory} disabled={loading}
-          className={`w-full py-5 rounded-2xl font-black text-xl tracking-wide transition-all shadow-xl hover:-translate-y-1 ${
-            loading ? "bg-gray-300 cursor-not-allowed text-gray-500 shadow-none hover:translate-y-0" : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/30 cursor-pointer"
-          }`}>
+          className={`w-full py-5 rounded-2xl font-black text-xl tracking-wide transition-all shadow-xl hover:-translate-y-1 ${loading ? "bg-gray-300 cursor-not-allowed text-gray-500 shadow-none hover:translate-y-0" : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/30 cursor-pointer"
+            }`}>
           {loading ? "Optimisation en cours…" : "⚡ Lancer l'Optimisation de l'Usine"}
         </button>
 
@@ -382,7 +421,7 @@ export default function OptimizationPage() {
             {diagnoseResult && (
               <div className="mt-6 bg-white border border-red-100 rounded-xl p-6 shadow-sm animate-in fade-in duration-300">
                 <div className="flex items-center gap-2 mb-4 border-b border-gray-100 pb-3">
-                   <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2"><span>🧠</span> Diagnostic IA Mizan</h3>
+                  <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2"><span>🧠</span> Diagnostic IA Mizan</h3>
                 </div>
                 <div className="prose prose-sm max-w-none text-gray-700">
                   <ReactMarkdown>{diagnoseResult}</ReactMarkdown>
@@ -397,7 +436,7 @@ export default function OptimizationPage() {
             <div className="bg-gray-900 text-white rounded-3xl p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl">
               <div>
                 <p className="text-gray-400 text-sm font-bold uppercase tracking-widest">Coût Total de Production</p>
-                <p className="text-gray-300 mt-2 font-medium">Pour {result.recipes.reduce((s,r)=>s+r.raw_tons,0).toFixed(2)}t de matières consommées</p>
+                <p className="text-gray-300 mt-2 font-medium">Pour {result.recipes.reduce((s, r) => s + r.raw_tons, 0).toFixed(2)}t de matières consommées</p>
               </div>
               <p className="text-5xl font-black tracking-tight text-emerald-400">
                 {result.total_factory_cost_tnd.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} <span className="text-3xl text-emerald-600/50">TND</span>
@@ -520,7 +559,7 @@ export default function OptimizationPage() {
                         </button>
                       </div>
                     </div>
-                    
+
                     {/* Hidden PDF Template */}
                     <div style={{ position: 'absolute', top: '-9999px', left: '-9999px' }}>
                       <div id={`pdf-template-${rec.name}`} style={{ width: '800px', backgroundColor: 'white', padding: '40px', color: 'black', fontFamily: 'sans-serif' }}>
@@ -539,7 +578,7 @@ export default function OptimizationPage() {
                         <div style={{ backgroundColor: '#f3f4f6', padding: '15px', borderRadius: '8px', marginBottom: '30px' }}>
                           <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold', color: '#1f2937' }}>Recette : {rec.name}</h3>
                         </div>
-                        
+
                         {/* Section 1: Composition */}
                         <div style={{ marginBottom: '35px' }}>
                           <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '15px', borderBottom: '1px solid #e5e7eb', paddingBottom: '8px', color: '#111827' }}>1. Composition (Matières Premières)</h2>
@@ -562,7 +601,7 @@ export default function OptimizationPage() {
                             </tbody>
                           </table>
                         </div>
-                        
+
                         {/* Section 2: Nutrition */}
                         <div style={{ marginBottom: '40px' }}>
                           <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '15px', borderBottom: '1px solid #e5e7eb', paddingBottom: '8px', color: '#111827' }}>2. Valeurs Nutritionnelles Garanties</h2>
@@ -580,10 +619,10 @@ export default function OptimizationPage() {
                                   const cons = originalRec?.constraints?.[key];
                                   let cibleStr = "—";
                                   if (cons) {
-                                      if (cons.exact !== undefined) cibleStr = `Exact: ${cons.exact}`;
-                                      else if (cons.min !== undefined && cons.max !== undefined) cibleStr = `${cons.min} - ${cons.max}`;
-                                      else if (cons.min !== undefined) cibleStr = `Min: ${cons.min}`;
-                                      else if (cons.max !== undefined) cibleStr = `Max: ${cons.max}`;
+                                    if (cons.exact !== undefined) cibleStr = `Exact: ${cons.exact}`;
+                                    else if (cons.min !== undefined && cons.max !== undefined) cibleStr = `${cons.min} - ${cons.max}`;
+                                    else if (cons.min !== undefined) cibleStr = `Min: ${cons.min}`;
+                                    else if (cons.max !== undefined) cibleStr = `Max: ${cons.max}`;
                                   }
                                   return (
                                     <tr key={key} style={{ backgroundColor: i % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
@@ -619,11 +658,11 @@ export default function OptimizationPage() {
       {selectedReport && (() => {
         const original = getOriginalRecipe(selectedReport.name);
         return (
-          <FicheModal 
-            report={selectedReport} 
-            originalConstraints={original?.constraints} 
+          <FicheModal
+            report={selectedReport}
+            originalConstraints={original?.constraints}
             species={original?.species}
-            onClose={() => setSelectedReport(null)} 
+            onClose={() => setSelectedReport(null)}
           />
         );
       })()}
@@ -693,9 +732,8 @@ export default function OptimizationPage() {
               } catch { setParamData([]); }
               finally { setParamLoading(false); }
             }} disabled={paramLoading}
-              className={`w-full py-3.5 rounded-xl font-black text-sm tracking-wide transition-all shadow-md mb-6 ${
-                paramLoading ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/20 cursor-pointer"
-              }`}>
+              className={`w-full py-3.5 rounded-xl font-black text-sm tracking-wide transition-all shadow-md mb-6 ${paramLoading ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/20 cursor-pointer"
+                }`}>
               {paramLoading ? "Calcul en cours… (GLOP ×" + paramSteps + ")" : "⚡ Générer la Courbe de Coût"}
             </button>
 
@@ -710,7 +748,7 @@ export default function OptimizationPage() {
                         label={{ value: paramLabel, position: 'insideBottom', offset: -5, style: { fontSize: 11, fill: '#9ca3af', fontWeight: 700 } }} />
                       <YAxis tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false}
                         label={{ value: 'Coût (TND)', angle: -90, position: 'insideLeft', offset: -5, style: { fontSize: 11, fill: '#9ca3af', fontWeight: 700 } }} />
-                      <RechartsTooltip 
+                      <RechartsTooltip
                         contentStyle={{ borderRadius: '12px', fontSize: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', background: 'white' }}
                         formatter={(val: any) => val === null ? ['Infaisable', 'Coût'] : [`${Number(val).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} TND`, 'Coût']}
                         labelFormatter={(label: any) => `${paramLabel}: ${label}`}
