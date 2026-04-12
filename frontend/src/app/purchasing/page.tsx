@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { Zap, AlertTriangle, TrendingDown, BrainCircuit, Sparkles, RefreshCcw, HandCoins } from "lucide-react";
+import React, { useState, useEffect, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -124,7 +125,9 @@ export default function PurchasingPage() {
     <div className="p-10 max-w-7xl mx-auto animate-in fade-in duration-500 pb-24">
       {/* Header */}
       <div className="mb-10">
-        <h1 className="text-3xl font-black text-gray-900 tracking-tight">💰 Achats & Stratégie</h1>
+        <h1 className="text-3xl font-black text-gray-900 tracking-tight flex items-center gap-2">
+          <HandCoins className="w-8 h-8 text-emerald-600" /> Achats & Stratégie
+        </h1>
         <p className="text-gray-500 mt-1">Tableau de bord du Directeur des Achats — Prix d'Intérêt, négociations et intelligence artificielle.</p>
       </div>
 
@@ -133,12 +136,11 @@ export default function PurchasingPage() {
         <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm mb-8">
           <p className="text-gray-600 font-medium mb-4">Lancez d'abord une optimisation pour générer les données de Shadow Pricing.</p>
           <button onClick={runOptimization} disabled={loading}
-            className={`w-full py-4 rounded-xl font-black text-lg tracking-wide transition-all shadow-lg ${
-              loading ? "bg-gray-300 cursor-not-allowed text-gray-500" : "bg-gray-900 hover:bg-gray-800 text-white shadow-gray-900/20 cursor-pointer"
-            }`}>
-            {loading ? "Optimisation en cours…" : "⚡ Lancer l'Optimisation de l'Usine"}
+            className={`w-full py-4 rounded-xl font-black text-lg tracking-wide transition-all shadow-lg ${loading ? "bg-gray-300 cursor-not-allowed text-gray-500" : "bg-gray-900 hover:bg-gray-800 text-white shadow-gray-900/20 cursor-pointer"
+              }`}>
+            {loading ? "Optimisation en cours…" : <span className="flex items-center justify-center gap-2"><Zap className="w-5 h-5" /> Lancer l'Optimisation de l'Usine</span>}
           </button>
-          {error && <p className="text-red-600 mt-4 font-bold">⚠ {error}</p>}
+          {error && <p className="text-red-600 mt-4 font-bold flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> {error}</p>}
         </div>
       )}
 
@@ -164,7 +166,7 @@ export default function PurchasingPage() {
                   <p className="text-sm text-gray-500 mt-1">écart de seulement <b className="text-emerald-700">{allShadowPrices[0].difference.toFixed(3)} TND</b></p>
                 </>
               ) : (
-                <p className="text-gray-400 text-sm">Tous les ingrédients sont utilisés ✅</p>
+                <p className="text-gray-400 text-sm font-semibold">Toutes les matières sont utilisées.</p>
               )}
             </div>
           </div>
@@ -173,7 +175,7 @@ export default function PurchasingPage() {
           <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
             <div className="p-6 border-b border-gray-100">
               <div className="flex items-center gap-2">
-                <span className="text-xl">📉</span>
+                <TrendingDown className="w-6 h-6 text-red-600" />
                 <h2 className="text-xl font-black text-gray-900">Opportunités de Négociation (Shadow Prices)</h2>
               </div>
               <p className="text-gray-500 text-sm mt-1">Classé par proximité de rentabilité — le premier de la liste est l'effort de négociation le plus faible.</p>
@@ -203,8 +205,9 @@ export default function PurchasingPage() {
                           <td className="py-4 px-6 text-right font-mono text-emerald-600 font-bold">{sp.target_price.toFixed(3)}</td>
                           <td className="py-4 px-6 text-right font-mono font-bold text-gray-700">-{sp.difference.toFixed(3)} TND</td>
                           <td className="py-4 px-6 text-right">
-                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${isClose ? "bg-emerald-100 text-emerald-700 border border-emerald-200" : "bg-gray-100 text-gray-500 border border-gray-200"}`}>
-                              {isClose ? "🟢 Négociable" : "🔴 Éloigné"}
+                            <span className={`px-3 py-1 rounded-full text-xs font-bold flex items-center justify-center gap-1.5 w-fit ml-auto ${isClose ? "bg-emerald-100 text-emerald-700 border border-emerald-200" : "bg-gray-100 text-gray-500 border border-gray-200"}`}>
+                              <div className={`w-1.5 h-1.5 rounded-full ${isClose ? "bg-emerald-500" : "bg-gray-400"}`} />
+                              {isClose ? "Négociable" : "Éloigné"}
                             </span>
                           </td>
                         </tr>
@@ -214,8 +217,8 @@ export default function PurchasingPage() {
                 </table>
               </div>
             ) : (
-              <div className="p-8 text-center">
-                <p className="text-gray-400 text-lg">✅ Toutes les matières premières sont utilisées dans cette optimisation.</p>
+              <div className="p-8 text-center border-t border-gray-100">
+                <p className="text-gray-600 text-lg font-semibold">Toutes les matières premières sont utilisées dans cette optimisation.</p>
                 <p className="text-gray-400 text-sm mt-1">Aucun prix d'intérêt à exploiter.</p>
               </div>
             )}
@@ -225,7 +228,7 @@ export default function PurchasingPage() {
           <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
             <div className="p-6 border-b border-gray-100 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-xl">🧠</span>
+                <BrainCircuit className="w-6 h-6 text-indigo-600" />
                 <h2 className="text-xl font-black text-gray-900">Recommandations Stratégiques de l'IA</h2>
               </div>
               <button onClick={runAiAnalysis} disabled={aiLoading}
@@ -235,7 +238,7 @@ export default function PurchasingPage() {
                     <div className="w-4 h-4 rounded-full border-2 border-purple-300 border-r-purple-700 animate-spin" />
                     Analyse en cours...
                   </>
-                ) : "✨ Analyser avec l'IA Mizan"}
+                ) : <span className="flex items-center gap-2"><Sparkles className="w-4 h-4" /> Analyser avec l'IA Mizan</span>}
               </button>
             </div>
 
@@ -255,8 +258,8 @@ export default function PurchasingPage() {
 
           {/* Re-run button */}
           <button onClick={() => { setResult(null); setAiInsights(null); }}
-            className="w-full py-3 rounded-xl bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all font-bold text-sm border border-gray-200">
-            🔄 Relancer une Optimisation
+            className="w-full py-3 rounded-xl bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all font-bold text-sm border border-gray-200 flex items-center justify-center gap-2">
+            <RefreshCcw className="w-4 h-4" /> Relancer une Optimisation
           </button>
         </div>
       )}

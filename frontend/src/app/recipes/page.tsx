@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { Sparkles, Save, Scan, Edit3, Trash2, AlertTriangle, BookMarked, Layers, GitMerge } from "lucide-react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { getFilteredNutrients, SPECIES_OPTIONS, SPECIES_REGEX } from "@/utils/nutrientUtils";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -488,16 +489,16 @@ export default function RecipesPage() {
   type NutrientGroups = Record<string, string[]>;
 
   const groupNutrientKeys = (keys: string[]): NutrientGroups => {
-    const groups: NutrientGroups = {
-      "⚗️ Composition Générale": [],
-      "🧂 Minéraux": [],
-      "💊 Vitamines": [],
-      "🔗 Acides Aminés": [],
-      "⚡ Énergie": [],
-      "🐔 Spécifique Volaille": [],
-      "🐷 Spécifique Porc": [],
-      "🐄 Spécifique Ruminant": [],
-      "📊 Autre": [],
+    const groups: Record<string, string[]> = {
+      "Composition Générale": [],
+      "Énergie": [],
+      "Acides Aminés": [],
+      "Vitamines": [],
+      "Minéraux": [],
+      "Spécifique Volaille": [],
+      "Spécifique Porc": [],
+      "Spécifique Ruminant": [],
+      "Autre": [],
     };
 
     const is = (k: string, ...terms: string[]) =>
@@ -505,23 +506,23 @@ export default function RecipesPage() {
 
     for (const k of keys) {
       if (is(k, "volaille", "broiler", "poultry", "chicken", "laying hen", "cockerel", "turkey", "duck")) {
-        groups["🐔 Spécifique Volaille"].push(k);
+        groups["Spécifique Volaille"].push(k);
       } else if (is(k, "porc", "pig", "swine", "sow", "piglet")) {
-        groups["🐷 Spécifique Porc"].push(k);
+        groups["Spécifique Porc"].push(k);
       } else if (is(k, "ruminant", "ufl", "ufv", "pdia", "pdie", "pdim", "uem", "inra 2018", "bovine", "cow", "bull", "calf", "sheep", "lamb", "goat")) {
-        groups["🐄 Spécifique Ruminant"].push(k);
+        groups["Spécifique Ruminant"].push(k);
       } else if (is(k, "energy", "énergie", "nergie", "amei", "ame", "ne ", "neo", "gel", "kcal", "mj/", "eb ", "em ", "en ")) {
-        groups["⚡ Énergie"].push(k);
+        groups["Énergie"].push(k);
       } else if (is(k, "lysine", "methionine", "méthionine", "threonine", "tryptophan", "isoleucine", "leucine", "valine", "arginine", "histidine", "phenylalanine", "cystine", "glycine", "amino", "acide aminé", "lys ", "met ", "thr ", "trp ", "ile ", "leu ", "val ", "arg ", "his ", "phe ", "cys ")) {
-        groups["🔗 Acides Aminés"].push(k);
+        groups["Acides Aminés"].push(k);
       } else if (is(k, "vitamin", "vitamine", "choline", "niacin", "riboflavin", "thiamin", "biotin", "pantothenic", "folic", "cobalamin", "vit ")) {
-        groups["💊 Vitamines"].push(k);
+        groups["Vitamines"].push(k);
       } else if (is(k, "calcium", "phosphor", "sodium", "magnesium", "potassium", "zinc", "copper", "manganese", "iron", "selenium", "iodine", "chloride", "sulfur", "cobalt", "ca ", "p ", "na ", "mg ", "k ", "zn ", "cu ", "mn ", "fe ", "se ", " i ", "cl ", " s ", "co ")) {
-        groups["🧂 Minéraux"].push(k);
+        groups["Minéraux"].push(k);
       } else if (is(k, "dry matter", "crude protein", "crude fibre", "crude fat", "ash", "ndf", "adf", "starch", "sugar", "protéine", "fibre", "matière", "ms %", "extractif", "cb ", "mat ", "cel ", "cb %", "ma %", "mg %")) {
-        groups["⚗️ Composition Générale"].push(k);
+        groups["Composition Générale"].push(k);
       } else {
-        groups["📊 Autre"].push(k);
+        groups["Autre"].push(k);
       }
     }
 
@@ -578,8 +579,8 @@ export default function RecipesPage() {
                               key={opt.value}
                               onClick={() => editRec(masterRec.id, activeItem.id, "species", opt.value)}
                               className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all ${isActive
-                                  ? "bg-white text-gray-900 shadow-sm"
-                                  : "text-gray-400 hover:text-gray-700"
+                                ? "bg-white text-gray-900 shadow-sm"
+                                : "text-gray-400 hover:text-gray-700"
                                 }`}
                             >
                               {opt.label}
@@ -589,9 +590,9 @@ export default function RecipesPage() {
                       </div>
                       <select value={activeId} onChange={e => setActiveVersions(prev => ({ ...prev, [masterRec.id]: parseInt(e.target.value) }))}
                         className="bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-bold px-3 py-1.5 rounded-lg outline-none cursor-pointer">
-                        <option value={masterRec.id}>🗂️ {masterRec.version_tag} (Master)</option>
+                        <option value={masterRec.id}>■ {masterRec.version_tag} (Master)</option>
                         {masterRec.versions.map(v => (
-                          <option key={v.id} value={v.id}>🔀 {v.version_tag}</option>
+                          <option key={v.id} value={v.id}>└ {v.version_tag}</option>
                         ))}
                       </select>
                     </div>
@@ -610,13 +611,13 @@ export default function RecipesPage() {
                       }}
                       className="text-emerald-700 hover:text-emerald-900 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold shadow-sm outline-none"
                     >
-                      <option value="">📚 Appliquer une Norme</option>
+                      <option value="">Appliquer une Norme</option>
                       {standards.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                     </select>
 
                     <button onClick={() => askAIForBounds(masterRec.id, activeItem.id, activeItem.name)} disabled={aiLoadingFor === activeItem.id}
                       className="text-amber-700 hover:text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold flex items-center shadow-sm disabled:opacity-50">
-                      {aiLoadingFor === activeItem.id ? "⏳ Analyse IA..." : "✨ Suggérer Best Practices"}
+                      {aiLoadingFor === activeItem.id ? "Analyse IA..." : <><Sparkles className="w-3.5 h-3.5 mr-1" /> Best Practices</>}
                     </button>
 
                     <div className="relative">
@@ -625,7 +626,7 @@ export default function RecipesPage() {
                         disabled={ocrLoadingFor === activeItem.id}
                         className="text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold flex items-center shadow-sm disabled:opacity-50"
                       >
-                        {ocrLoadingFor === activeItem.id ? "⏳ Scan en cours..." : "📸 Scanner une Fiche"}
+                        {ocrLoadingFor === activeItem.id ? "Scan en cours..." : <><Scan className="w-3.5 h-3.5 mr-1" /> Scanner Fiche</>}
                       </button>
                       <input
                         id={`file-upload-${activeItem.id}`}
@@ -642,24 +643,24 @@ export default function RecipesPage() {
 
                     <button onClick={() => createRevision(masterRec.id, activeItem.id)} title="Nouvelle Version"
                       className="text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold flex items-center gap-1 shadow-sm">
-                      💾 Sauvegarder une Révision
+                      <Save className="w-3.5 h-3.5" /> Révision
                     </button>
                     {!isMasterActive && (
                       <button onClick={() => { editRec(masterRec.id, activeItem.id, "version_tag", prompt("Nouveau nom de version ?", activeItem.version_tag) || activeItem.version_tag); }}
                         className="text-gray-500 hover:text-gray-800 bg-gray-50 hover:bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold flex items-center shadow-sm">
-                        ✏️ Renommer
+                        <Edit3 className="w-3.5 h-3.5 mr-1" /> Renommer
                       </button>
                     )}
 
                     {confirmDeleteId === activeItem.id ? (
                       <button onClick={() => rmRec(masterRec.id, activeItem.id)}
-                        className="ml-auto text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold shadow-md animate-pulse">
-                        ⚠️ Confirmer la suppression ?
+                        className="ml-auto text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold flex items-center shadow-md animate-pulse">
+                        <AlertTriangle className="w-3.5 h-3.5 mr-1" /> Confirmer suppression
                       </button>
                     ) : (
                       <button onClick={() => setConfirmDeleteId(activeItem.id)}
-                        className="ml-auto text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-100 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold shadow-sm">
-                        ✕ Supprimer {isMasterActive ? "Master" : "Version"}
+                        className="ml-auto text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-100 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold flex items-center shadow-sm">
+                        <Trash2 className="w-3.5 h-3.5 mr-1" /> Supprimer
                       </button>
                     )}
 

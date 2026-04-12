@@ -4,16 +4,24 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserButton, useUser } from "@clerk/nextjs";
 
+import {
+  LayoutDashboard,
+  Boxes,
+  FileText,
+  Activity,
+  TrendingUp
+} from "lucide-react";
+
 export default function Sidebar() {
   const pathname = usePathname();
   const { user } = useUser();
 
   const links = [
-    { href: "/", label: "📊 Tableau de Bord" },
-    { href: "/ingredients", label: "🌾 Matières Premières" },
-    { href: "/recipes", label: "📋 Formules" },
-    { href: "/optimization", label: "⚡ Optimisation" },
-    { href: "/purchasing", label: "💰 Achats & Stratégie" },
+    { href: "/", label: "Tableau de Bord", icon: LayoutDashboard },
+    { href: "/ingredients", label: "Matières Premières", icon: Boxes },
+    { href: "/recipes", label: "Formules", icon: FileText },
+    { href: "/optimization", label: "Optimisation", icon: Activity },
+    { href: "/purchasing", label: "Achats & Stratégie", icon: TrendingUp },
   ];
 
   return (
@@ -32,12 +40,12 @@ export default function Sidebar() {
             <Link
               key={link.href}
               href={link.href}
-              className={`flex items-center px-4 py-3 rounded-xl transition-all font-semibold ${
-                isActive
-                  ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30"
-                  : "text-gray-400 hover:bg-gray-800 hover:text-gray-100"
-              }`}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-semibold ${isActive
+                  ? "bg-slate-800 text-white shadow-md shadow-slate-900/10 border border-slate-700/50"
+                  : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-100"
+                }`}
             >
+              <link.icon className={`w-5 h-5 ${isActive ? "text-emerald-400" : "text-slate-500"}`} />
               {link.label}
             </Link>
           );

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { Zap, Target, AlertTriangle, Bot, BrainCircuit, LineChart as LucideLineChart, FileText, Download, Printer, Search } from "lucide-react";
+import React, { useState, useEffect, useCallback } from "react";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, LineChart, Line } from "recharts";
 import ReactMarkdown from "react-markdown";
 import FicheModal from "@/components/FicheModal";
@@ -364,7 +365,7 @@ export default function OptimizationPage() {
 
         <div className="mb-6 bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
           <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <span>🎯</span> Sélectionner les Formules à Optimiser
+            <Target className="w-5 h-5 text-indigo-600" /> Sélectionner les Formules à Optimiser
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
             {recipes.map((master: any) => (
@@ -399,7 +400,7 @@ export default function OptimizationPage() {
         <button onClick={runFactory} disabled={loading}
           className={`w-full py-5 rounded-2xl font-black text-xl tracking-wide transition-all shadow-xl hover:-translate-y-1 ${loading ? "bg-gray-300 cursor-not-allowed text-gray-500 shadow-none hover:translate-y-0" : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/30 cursor-pointer"
             }`}>
-          {loading ? "Optimisation en cours…" : "⚡ Lancer l'Optimisation de l'Usine"}
+          {loading ? "Optimisation en cours…" : <span className="flex items-center justify-center gap-2"><Zap className="w-6 h-6" /> Lancer l'Optimisation de l'Usine</span>}
         </button>
 
         {error && (
@@ -407,21 +408,21 @@ export default function OptimizationPage() {
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div>
                 <p className="text-red-700 text-lg font-bold flex items-center gap-2">
-                  <span>⚠</span> Échec Logique du Solveur Mathématique
+                  <AlertTriangle className="w-5 h-5" /> Échec Logique du Solveur Mathématique
                 </p>
                 <p className="text-red-600 mt-2 font-medium">{error}</p>
                 <p className="text-red-500 text-xs mt-1">Les ingrédients disponibles ne permettent pas de satisfaire les contraintes Minimales et Maximales simultanément.</p>
               </div>
               <button onClick={askAIWhy} disabled={diagnoseLoading}
                 className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-5 rounded-xl text-sm transition-colors shadow-sm flex items-center gap-2 flex-shrink-0">
-                {diagnoseLoading ? "⏳ Résolution en cours..." : "🤖 Demander à l'IA pourquoi ?"}
+                {diagnoseLoading ? "⏳ Résolution en cours..." : <><Bot className="w-4 h-4" /> Demander à l'IA pourquoi ?</>}
               </button>
             </div>
 
             {diagnoseResult && (
               <div className="mt-6 bg-white border border-red-100 rounded-xl p-6 shadow-sm animate-in fade-in duration-300">
                 <div className="flex items-center gap-2 mb-4 border-b border-gray-100 pb-3">
-                  <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2"><span>🧠</span> Diagnostic IA Mizan</h3>
+                  <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2"><BrainCircuit className="w-5 h-5 text-indigo-600" /> Diagnostic IA Mizan</h3>
                 </div>
                 <div className="prose prose-sm max-w-none text-gray-700">
                   <ReactMarkdown>{diagnoseResult}</ReactMarkdown>
@@ -451,14 +452,14 @@ export default function OptimizationPage() {
                     <div className="w-4 h-4 rounded-full border-2 border-emerald-300 border-r-emerald-700 animate-spin" />
                     Audit en cours...
                   </>
-                ) : "🩺 Lancer l'Audit Nutritionnel & Process IA"}
+                ) : <span className="flex items-center gap-2"><Search className="w-5 h-5 text-emerald-600" /> Lancer l'Audit Nutritionnel & Process IA</span>}
               </button>
             </div>
 
             {auditResult && (
               <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-8 shadow-sm animate-in slide-in-from-top-4 duration-500">
                 <div className="flex items-center gap-3 mb-6">
-                  <span className="text-2xl">🩺</span>
+                  <Search className="w-6 h-6 text-emerald-600" />
                   <h2 className="text-xl font-black text-emerald-900">Rapport de Contrôle Qualité IA</h2>
                 </div>
                 <div className="prose prose-emerald max-w-none text-emerald-900/80 prose-strong:text-emerald-900 prose-li:marker:text-emerald-400">
@@ -544,7 +545,7 @@ export default function OptimizationPage() {
                           setParamData([]);
                           setParamModalOpen(true);
                         }} className="flex-1 py-3.5 px-3 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 transition-all font-bold cursor-pointer flex items-center justify-center gap-2 shadow-sm text-sm">
-                          📈 Paramétrique
+                          <LucideLineChart className="w-4 h-4 text-indigo-600" /> Paramétrique
                         </button>
                         <button onClick={() => exportPDF(rec, originalRec)} disabled={exportingPdf === rec.name} className="flex-1 py-3 px-2 rounded-xl bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 transition-all font-bold cursor-pointer flex items-center justify-center gap-1.5 shadow-sm text-xs">
                           {exportingPdf === rec.name ? (
@@ -552,10 +553,10 @@ export default function OptimizationPage() {
                               <div className="w-4 h-4 rounded-full border-2 border-red-300 border-r-red-700 animate-spin" />
                               PDF...
                             </>
-                          ) : "🖨️ PDF"}
+                          ) : <><Printer className="w-4 h-4" /> PDF</>}
                         </button>
                         <button onClick={() => exportCSV(rec, originalRec)} className="flex-1 py-3 px-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 transition-all font-bold cursor-pointer flex items-center justify-center gap-1.5 shadow-sm text-xs">
-                          📊 CSV
+                          <FileText className="w-4 h-4" /> CSV
                         </button>
                       </div>
                     </div>
@@ -673,7 +674,9 @@ export default function OptimizationPage() {
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto p-8" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-2xl font-black text-gray-900">📈 Analyse Paramétrique</h2>
+                <h2 className="text-2xl font-black text-gray-900 flex items-center gap-2">
+                  <LucideLineChart className="w-6 h-6 text-indigo-600" /> Analyse Paramétrique
+                </h2>
                 <p className="text-gray-500 text-sm mt-1">Faites varier un nutriment pour visualiser l'impact sur le coût total de l'usine.</p>
               </div>
               <button onClick={() => setParamModalOpen(false)} className="text-gray-400 hover:text-gray-600 text-2xl font-bold cursor-pointer">✕</button>
@@ -758,7 +761,9 @@ export default function OptimizationPage() {
                   </ResponsiveContainer>
                 </div>
                 {paramData.some(d => d.cost === null) && (
-                  <p className="text-center text-orange-600 text-xs font-bold mt-3">⚠ Certains points sont infaisables (le solveur n'a pas trouvé de solution optimale).</p>
+                  <p className="flex justify-center items-center gap-1.5 text-center text-orange-600 text-xs font-bold mt-3">
+                    <AlertTriangle className="w-4 h-4" /> Certains points sont infaisables (le solveur n'a pas trouvé de solution optimale).
+                  </p>
                 )}
               </div>
             )}

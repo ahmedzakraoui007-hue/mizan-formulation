@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { Save, Plus, Search, FlaskConical, X, Edit3, Trash2, Check, AlertCircle } from "lucide-react";
+import React, { useState, useEffect, useCallback } from "react";
 import { getNutrientUnit } from "@/utils/nutrientUtils";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -40,10 +41,10 @@ const COMMON_NUTRIENTS = [
 ];
 
 const CATEGORY_COLORS: { test: RegExp; badge: string; dot: string }[] = [
-  { test: /volaille/i, badge: "bg-amber-50 text-amber-700 border-amber-200",   dot: "bg-amber-400" },
-  { test: /porc/i,    badge: "bg-pink-50 text-pink-700 border-pink-200",       dot: "bg-pink-400" },
-  { test: /ruminant/i,badge: "bg-green-50 text-green-700 border-green-200",    dot: "bg-green-400" },
-  { test: /.*/,       badge: "bg-slate-50 text-slate-700 border-slate-200",    dot: "bg-slate-400" },
+  { test: /volaille/i, badge: "bg-amber-50 text-amber-700 border-amber-200", dot: "bg-amber-400" },
+  { test: /porc/i, badge: "bg-pink-50 text-pink-700 border-pink-200", dot: "bg-pink-400" },
+  { test: /ruminant/i, badge: "bg-green-50 text-green-700 border-green-200", dot: "bg-green-400" },
+  { test: /.*/, badge: "bg-slate-50 text-slate-700 border-slate-200", dot: "bg-slate-400" },
 ];
 
 function getCategoryStyle(key: string) {
@@ -53,15 +54,15 @@ function getCategoryStyle(key: string) {
 function groupNutrients(nutrients: Record<string, number>) {
   const groups: Record<string, { key: string; value: number }[]> = {
     "Composition Générale": [],
-    "🐔 Volaille": [],
-    "🐷 Porc": [],
-    "🐄 Ruminant": [],
+    "Volaille": [],
+    "Porc": [],
+    "Ruminant": [],
   };
   for (const [k, v] of Object.entries(nutrients)) {
-    if (/volaille/i.test(k))      groups["🐔 Volaille"].push({ key: k, value: v });
-    else if (/porc/i.test(k))     groups["🐷 Porc"].push({ key: k, value: v });
-    else if (/ruminant/i.test(k)) groups["🐄 Ruminant"].push({ key: k, value: v });
-    else                           groups["Composition Générale"].push({ key: k, value: v });
+    if (/volaille/i.test(k)) groups["Volaille"].push({ key: k, value: v });
+    else if (/porc/i.test(k)) groups["Porc"].push({ key: k, value: v });
+    else if (/ruminant/i.test(k)) groups["Ruminant"].push({ key: k, value: v });
+    else groups["Composition Générale"].push({ key: k, value: v });
   }
   return groups;
 }
@@ -73,16 +74,16 @@ function groupNutrients(nutrients: Record<string, number>) {
 export default function IngredientsPage() {
   // The main list only holds lite data (no heavy nutrients)
   const [ingredients, setIngredients] = useState<LiteIngredient[]>([]);
-  const [searchTerm, setSearchTerm]   = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("Tous");
-  const [fetching, setFetching]       = useState(true);
+  const [fetching, setFetching] = useState(true);
 
   // Track inline row edits (name, cost, dm, stock only — never nutrients from the table)
   const [pendingRowEdits, setPendingRowEdits] = useState<Record<number, Partial<LiteIngredient>>>({});
   const hasRowEdits = Object.keys(pendingRowEdits).length > 0;
 
   // Side panel state — holds a FULL ingredient object fetched on demand
-  const [panel, setPanel]             = useState<FullIngredient | null>(null);
+  const [panel, setPanel] = useState<FullIngredient | null>(null);
   const [panelSearch, setPanelSearch] = useState("");
   const [panelSaving, setPanelSaving] = useState(false);
 
@@ -249,9 +250,9 @@ export default function IngredientsPage() {
   const filteredIngredients = ingredients.filter(ing => {
     const matchesSearch = ing.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus =
-      filterStatus === "Tous"         ? true :
-      filterStatus === "Stock Actif"  ? ing.is_active :
-      filterStatus === "Base Inactive"? !ing.is_active : true;
+      filterStatus === "Tous" ? true :
+        filterStatus === "Stock Actif" ? ing.is_active :
+          filterStatus === "Base Inactive" ? !ing.is_active : true;
     return matchesSearch && matchesStatus;
   });
 
@@ -305,12 +306,12 @@ export default function IngredientsPage() {
               {hasRowEdits && (
                 <button onClick={saveRowEdits}
                   className="bg-emerald-600 text-white hover:bg-emerald-700 px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-md flex items-center gap-2 animate-pulse">
-                  💾 Sauvegarder les modifications
+                  <Save className="w-4 h-4" /> Sauvegarder
                 </button>
               )}
               <button onClick={addIng}
-                className="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-md shadow-blue-600/20">
-                + Ajouter
+                className="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-md shadow-blue-600/20 flex items-center gap-1">
+                <Plus className="w-4 h-4" /> Ajouter
               </button>
             </div>
           </div>
@@ -318,7 +319,7 @@ export default function IngredientsPage() {
           {/* Toolbar */}
           <div className="flex items-center gap-3">
             <div className="relative flex-1 max-w-sm">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input type="text" placeholder="Rechercher une matière première..."
                 value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
                 className="pl-9 pr-4 py-2.5 w-full bg-white border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm" />
@@ -326,8 +327,8 @@ export default function IngredientsPage() {
             <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
               className="bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm cursor-pointer">
               <option value="Tous">Tous les ingrédients</option>
-              <option value="Stock Actif">✅ Stock Actif</option>
-              <option value="Base Inactive">⚪ Base Inactive</option>
+              <option value="Stock Actif">Stock Actif</option>
+              <option value="Base Inactive">Base Inactive</option>
             </select>
           </div>
         </div>
@@ -339,10 +340,9 @@ export default function IngredientsPage() {
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50/80">
                   {["Nom", "Statut", "Coût TND/kg", "MS %", "Protéine %", "Stock (t)", "Fiche Technique", ""].map((h, i) => (
-                    <th key={i} className={`py-3.5 px-5 text-xs font-bold tracking-wider uppercase text-gray-400 ${
-                      h === "Nom" ? "text-left min-w-[220px]" :
+                    <th key={i} className={`py-3.5 px-5 text-xs font-bold tracking-wider uppercase text-gray-400 ${h === "Nom" ? "text-left min-w-[220px]" :
                       h === "Statut" || h === "Fiche Technique" || h === "" ? "text-center" : "text-right"
-                    }`}>{h}</th>
+                      }`}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -365,8 +365,9 @@ export default function IngredientsPage() {
                     {/* Statut */}
                     <td className="py-3 px-5 text-center">
                       <button onClick={() => toggleActive(ing.id)}
-                        className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${ing.is_active ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-200" : "bg-gray-100 text-gray-500 hover:bg-gray-200 border border-gray-200"}`}>
-                        {ing.is_active ? "🟢 Actif" : "⚪ Inactif"}
+                        className={`px-3 py-1 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1.5 mx-auto ${ing.is_active ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-200" : "bg-gray-100 text-gray-500 hover:bg-gray-200 border border-gray-200"}`}>
+                        <div className={`w-2 h-2 rounded-full ${ing.is_active ? "bg-emerald-500" : "bg-gray-400"}`} />
+                        {ing.is_active ? "Actif" : "Inactif"}
                       </button>
                     </td>
 
@@ -386,9 +387,9 @@ export default function IngredientsPage() {
                     <td className="py-3 px-5 text-right">
                       <span className="font-mono text-gray-600 font-semibold">
                         {ing.nutrients?.["Crude protein (%)"] ??
-                         ing.nutrients?.["Crude protein"] ??
-                         ing.nutrients?.["Protéine %"] ??
-                         "—"}
+                          ing.nutrients?.["Crude protein"] ??
+                          ing.nutrients?.["Protéine %"] ??
+                          "—"}
                       </span>
                     </td>
 
@@ -401,12 +402,11 @@ export default function IngredientsPage() {
                     {/* Fiche Technique */}
                     <td className="py-3 px-5 text-center">
                       <button onClick={() => openPanel(ing.id)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
-                          panel?.id === ing.id
-                            ? "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/25"
-                            : "bg-white text-blue-600 border-blue-200 hover:bg-blue-600 hover:text-white hover:border-blue-600 shadow-sm"
-                        }`}>
-                        🔬 Détails
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border flex items-center justify-center gap-1.5 mx-auto ${panel?.id === ing.id
+                          ? "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/25"
+                          : "bg-white text-blue-600 border-blue-200 hover:bg-blue-600 hover:text-white hover:border-blue-600 shadow-sm"
+                          }`}>
+                        <FlaskConical className="w-3.5 h-3.5" /> Détails
                       </button>
                     </td>
 
@@ -447,12 +447,12 @@ export default function IngredientsPage() {
                       <input type="number" step="0.1" value={panel.dm}
                         onChange={e => setPanel(prev => prev ? { ...prev, dm: parseFloat(e.target.value) || 0 } : null)}
                         className="w-16 bg-white/10 border-none outline-none text-white font-bold ml-1 rounded px-1" />
-                    %</span>
+                      %</span>
                     <span className="text-xs text-slate-400 font-mono">Coût:
                       <input type="number" step="0.01" value={panel.cost}
                         onChange={e => setPanel(prev => prev ? { ...prev, cost: parseFloat(e.target.value) || 0 } : null)}
                         className="w-20 bg-white/10 border-none outline-none text-white font-bold ml-1 rounded px-1" />
-                    TND/kg</span>
+                      TND/kg</span>
                     <span className="text-xs bg-blue-800/60 text-blue-200 px-2 py-0.5 rounded-full font-bold border border-blue-700">
                       {totalNutrients} paramètres
                     </span>
@@ -460,13 +460,13 @@ export default function IngredientsPage() {
                 </div>
                 <button onClick={() => setPanel(null)}
                   className="flex-shrink-0 text-slate-400 hover:text-white hover:bg-white/10 w-8 h-8 rounded-lg flex items-center justify-center transition-all text-lg font-bold">
-                  ✕
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 
               {/* Panel Search */}
               <div className="relative mt-4">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                 <input type="text" placeholder="Filtrer les paramètres..."
                   value={panelSearch} onChange={e => setPanelSearch(e.target.value)}
                   className="pl-9 pr-4 py-2.5 w-full bg-white/10 border border-white/20 rounded-lg text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all" />
@@ -505,7 +505,7 @@ export default function IngredientsPage() {
                           <button
                             onClick={() => removePanelNutrient(key)}
                             className="text-red-400 hover:text-red-600 transition-colors ml-2">
-                            ✕
+                            <X className="w-4 h-4" />
                           </button>
                         </div>
                       ))}
@@ -546,7 +546,7 @@ export default function IngredientsPage() {
                 <button
                   onClick={() => { const custom = prompt("Nom du nouveau nutriment :"); if (custom) addPanelNutrient(custom); }}
                   className="bg-blue-50 text-blue-600 border border-blue-100 hover:bg-blue-100 px-3 py-2 rounded-lg text-xs font-black transition-all">
-                  ✎
+                  <Edit3 className="w-4 h-4" />
                 </button>
               </div>
 
@@ -562,7 +562,7 @@ export default function IngredientsPage() {
                   </button>
                   <button onClick={savePanel} disabled={panelSaving}
                     className="bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 px-5 py-2 rounded-xl text-sm font-bold transition-all shadow-sm flex items-center gap-2">
-                    {panelSaving ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : "💾"}
+                    {panelSaving ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
                     Sauvegarder la fiche
                   </button>
                 </div>

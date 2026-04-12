@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { saveAs } from "file-saver";
+import { X, FileSpreadsheet, Share2, Printer } from "lucide-react";
 import { isNutrientSpecificToSpecies, getNutrientUnit, getTopNutrients } from "@/utils/nutrientUtils";
 
 interface ResultIngredient {
@@ -32,7 +32,7 @@ interface FicheModalProps {
 export default function FicheModal({ report, originalConstraints, species = "General", onClose }: FicheModalProps) {
   const now = new Date();
   const dateStr = now.toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
-  
+
   // Sort ingredients by weight descending
   const sortedIngredients = [...report.ingredients].sort((a, b) => b.tons - a.tons);
 
@@ -46,18 +46,18 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
     csv += `Cout total (TND),${report.cost_tnd.toFixed(2)}\n`;
     csv += `Taille du sac (kg),${report.bag_size_kg}\n`;
     csv += `Cout par sac (TND),${report.cost_per_bag_tnd.toFixed(3)}\n\n`;
-    
+
     csv += `Matiere Premiere,Quantite (kg),Quantite (t),Proportion (%)\n`;
     sortedIngredients.forEach(ing => {
       csv += `"${ing.name}",${Math.round(ing.percentage * 10)},${ing.tons.toFixed(2)},${Math.round(ing.percentage)}\n`;
     });
-    
+
     csv += `\nValeurs Nutritionnelles,Atteint,Unité\n`;
     getTopNutrients(report.nutrients, originalConstraints, species)
       .forEach(([key, val]) => {
         csv += `"${key}",${val.toFixed(2)},"${getNutrientUnit(key)}"\n`;
       });
-    
+
     const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
     const blob = new Blob([bom, csv], { type: "text/csv;charset=utf-8" });
     const fileName = `Fiche_${report.name.replace(/[^a-zA-Z0-9_-]/g, "_")}_${now.toISOString().slice(0, 10)}.csv`;
@@ -75,34 +75,34 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
     try {
       const el = document.getElementById(`modal-pdf-template`);
       if (!el) return;
-      
+
       const { default: html2canvas } = await import("html2canvas");
       const { default: jsPDF } = await import("jspdf");
 
       const canvas = await html2canvas(el, { scale: 2, useCORS: true });
       const imgData = canvas.toDataURL("image/png");
-      
+
       const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       const imgHeight = (canvas.height * pdfWidth) / canvas.width;
-      
+
       let heightLeft = imgHeight;
       let position = 0;
-      
+
       pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
       heightLeft -= pdfHeight;
-      
+
       while (heightLeft >= 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
         pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
         heightLeft -= pdfHeight;
       }
-      
+
       const pdfBlob = pdf.output("blob");
       const file = new File([pdfBlob], `Fiche_${report.name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`, { type: "application/pdf" });
-      
+
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
           files: [file],
@@ -142,13 +142,13 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 print:bg-white print:relative print:z-0 print:block overflow-y-auto pt-10 pb-10 print:p-0">
       <style dangerouslySetInnerHTML={{ __html: printStyles }} />
       <div className="bg-white rounded-2xl shadow-2xl w-11/12 max-w-4xl p-10 max-h-none print:shadow-none print:w-full print:p-0 relative my-auto">
-        
+
         {/* Close Button (Hidden in Print) */}
-        <button 
+        <button
           onClick={onClose}
           className="absolute top-6 right-6 text-gray-400 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-full w-8 h-8 flex items-center justify-center transition-colors print:hidden"
         >
-          ✕
+          <X className="w-5 h-5" />
         </button>
 
         {/* Header */}
@@ -234,7 +234,7 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
                   <div key={key} className="flex justify-between border-b border-gray-200/60 pb-1 print:border-gray-400">
                     <span className="text-gray-600 font-bold">{key}</span>
                     <span className="font-black text-gray-900 text-right">
-                      {val.toLocaleString("fr-FR", { maximumFractionDigits: 2 })} 
+                      {val.toLocaleString("fr-FR", { maximumFractionDigits: 2 })}
                       <span className="text-[10px] text-gray-400 ml-1">{getNutrientUnit(key)}</span>
                       <span className="text-xs text-gray-500 font-medium">{targetStr}</span>
                     </span>
@@ -247,7 +247,7 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
         {/* Footer (Hidden in Print) */}
         <div className="mt-8 pt-6 border-t border-gray-200 flex flex-col sm:flex-row gap-4 justify-end print:hidden">
           <button onClick={generateCSV} className="px-6 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-bold hover:bg-gray-200 transition-colors shadow-sm flex items-center justify-center gap-2">
-            📊 Exporter en CSV
+            <FileSpreadsheet className="w-4 h-4" /> Exporter en CSV
           </button>
           <button onClick={shareToWhatsApp} disabled={sharing} className={`px-6 py-2.5 rounded-xl text-white font-bold transition-colors shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 ${sharing ? "bg-emerald-400 cursor-not-allowed" : "bg-emerald-500 hover:bg-emerald-600"}`}>
             {sharing ? (
@@ -255,10 +255,10 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
                 <div className="w-4 h-4 rounded-full border-2 border-white border-r-transparent animate-spin" />
                 Préparation...
               </>
-            ) : "📲 WhatsApp"}
+            ) : <span className="flex items-center gap-2"><Share2 className="w-4 h-4" /> WhatsApp</span>}
           </button>
           <button onClick={handlePrint} className="px-6 py-2.5 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
-            🖨️ Imprimer la Fiche
+            <Printer className="w-4 h-4" /> Imprimer la Fiche
           </button>
         </div>
 
@@ -279,7 +279,7 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
             <div style={{ backgroundColor: '#f3f4f6', padding: '15px', borderRadius: '8px', marginBottom: '30px' }}>
               <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold', color: '#1f2937' }}>Recette : {report.name}</h3>
             </div>
-            
+
             <div style={{ marginBottom: '35px' }}>
               <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '15px', borderBottom: '1px solid #e5e7eb', paddingBottom: '8px', color: '#111827' }}>1. Composition (Matières Premières)</h2>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
@@ -301,7 +301,7 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
                 </tbody>
               </table>
             </div>
-            
+
             <div style={{ marginBottom: '40px' }}>
               <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '15px', borderBottom: '1px solid #e5e7eb', paddingBottom: '8px', color: '#111827' }}>2. Valeurs Nutritionnelles Garanties</h2>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
@@ -318,10 +318,10 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
                       const cons = originalConstraints?.[key];
                       let cibleStr = "—";
                       if (cons) {
-                          if (cons.exact !== undefined) cibleStr = `Exact: ${cons.exact}`;
-                          else if (cons.min !== undefined && cons.max !== undefined) cibleStr = `${cons.min} - ${cons.max}`;
-                          else if (cons.min !== undefined) cibleStr = `Min: ${cons.min}`;
-                          else if (cons.max !== undefined) cibleStr = `Max: ${cons.max}`;
+                        if (cons.exact !== undefined) cibleStr = `Exact: ${cons.exact}`;
+                        else if (cons.min !== undefined && cons.max !== undefined) cibleStr = `${cons.min} - ${cons.max}`;
+                        else if (cons.min !== undefined) cibleStr = `Min: ${cons.min}`;
+                        else if (cons.max !== undefined) cibleStr = `Max: ${cons.max}`;
                       }
                       return (
                         <tr key={key} style={{ backgroundColor: i % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
