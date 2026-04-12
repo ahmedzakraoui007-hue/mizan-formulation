@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useState } from "react";
 import { saveAs } from "file-saver";
 import { X, FileSpreadsheet, Share2, Printer } from "lucide-react";
 import { isNutrientSpecificToSpecies, getNutrientUnit, getTopNutrients } from "@/utils/nutrientUtils";
