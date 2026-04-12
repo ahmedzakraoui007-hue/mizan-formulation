@@ -25,7 +25,7 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside className="w-64 bg-gray-900 text-white flex flex-col h-screen fixed top-0 left-0 overflow-y-auto shadow-xl z-50">
+    <aside className="w-64 bg-slate-950 border-r border-slate-800 text-slate-300 flex flex-col h-screen fixed top-0 left-0 overflow-y-auto shadow-2xl z-50">
       <div className="p-6">
         <h1 className="text-xl font-black tracking-tight flex items-center gap-2">
           <span className="text-emerald-400">MIZAN</span> FORMULATION
@@ -41,8 +41,8 @@ export default function Sidebar() {
               key={link.href}
               href={link.href}
               className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-semibold ${isActive
-                  ? "bg-slate-800 text-white shadow-md shadow-slate-900/10 border border-slate-700/50"
-                  : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-100"
+                ? "bg-slate-800 text-white shadow-md shadow-slate-900/10 border border-slate-700/50"
+                : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-100"
                 }`}
             >
               <link.icon className={`w-5 h-5 ${isActive ? "text-emerald-400" : "text-slate-500"}`} />
