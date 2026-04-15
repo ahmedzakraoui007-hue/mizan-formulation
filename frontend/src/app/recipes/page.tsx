@@ -156,8 +156,11 @@ export default function RecipesPage() {
     });
   };
 
-  const editRecNum = (masterId: number, targetId: number, key: keyof Recipe, v: string) =>
-    editRec(masterId, targetId, key, parseFloat(v) || 0);
+  const editRecNum = (masterId: number, targetId: number, key: keyof Recipe, v: string) => {
+    // Allow empty string during typing — don't coerce to 0 mid-keystroke
+    const parsed = v === "" ? 0 : Number(v);
+    editRec(masterId, targetId, key, isNaN(parsed) ? 0 : parsed);
+  };
 
   const editRecConstraint = (masterId: number, targetId: number, nutrKey: string, field: "min" | "max" | "exact", v: string) => {
     setRecipes(prev => {
@@ -165,13 +168,14 @@ export default function RecipesPage() {
         if (master.id !== masterId) return master;
 
         const updateConstraints = (rec: Recipe) => {
-          const val = v === "" ? undefined : (parseFloat(v) || 0);
+          const val = v === "" ? undefined : Number(v);
+          const numVal = (val !== undefined && isNaN(val)) ? undefined : val;
           const updated = { ...rec.constraints };
           if (!updated[nutrKey]) updated[nutrKey] = {};
 
           const config = { ...updated[nutrKey] };
-          if (val === undefined) delete config[field];
-          else config[field] = val;
+          if (numVal === undefined) delete config[field];
+          else config[field] = numVal;
 
           if (Object.keys(config).length === 0) delete updated[nutrKey];
           else updated[nutrKey] = config;
