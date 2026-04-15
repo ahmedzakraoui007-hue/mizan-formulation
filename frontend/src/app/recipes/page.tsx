@@ -751,9 +751,9 @@ export default function RecipesPage() {
                               <thead>
                                 <tr className="text-slate-500 text-[10px] uppercase tracking-[0.12em] font-extrabold border-b border-slate-100">
                                   <th className="pb-3 w-1/3">Nutriment</th>
-                                  <th className="pb-3 w-20 text-right pr-2">Min</th>
-                                  <th className="pb-3 w-20 text-right pr-2">Max</th>
-                                  <th className="pb-3 w-24 text-right text-amber-600">Exact</th>
+                                  <th className="pb-3 w-28 text-right pr-2">Min</th>
+                                  <th className="pb-3 w-28 text-right pr-2">Max</th>
+                                  <th className="pb-3 w-32 text-right text-amber-600">Exact</th>
                                   <th className="pb-3 w-8"></th>
                                 </tr>
                               </thead>
@@ -875,9 +875,9 @@ export default function RecipesPage() {
                               <thead>
                                 <tr className="text-slate-500 text-[10px] uppercase tracking-[0.12em] font-extrabold border-b border-slate-100">
                                   <th className="pb-3 w-1/3">Ingrédient</th>
-                                  <th className="pb-3 w-20 text-right pr-2">Min %</th>
-                                  <th className="pb-3 w-20 text-right pr-2">Max %</th>
-                                  <th className="pb-3 w-24 text-right text-emerald-600">Exact %</th>
+                                  <th className="pb-3 w-28 text-right pr-2">Min %</th>
+                                  <th className="pb-3 w-28 text-right pr-2">Max %</th>
+                                  <th className="pb-3 w-32 text-right text-emerald-600">Exact %</th>
                                   <th className="pb-3 w-8"></th>
                                 </tr>
                               </thead>
