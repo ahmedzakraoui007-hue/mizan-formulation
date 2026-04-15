@@ -1,6 +1,6 @@
 "use client";
 
-import { Zap, Target, AlertTriangle, Bot, BrainCircuit, LineChart as LucideLineChart, FileText, Download, Printer, Search } from "lucide-react";
+import { Zap, Target, AlertTriangle, Bot, BrainCircuit, LineChart as LucideLineChart, FileText, Download, Printer, Search, Eye } from "lucide-react";
 import React, { useState, useEffect, useCallback } from "react";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, LineChart, Line } from "recharts";
 import ReactMarkdown from "react-markdown";
@@ -543,7 +543,7 @@ export default function OptimizationPage() {
 
                       <div className="flex flex-col gap-3 mt-auto">
                         <button onClick={() => setSelectedReport(rec)} className="w-full py-3.5 rounded-xl bg-gray-900 border border-transparent text-white hover:bg-gray-800 transition-all font-bold cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-gray-900/20">
-                          👁️ Voir Fiche de Fabrication
+                          <Eye className="w-4 h-4" /> Voir Fiche de Fabrication
                         </button>
                         <div className="flex gap-3">
                           <button onClick={() => {

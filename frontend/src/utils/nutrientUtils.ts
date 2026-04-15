@@ -1,8 +1,8 @@
 export const SPECIES_OPTIONS = [
-  { value: "Volaille", label: "🐔 Volaille" },
-  { value: "Porc", label: "🐷 Porc" },
-  { value: "Ruminant", label: "🐄 Ruminant" },
-  { value: "General", label: "♾️ Standard" },
+  { value: "Volaille", label: "Volaille" },
+  { value: "Porc", label: "Porc" },
+  { value: "Ruminant", label: "Ruminant" },
+  { value: "General", label: "Standard" },
 ];
 
 export const SPECIES_REGEX: Record<string, RegExp | null> = {

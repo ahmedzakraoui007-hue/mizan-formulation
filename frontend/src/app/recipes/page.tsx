@@ -2,7 +2,7 @@
 
 import { Sparkles, Save, Scan, Edit3, Trash2, AlertTriangle, BookMarked, Layers, GitMerge, X, FlaskConical, Wheat, Plus, ChevronRight } from "lucide-react";
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { getFilteredNutrients, SPECIES_OPTIONS, SPECIES_REGEX } from "@/utils/nutrientUtils";
+import { getFilteredNutrients, SPECIES_OPTIONS, SPECIES_REGEX, getNutrientUnit } from "@/utils/nutrientUtils";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -760,7 +760,10 @@ export default function RecipesPage() {
                                 {/* Only show rows that are in THIS recipe's constraints */}
                                 {Object.keys(activeItem.constraints).filter(nc => !globalIngredientNames.includes(nc)).map(nc => (
                                   <tr key={nc} className="group/row hover:bg-slate-50/80 transition-colors">
-                                    <td className="py-2.5 text-slate-800 font-semibold text-[13px]">{nc}</td>
+                                    <td className="py-2.5 text-slate-800 font-semibold text-[13px]">
+                                      {nc}
+                                      {getNutrientUnit(nc) && <span className="ml-1.5 text-[10px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">{getNutrientUnit(nc)}</span>}
+                                    </td>
                                     <td className="py-2.5 pr-2">
                                       <input type="number" step="0.1" placeholder="—" value={activeItem.constraints?.[nc]?.min ?? ""} onChange={e => editRecConstraint(masterRec.id, activeItem.id, nc, "min", e.target.value)} className={`${cell} w-full text-right bg-transparent group-hover/row:bg-white border-slate-200 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-100`} />
                                     </td>
@@ -880,7 +883,10 @@ export default function RecipesPage() {
                                 )}
                                 {Object.keys(activeItem.constraints).filter(nc => globalIngredientNames.includes(nc)).map(nc => (
                                   <tr key={nc} className="group/row hover:bg-slate-50/80 transition-colors">
-                                    <td className="py-2.5 text-slate-800 font-semibold text-[13px]">{nc}</td>
+                                    <td className="py-2.5 text-slate-800 font-semibold text-[13px]">
+                                      {nc}
+                                      <span className="ml-1.5 text-[10px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">%</span>
+                                    </td>
                                     <td className="py-2.5 pr-2">
                                       <input type="number" step="0.1" placeholder="—" value={activeItem.constraints?.[nc]?.min ?? ""} onChange={e => editRecConstraint(masterRec.id, activeItem.id, nc, "min", e.target.value)} className={`${cell} w-full text-right bg-transparent group-hover/row:bg-white border-slate-200 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-100`} />
                                     </td>
