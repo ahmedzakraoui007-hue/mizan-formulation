@@ -271,7 +271,7 @@ export default function IngredientsPage() {
   const formatNutrientLabel = (key: string): string =>
     key.replace(/\s*\([^)]*\)\s*$/, '').replace(/\s+%\s*$/, '').trim();
 
-  const cell = "bg-white border border-gray-200 rounded-lg px-3 py-2 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm transition-all";
+  const cell = "bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
 
   // ─────────────────────────────────────────────────────────────────────────
   //  RENDER
