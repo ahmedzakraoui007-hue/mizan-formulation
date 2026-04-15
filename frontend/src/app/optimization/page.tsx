@@ -1,6 +1,6 @@
 "use client";
 
-import { Zap, Target, AlertTriangle, Bot, BrainCircuit, LineChart as LucideLineChart, FileText, Download, Printer, Search, Eye } from "lucide-react";
+import { Zap, Target, AlertTriangle, Bot, BrainCircuit, LineChart as LucideLineChart, FileText, Download, Printer, Search, Eye, X } from "lucide-react";
 import React, { useState, useEffect, useCallback } from "react";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, LineChart, Line } from "recharts";
 import ReactMarkdown from "react-markdown";
@@ -692,7 +692,7 @@ export default function OptimizationPage() {
                   </h2>
                   <p className="text-gray-500 text-sm mt-1">Faites varier un nutriment pour visualiser l'impact sur le coût total de l'usine.</p>
                 </div>
-                <button onClick={() => setParamModalOpen(false)} className="text-gray-400 hover:text-gray-600 text-2xl font-bold cursor-pointer">✕</button>
+                <button onClick={() => setParamModalOpen(false)} className="text-gray-400 hover:text-gray-600 cursor-pointer"><X className="w-6 h-6" /></button>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -750,7 +750,7 @@ export default function OptimizationPage() {
               }} disabled={paramLoading}
                 className={`w-full py-3.5 rounded-xl font-black text-sm tracking-wide transition-all shadow-md mb-6 ${paramLoading ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/20 cursor-pointer"
                   }`}>
-                {paramLoading ? "Calcul en cours… (GLOP ×" + paramSteps + ")" : "⚡ Générer la Courbe de Coût"}
+                {paramLoading ? "Calcul en cours… (GLOP ×" + paramSteps + ")" : <><Zap className="w-4 h-4 inline mr-1" />Générer la Courbe de Coût</>}
               </button>
 
               {paramData.length > 0 && (

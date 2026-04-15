@@ -250,7 +250,7 @@ export default function PurchasingPage() {
               </div>
             ) : (
               <div className="p-8 text-center text-gray-400">
-                <p className="text-lg">Cliquez sur "✨ Analyser avec l'IA Mizan" pour générer des recommandations financières ciblées.</p>
+                <p className="text-lg">{"Cliquez sur \"Analyser avec l'IA Mizan\" pour générer des recommandations financières ciblées."}</p>
                 <p className="text-sm mt-1">L'IA utilisera les données de Shadow Pricing pour identifier les meilleures cibles de négociation.</p>
               </div>
             )}

@@ -414,7 +414,7 @@ export default function IngredientsPage() {
                     <td className="py-3 px-5 text-center">
                       <button onClick={() => rmIng(ing.id)}
                         className="text-red-400 hover:text-white hover:bg-red-500 border border-transparent hover:border-red-500 px-2.5 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-all text-xs font-bold">
-                        ✕
+                        <X className="w-3.5 h-3.5" />
                       </button>
                     </td>
                   </tr>
@@ -531,7 +531,7 @@ export default function IngredientsPage() {
                   className="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 text-xs font-bold outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer text-gray-900"
                   onChange={e => { if (e.target.value && e.target.value !== "NEW_PROMPT") { addPanelNutrient(e.target.value); e.target.value = ""; } }}
                   defaultValue="">
-                  <option value="" disabled>＋ Ajouter un nutriment...</option>
+                  <option value="" disabled>+ Ajouter un nutriment...</option>
                   {(() => {
                     const allKeys = new Set(COMMON_NUTRIENTS);
                     ingredients.forEach(i => { if (i.nutrients) Object.keys(i.nutrients).forEach(k => allKeys.add(k)); });
