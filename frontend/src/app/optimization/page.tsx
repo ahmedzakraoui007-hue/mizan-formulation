@@ -112,9 +112,9 @@ export default function OptimizationPage() {
 
         // Active = explicitly true (the migration now ensures all rows have a value)
         const activeIngs = ings.filter((i: any) => i.is_active === true || i.is_active == null);
-        let tStock = activeIngs.reduce((s: number, i: any) => s + (i.inventory_limit_tons || 0), 0);
+        const tStock = activeIngs.reduce((s: number, i: any) => s + (i.inventory_limit_tons || 0), 0);
         // Count all recipes: masters + their versions
-        let tDemand = recs.reduce((s: number, r: any) => {
+        const tDemand = recs.reduce((s: number, r: any) => {
           const masterDemand = r.demand_tons || 0;
           const versionsDemand = (r.versions || []).reduce((vs: number, v: any) => vs + (v.demand_tons || 0), 0);
           return s + masterDemand + versionsDemand;

@@ -3,25 +3,20 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserButton, useUser } from "@clerk/nextjs";
-
-import {
-  LayoutDashboard,
-  Boxes,
-  FileText,
-  Activity,
-  TrendingUp
-} from "lucide-react";
+import { Activity, Boxes, FileText, LayoutDashboard, TrendingUp } from "lucide-react";
+import { useI18n, type Locale } from "@/lib/i18n";
 
 export default function Sidebar() {
   const pathname = usePathname();
   const { user } = useUser();
+  const { locale, setLocale, t } = useI18n();
 
   const links = [
-    { href: "/", label: "Tableau de Bord", icon: LayoutDashboard },
-    { href: "/ingredients", label: "Matières Premières", icon: Boxes },
-    { href: "/recipes", label: "Formules", icon: FileText },
-    { href: "/optimization", label: "Optimisation", icon: Activity },
-    { href: "/purchasing", label: "Achats & Stratégie", icon: TrendingUp },
+    { href: "/", label: t("dashboard"), icon: LayoutDashboard },
+    { href: "/ingredients", label: t("ingredients"), icon: Boxes },
+    { href: "/recipes", label: t("recipes"), icon: FileText },
+    { href: "/optimization", label: t("optimization"), icon: Activity },
+    { href: "/purchasing", label: t("purchasing"), icon: TrendingUp },
   ];
 
   return (
@@ -40,10 +35,11 @@ export default function Sidebar() {
             <Link
               key={link.href}
               href={link.href}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-semibold ${isActive
-                ? "bg-slate-800 text-white shadow-md shadow-slate-900/10 border border-slate-700/50"
-                : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-100"
-                }`}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-semibold ${
+                isActive
+                  ? "bg-slate-800 text-white shadow-md shadow-slate-900/10 border border-slate-700/50"
+                  : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-100"
+              }`}
             >
               <link.icon className={`w-5 h-5 ${isActive ? "text-emerald-400" : "text-slate-500"}`} />
               {link.label}
@@ -53,7 +49,19 @@ export default function Sidebar() {
       </nav>
 
       <div className="p-4 mt-auto space-y-3">
-        {/* User profile section */}
+        <label className="block text-[10px] uppercase tracking-widest text-slate-500 font-black">
+          {t("language")}
+          <select
+            value={locale}
+            onChange={(event) => setLocale(event.target.value as Locale)}
+            className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-slate-100 outline-none focus:border-emerald-500"
+          >
+            <option value="fr">Francais</option>
+            <option value="en">English</option>
+            <option value="ar">العربية</option>
+          </select>
+        </label>
+
         <div className="flex items-center gap-3 bg-gray-800 rounded-xl px-3 py-3">
           <UserButton
             appearance={{
@@ -72,10 +80,9 @@ export default function Sidebar() {
           </div>
         </div>
 
-        {/* Version tag */}
         <div className="bg-gray-800 rounded-xl p-4 text-xs text-gray-400 font-medium">
-          Mizan ERP v2.0 <br />
-          <span className="text-gray-500">Multi-Blend Optimization Engine</span>
+          Mizan ERP v2.1 <br />
+          <span className="text-gray-500">Multi-Tenant Optimization Engine</span>
         </div>
       </div>
     </aside>

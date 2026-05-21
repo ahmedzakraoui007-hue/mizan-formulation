@@ -37,7 +37,10 @@ def seed():
         names = [ing["name"] for ing in data]
 
         # ── Idempotency: delete existing rows with the same names ─────────────
-        existing = db.query(IngredientDB).filter(IngredientDB.name.in_(names)).all()
+        existing = db.query(IngredientDB).filter(
+            IngredientDB.tenant_id == "public",
+            IngredientDB.name.in_(names),
+        ).all()
         if existing:
             print(f"⚠️  Suppression de {len(existing)} ingrédient(s) existant(s) pour ré-insertion propre...")
             for row in existing:
@@ -61,7 +64,7 @@ def seed():
             # INRAE is a nutritional database — transport cost is user-configured, not scraped.
             # Reset to 0 so we don't silently add cost to every ingredient.
             ing_data['transport_cost'] = 0.0
-            row = IngredientDB(**ing_data)
+            row = IngredientDB(tenant_id="public", **ing_data)
             db.add(row)
             print(f"   ✅ Ajout : {ing_data['name']} ({len(ing_data.get('nutrients', {}))} paramètres)")
 

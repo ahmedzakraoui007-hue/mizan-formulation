@@ -1,13 +1,16 @@
 import os
-import google.generativeai as genai
+from google import genai
 from dotenv import load_dotenv
 
 load_dotenv()
 
 # Initialize the Gemini client
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
+client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
+
+
+def _text(response) -> str:
+    return getattr(response, "text", "") or ""
 
 async def generate_financial_insights(recipe_result_json: dict) -> str:
     if not GEMINI_API_KEY:
@@ -30,10 +33,10 @@ RÈGLES ABSOLUES :
 3. 💡 **Opportunité Logistique** : Examine les transport_cost dans les données d'entrée. Si un ingrédient a un transport_cost élevé par rapport à son cost, signale-le et propose d'explorer un fournisseur local. Si tous les transports sont à 0, dis-le et recommande de renseigner les vrais frais logistiques pour affiner l'analyse."""
 
     try:
-        model = genai.GenerativeModel('gemini-2.5-flash')
+        model_name = "gemini-2.5-flash"
         prompt = f"{system_instruction}\n\nJSON des résultats de l'optimisation :\n{recipe_result_json}"
-        response = model.generate_content(prompt)
-        return response.text
+        response = client.models.generate_content(model=model_name, contents=prompt)
+        return _text(response)
         
     except Exception as e:
         print(f"Gemini API Error: {e}")
@@ -67,10 +70,10 @@ RÈGLES ABSOLUES :
 3. 🛠️ **Recommandation Technique** : Donne une action concrète que le formulateur doit modifier dans ses contraintes Min/Max pour obtenir un granulé plus sûr et de meilleure qualité physique. Sois précis : "Augmentez la contrainte minimum de [Nutriment] de X% à Y%" ou "Ajoutez une contrainte maximum de [Nutriment] à Z%"."""
 
     try:
-        model = genai.GenerativeModel('gemini-2.5-flash')
+        model_name = "gemini-2.5-flash"
         prompt = f"{system_instruction}\n\nJSON des résultats de la formulation :\n{recipe_result_json}"
-        response = model.generate_content(prompt)
-        return response.text
+        response = client.models.generate_content(model=model_name, contents=prompt)
+        return _text(response)
         
     except Exception as e:
         print(f"Gemini Audit API Error: {e}")
@@ -153,12 +156,12 @@ Exemple de réponse attendue si les éléments sont ["Protéine %", "Calcium %",
 }}"""
 
     try:
-        model = genai.GenerativeModel('gemini-2.5-flash')
+        model_name = "gemini-2.5-flash"
         prompt = f"{system_instruction}\n\nRecette cible : {recipe_name}\nEspèce : {species}\n\nÉléments à évaluer : {json.dumps(elements, ensure_ascii=False)}"
-        response = model.generate_content(prompt)
+        response = client.models.generate_content(model=model_name, contents=prompt)
 
         # Strip markdown wrapper if Gemini adds it despite instructions
-        raw_text = response.text.strip()
+        raw_text = _text(response).strip()
         if raw_text.startswith("```json"):
             raw_text = raw_text[7:]
         if raw_text.endswith("```"):
@@ -218,7 +221,7 @@ Exemple de réponse attendue si les éléments sont ["Protéine %", "Calcium %",
         return normalized
 
     except json.JSONDecodeError:
-        print(f"Gemini returned invalid JSON for constraints: {response.text}")
+        print(f"Gemini returned invalid JSON for constraints: {_text(response)}")
         raise ValueError("L'IA n'a pas renvoyé un format JSON valide.")
     except Exception as e:
         print(f"Gemini Bound Suggestion API Error: {e}")
@@ -242,10 +245,10 @@ RÈGLES ABSOLUES DU SOLVEUR (A LIRE ATTENTIVEMENT) :
 5. Termine toujours par une section **✅ Recommandation Pratique** : dis à l'utilisateur quelle contrainte précise modifier (ex: "Baissez l'exigence Minimum en Protéine", "Augmentez la limite Maximum du Soja", ou "Ajoutez un ingrédient riche en énergie")."""
     
     try:
-        model = genai.GenerativeModel('gemini-2.5-flash')
+        model_name = "gemini-2.5-flash"
         prompt = f"{system_instruction}\n\nRecette : {recipe_name}\n\nContraintes Exigées :\n{json.dumps(constraints, indent=2, ensure_ascii=False)}\n\nIngrédients Disponibles (Inventaire Actif) :\n{json.dumps(available_ingredients, indent=2, ensure_ascii=False)}"
-        response = model.generate_content(prompt)
-        return response.text
+        response = client.models.generate_content(model=model_name, contents=prompt)
+        return _text(response)
     except Exception as e:
         print(f"Gemini Diagnose Error: {e}")
         return f"❌ Impossible de joindre l'IA Mizan pour le diagnostic : {str(e)}"
@@ -278,7 +281,7 @@ Exemple :
 }}"""
 
     try:
-        model = genai.GenerativeModel('gemini-2.0-flash')
+        model_name = "gemini-2.0-flash"
         
         # Prepare the multi-modal prompt
         content = [
@@ -289,10 +292,10 @@ Exemple :
             }
         ]
         
-        response = await model.generate_content_async(content)
+        response = await client.aio.models.generate_content(model=model_name, contents=content)
         
         # Strip markdown wrapper
-        raw_text = response.text.strip()
+        raw_text = _text(response).strip()
         if raw_text.startswith("```json"):
             raw_text = raw_text[7:]
         if raw_text.endswith("```"):

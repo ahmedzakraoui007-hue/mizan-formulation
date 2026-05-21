@@ -188,7 +188,7 @@ export const getTopNutrients = (
     Ruminant: ["Protéine %", "UFL (par kg MS)", "UFV (par kg MS)", "PDIN (g/kg MS)", "PDIE (g/kg MS)", "Calcium %", "Phosphore %", "Cellulose brute %"],
   };
   const speciesPrimary = primaryNutrients[mapped] || [];
-  let selected: string[] = [];
+  const selected: string[] = [];
   for (const p of speciesPrimary) {
     if (selected.length >= 10) break;
     const match = allKeys.find(k => k.toLowerCase().includes(p.toLowerCase()) || p.toLowerCase().includes(k.toLowerCase()));

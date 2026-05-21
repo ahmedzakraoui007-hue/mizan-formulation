@@ -1,6 +1,7 @@
 import sys
 import os
 import json
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -8,8 +9,13 @@ base_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, base_dir)
 from db_models import IngredientDB
 
-NEON_URL = "postgresql://neondb_owner:npg_GKdtDsM46qli@ep-plain-queen-aly72j4l-pooler.c-3.eu-central-1.aws.neon.tech/neondb?sslmode=require"
-engine = create_engine(NEON_URL)
+load_dotenv()
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL or not DATABASE_URL.startswith(("postgresql://", "postgres://")):
+    raise RuntimeError("Set DATABASE_URL to the target PostgreSQL database before running this patch script.")
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 db = SessionLocal()
 

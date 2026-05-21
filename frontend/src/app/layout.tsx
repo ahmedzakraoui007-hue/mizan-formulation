@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import Sidebar from "@/components/Sidebar";
+import AppProviders from "@/components/AppProviders";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -28,13 +29,15 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="fr">
         <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 flex min-h-screen print:bg-white`}>
-          <div className="print:hidden">
-            <Sidebar />
-          </div>
-          {/* Main Content Area - Push 64 padding-left to clear fixed 64-width sidebar */}
-          <main className="flex-1 xl:ml-64 min-h-screen print:ml-0 print:min-h-0">
-            {children}
-          </main>
+          <AppProviders>
+            <div className="print:hidden">
+              <Sidebar />
+            </div>
+            {/* Main Content Area - Push 64 padding-left to clear fixed 64-width sidebar */}
+            <main className="flex-1 xl:ml-64 min-h-screen print:ml-0 print:min-h-0">
+              {children}
+            </main>
+          </AppProviders>
         </body>
       </html>
     </ClerkProvider>

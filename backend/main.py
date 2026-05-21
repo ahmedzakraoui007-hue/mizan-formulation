@@ -5,7 +5,8 @@ from typing import List, Optional, Dict
 from sqlalchemy.orm import Session
 
 from database import engine, get_db, Base
-from db_models import IngredientDB, RecipeDB
+from db_models import IngredientDB, RecipeDB, TenantDB
+from auth import TenantContext, get_tenant_context
 from solver import solve_least_cost_formulation, solve_multi_blend
 from ai_service import generate_financial_insights, generate_formulator_audit, suggest_best_practice_bounds
 
@@ -19,11 +20,16 @@ app = FastAPI(
     description="Least-Cost Livestock Feed Optimizer — Single & Multi-Blend",
 )
 
-# Allow all origins for MVP phase
+allowed_origins = [
+    origin.strip()
+    for origin in os.getenv("FRONTEND_URL", "http://localhost:3000").split(",")
+    if origin.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
+    allow_origins=allowed_origins,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -53,32 +59,32 @@ class OptimizeRequest(BaseModel):
 
 class MultiBlendIngredient(BaseModel):
     name: str
-    cost: float
-    transport_cost: float = 0.0
-    dm: float
+    cost: float = Field(ge=0)
+    transport_cost: float = Field(default=0.0, ge=0)
+    dm: float = Field(gt=0, le=100)
     nutrients: Dict[str, float] = Field(default_factory=dict)
-    inventory_limit_tons: float
+    inventory_limit_tons: float = Field(ge=0)
     is_active: bool = True
 
 class MultiBlendIngredientUpdate(BaseModel):
     name: Optional[str] = None
-    cost: Optional[float] = None
-    transport_cost: Optional[float] = None
-    dm: Optional[float] = None
+    cost: Optional[float] = Field(default=None, ge=0)
+    transport_cost: Optional[float] = Field(default=None, ge=0)
+    dm: Optional[float] = Field(default=None, gt=0, le=100)
     nutrients: Optional[Dict[str, float]] = None
-    inventory_limit_tons: Optional[float] = None
+    inventory_limit_tons: Optional[float] = Field(default=None, ge=0)
     is_active: Optional[bool] = None
 
 class ConstraintConfig(BaseModel):
-    min: Optional[float] = None
-    max: Optional[float] = None
-    exact: Optional[float] = None
+    min: Optional[float] = Field(default=None, ge=0)
+    max: Optional[float] = Field(default=None, ge=0)
+    exact: Optional[float] = Field(default=None, ge=0)
 
 class RecipeDemand(BaseModel):
     name: str
-    demand_tons: float
-    process_yield_percent: float = 100.0
-    bag_size_kg: float = 50.0
+    demand_tons: float = Field(gt=0)
+    process_yield_percent: float = Field(default=100.0, gt=0, le=100)
+    bag_size_kg: float = Field(default=50.0, gt=0)
     constraints: Dict[str, ConstraintConfig] = Field(default_factory=dict)
     parent_id: Optional[int] = None
     version_tag: str = "V1"
@@ -105,6 +111,21 @@ class RecipeOut(RecipeDemand):
 class RecipeOutGrouped(RecipeOut):
     versions: List[RecipeOut] = []
 
+class TenantBootstrapRequest(BaseModel):
+    name: str = "Mizan Workspace"
+    locale: str = Field(default="fr", pattern="^(fr|en|ar)$")
+
+class TenantUpdateRequest(BaseModel):
+    name: Optional[str] = None
+    locale: Optional[str] = Field(default=None, pattern="^(fr|en|ar)$")
+    onboarding_completed: Optional[bool] = None
+
+class TenantOut(BaseModel):
+    tenant_id: str
+    name: str
+    locale: str
+    onboarding_completed: bool
+
 
 # ═══════════════════  SEED DATA  ══════════════════════════════════════
 
@@ -120,6 +141,94 @@ DEFAULT_RECIPES = [
     {"name": "Poultry Grower", "demand_tons": 25, "process_yield_percent": 100.0, "bag_size_kg": 50.0, "constraints": {"Protéine %": {"min": 17, "max": 22}, "Fibre %": {"min": 3, "max": 7},  "Énergie": {"min": 2600}}},
     {"name": "Dairy Cow",      "demand_tons": 30, "process_yield_percent": 100.0, "bag_size_kg": 50.0, "constraints": {"Protéine %": {"min": 14, "max": 18}, "Fibre %": {"min": 5, "max": 10}, "Énergie": {"min": 2200}}},
 ]
+def _tenant_out(row: TenantDB, tenant_id: str) -> TenantOut:
+    return TenantOut(
+        tenant_id=tenant_id,
+        name=row.name,
+        locale=row.locale,
+        onboarding_completed=row.onboarding_completed,
+    )
+
+
+def _ensure_tenant(db: Session, tenant: TenantContext, name: str | None = None, locale: str | None = None) -> TenantDB:
+    row = db.query(TenantDB).filter(TenantDB.tenant_key == tenant.tenant_id).first()
+    if row:
+        return row
+
+    row = TenantDB(
+        tenant_key=tenant.tenant_id,
+        name=name or "Mizan Workspace",
+        locale=locale or "fr",
+        onboarding_completed=False,
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def _clone_public_seed_data(db: Session, tenant_id: str) -> None:
+    if tenant_id == "public":
+        return
+    if db.query(IngredientDB).filter(IngredientDB.tenant_id == tenant_id).count() > 0:
+        return
+
+    import copy
+
+    for ing in db.query(IngredientDB).filter(IngredientDB.tenant_id == "public").all():
+        db.add(IngredientDB(
+            tenant_id=tenant_id,
+            name=ing.name,
+            cost=ing.cost,
+            transport_cost=ing.transport_cost,
+            dm=ing.dm,
+            nutrients=copy.deepcopy(ing.nutrients or {}),
+            inventory_limit_tons=ing.inventory_limit_tons,
+            is_active=ing.is_active,
+        ))
+
+    parent_map: dict[int, RecipeDB] = {}
+    public_masters = db.query(RecipeDB).filter(
+        RecipeDB.tenant_id == "public",
+        RecipeDB.parent_id == None,
+    ).all()
+    for rec in public_masters:
+        clone = RecipeDB(
+            tenant_id=tenant_id,
+            name=rec.name,
+            demand_tons=rec.demand_tons,
+            constraints=copy.deepcopy(rec.constraints or {}),
+            process_yield_percent=rec.process_yield_percent,
+            bag_size_kg=rec.bag_size_kg,
+            parent_id=None,
+            version_tag=rec.version_tag,
+            species=rec.species,
+        )
+        db.add(clone)
+        db.flush()
+        parent_map[rec.id] = clone
+
+    public_versions = db.query(RecipeDB).filter(
+        RecipeDB.tenant_id == "public",
+        RecipeDB.parent_id != None,
+    ).all()
+    for rec in public_versions:
+        parent = parent_map.get(rec.parent_id)
+        if not parent:
+            continue
+        db.add(RecipeDB(
+            tenant_id=tenant_id,
+            name=rec.name,
+            demand_tons=rec.demand_tons,
+            constraints=copy.deepcopy(rec.constraints or {}),
+            process_yield_percent=rec.process_yield_percent,
+            bag_size_kg=rec.bag_size_kg,
+            parent_id=parent.id,
+            version_tag=rec.version_tag,
+            species=rec.species,
+        ))
+
+    db.commit()
 
 
 @app.on_event("startup")
@@ -153,6 +262,12 @@ def seed_database():
                         conn.execute(text("ALTER TABLE recipes ADD COLUMN species VARCHAR"))
                         conn.execute(text("UPDATE recipes SET species = 'General' WHERE species IS NULL"))
 
+                if "tenant_id" not in existing_cols:
+                    print("Migrating: adding 'tenant_id' to recipes...")
+                    with engine.begin() as conn:
+                        conn.execute(text("ALTER TABLE recipes ADD COLUMN tenant_id VARCHAR"))
+                        conn.execute(text("UPDATE recipes SET tenant_id = 'public' WHERE tenant_id IS NULL"))
+
             # ── Ingredient column migrations ───────────────────────────────
             if inspector.has_table("ingredients"):
                 existing_ing_cols = [col["name"] for col in inspector.get_columns("ingredients")]
@@ -168,18 +283,33 @@ def seed_database():
                     with engine.begin() as conn:
                         conn.execute(text("UPDATE ingredients SET is_active = 1 WHERE is_active IS NULL"))
 
+                if "tenant_id" not in existing_ing_cols:
+                    print("Migrating: adding 'tenant_id' to ingredients...")
+                    with engine.begin() as conn:
+                        conn.execute(text("ALTER TABLE ingredients ADD COLUMN tenant_id VARCHAR"))
+                        conn.execute(text("UPDATE ingredients SET tenant_id = 'public' WHERE tenant_id IS NULL"))
+
         except Exception as e:
             print(f"Migration warning: {e}")
 
         # ── Seed empty tables ────────────────────────────────────────────
-        if db.query(IngredientDB).count() == 0:
-            for row in DEFAULT_INGREDIENTS:
-                db.add(IngredientDB(**row))
+        if db.query(TenantDB).filter(TenantDB.tenant_key == "public").first() is None:
+            db.add(TenantDB(
+                tenant_key="public",
+                name="Public Seed Workspace",
+                locale="fr",
+                onboarding_completed=True,
+            ))
             db.commit()
 
-        if db.query(RecipeDB).count() == 0:
+        if db.query(IngredientDB).filter(IngredientDB.tenant_id == "public").count() == 0:
+            for row in DEFAULT_INGREDIENTS:
+                db.add(IngredientDB(tenant_id="public", **row))
+            db.commit()
+
+        if db.query(RecipeDB).filter(RecipeDB.tenant_id == "public").count() == 0:
             for row in DEFAULT_RECIPES:
-                db.add(RecipeDB(**row))
+                db.add(RecipeDB(tenant_id="public", **row))
             db.commit()
 
         # ── Auto-restore missing nutrients from INRAE JSON ─────────────────
@@ -208,9 +338,56 @@ def seed_database():
 
 # ═══════════════════  CRUD — INGREDIENTS  ═════════════════════════════
 
+# Tenant bootstrap
+
+@app.get("/api/tenant/me", response_model=TenantOut)
+def get_tenant_me(
+    db: Session = Depends(get_db),
+    tenant: TenantContext = Depends(get_tenant_context),
+):
+    row = _ensure_tenant(db, tenant)
+    return _tenant_out(row, tenant.tenant_id)
+
+
+@app.post("/api/tenant/bootstrap", response_model=TenantOut)
+def bootstrap_tenant(
+    request: TenantBootstrapRequest,
+    db: Session = Depends(get_db),
+    tenant: TenantContext = Depends(get_tenant_context),
+):
+    row = _ensure_tenant(db, tenant, request.name, request.locale)
+    row.name = request.name
+    row.locale = request.locale
+    _clone_public_seed_data(db, tenant.tenant_id)
+    db.commit()
+    db.refresh(row)
+    return _tenant_out(row, tenant.tenant_id)
+
+
+@app.patch("/api/tenant/me", response_model=TenantOut)
+def update_tenant_me(
+    request: TenantUpdateRequest,
+    db: Session = Depends(get_db),
+    tenant: TenantContext = Depends(get_tenant_context),
+):
+    row = _ensure_tenant(db, tenant)
+    update_data = request.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        if value is not None:
+            setattr(row, key, value)
+    db.commit()
+    db.refresh(row)
+    return _tenant_out(row, tenant.tenant_id)
+
+
 @app.get("/api/ingredients", response_model=List[IngredientOut])
-def list_ingredients(lite: bool = False, db: Session = Depends(get_db)):
-    rows = db.query(IngredientDB).all()
+def list_ingredients(
+    lite: bool = False,
+    db: Session = Depends(get_db),
+    tenant: TenantContext = Depends(get_tenant_context),
+):
+    _ensure_tenant(db, tenant)
+    rows = db.query(IngredientDB).filter(IngredientDB.tenant_id == tenant.tenant_id).all()
     if lite:
         result = []
         for row in rows:
@@ -235,16 +412,28 @@ def list_ingredients(lite: bool = False, db: Session = Depends(get_db)):
     return rows
 
 @app.get("/api/ingredients/{ingredient_id}", response_model=IngredientOut)
-def get_ingredient(ingredient_id: int, db: Session = Depends(get_db)):
-    row = db.query(IngredientDB).filter(IngredientDB.id == ingredient_id).first()
+def get_ingredient(
+    ingredient_id: int,
+    db: Session = Depends(get_db),
+    tenant: TenantContext = Depends(get_tenant_context),
+):
+    row = db.query(IngredientDB).filter(
+        IngredientDB.id == ingredient_id,
+        IngredientDB.tenant_id == tenant.tenant_id,
+    ).first()
     if not row:
         raise HTTPException(status_code=404, detail="Ingredient not found")
     return row
 
 
 @app.post("/api/ingredients", response_model=IngredientOut)
-def create_ingredient(data: MultiBlendIngredient, db: Session = Depends(get_db)):
-    row = IngredientDB(**data.model_dump())
+def create_ingredient(
+    data: MultiBlendIngredient,
+    db: Session = Depends(get_db),
+    tenant: TenantContext = Depends(get_tenant_context),
+):
+    _ensure_tenant(db, tenant)
+    row = IngredientDB(tenant_id=tenant.tenant_id, **data.model_dump())
     db.add(row)
     db.commit()
     db.refresh(row)
@@ -252,8 +441,16 @@ def create_ingredient(data: MultiBlendIngredient, db: Session = Depends(get_db))
 
 
 @app.put("/api/ingredients/{ingredient_id}", response_model=IngredientOut)
-def update_ingredient(ingredient_id: int, data: MultiBlendIngredientUpdate, db: Session = Depends(get_db)):
-    row = db.query(IngredientDB).filter(IngredientDB.id == ingredient_id).first()
+def update_ingredient(
+    ingredient_id: int,
+    data: MultiBlendIngredientUpdate,
+    db: Session = Depends(get_db),
+    tenant: TenantContext = Depends(get_tenant_context),
+):
+    row = db.query(IngredientDB).filter(
+        IngredientDB.id == ingredient_id,
+        IngredientDB.tenant_id == tenant.tenant_id,
+    ).first()
     if not row:
         raise HTTPException(status_code=404, detail="Ingredient not found")
     
@@ -267,8 +464,15 @@ def update_ingredient(ingredient_id: int, data: MultiBlendIngredientUpdate, db: 
 
 
 @app.delete("/api/ingredients/{ingredient_id}")
-def delete_ingredient(ingredient_id: int, db: Session = Depends(get_db)):
-    row = db.query(IngredientDB).filter(IngredientDB.id == ingredient_id).first()
+def delete_ingredient(
+    ingredient_id: int,
+    db: Session = Depends(get_db),
+    tenant: TenantContext = Depends(get_tenant_context),
+):
+    row = db.query(IngredientDB).filter(
+        IngredientDB.id == ingredient_id,
+        IngredientDB.tenant_id == tenant.tenant_id,
+    ).first()
     if not row:
         raise HTTPException(status_code=404, detail="Ingredient not found")
     db.delete(row)
@@ -276,7 +480,10 @@ def delete_ingredient(ingredient_id: int, db: Session = Depends(get_db)):
     return {"ok": True}
 
 @app.post("/api/admin/restore-nutrients")
-def restore_nutrients(db: Session = Depends(get_db)):
+def restore_nutrients(
+    db: Session = Depends(get_db),
+    tenant: TenantContext = Depends(get_tenant_context),
+):
     """
     Safely restores missing nutrient profiles from the INRAE JSON file
     without overwriting user-modified costs or inventory limits.
@@ -296,7 +503,7 @@ def restore_nutrients(db: Session = Depends(get_db)):
         inrae_dict = {item["name"]: item.get("nutrients", {}) for item in data}
         
         updated_count = 0
-        all_ingredients = db.query(IngredientDB).all()
+        all_ingredients = db.query(IngredientDB).filter(IngredientDB.tenant_id == tenant.tenant_id).all()
         for ing in all_ingredients:
             if ing.name in inrae_dict:
                 # Only update if the DB nutrients are empty or very small (meaning they were wiped by the lite=true bug)
@@ -316,8 +523,12 @@ def restore_nutrients(db: Session = Depends(get_db)):
 from sqlalchemy.sql import text
 
 @app.get("/api/recipes", response_model=List[RecipeOutGrouped])
-def list_recipes(db: Session = Depends(get_db)):
-    all_recipes = db.query(RecipeDB).all()
+def list_recipes(
+    db: Session = Depends(get_db),
+    tenant: TenantContext = Depends(get_tenant_context),
+):
+    _ensure_tenant(db, tenant)
+    all_recipes = db.query(RecipeDB).filter(RecipeDB.tenant_id == tenant.tenant_id).all()
     
     # Group by parent_id
     masters = []
@@ -362,8 +573,13 @@ def list_standards():
 
 
 @app.post("/api/recipes", response_model=RecipeOut)
-def create_recipe(data: RecipeDemand, db: Session = Depends(get_db)):
-    row = RecipeDB(**data.model_dump())
+def create_recipe(
+    data: RecipeDemand,
+    db: Session = Depends(get_db),
+    tenant: TenantContext = Depends(get_tenant_context),
+):
+    _ensure_tenant(db, tenant)
+    row = RecipeDB(tenant_id=tenant.tenant_id, **data.model_dump())
     db.add(row)
     db.commit()
     db.refresh(row)
@@ -375,7 +591,10 @@ class SuggestBoundsRequest(BaseModel):
     species: str = "Standard"
 
 @app.post("/api/recipes/suggest-bounds")
-async def api_suggest_bounds(request: SuggestBoundsRequest):
+async def api_suggest_bounds(
+    request: SuggestBoundsRequest,
+    tenant: TenantContext = Depends(get_tenant_context),
+):
     try:
         suggestions = await suggest_best_practice_bounds(request.recipe_name, request.elements, request.species)
         return {"status": "ok", "suggestions": suggestions}
@@ -385,12 +604,22 @@ async def api_suggest_bounds(request: SuggestBoundsRequest):
         raise HTTPException(status_code=500, detail="Erreur interne du serveur lors de l'appel à l'IA.")
 
 @app.post("/api/recipes/extract-bounds")
-async def api_extract_bounds(file: UploadFile = File(...), species: str = "Standard"):
+async def api_extract_bounds(
+    file: UploadFile = File(...),
+    species: str = "Standard",
+    tenant: TenantContext = Depends(get_tenant_context),
+):
     try:
         from ai_service import extract_bounds_from_image
         contents = await file.read()
+        if len(contents) > 8 * 1024 * 1024:
+            raise HTTPException(status_code=413, detail="File too large. Maximum size is 8 MB.")
+        if file.content_type not in {"image/png", "image/jpeg", "image/webp", "application/pdf"}:
+            raise HTTPException(status_code=400, detail="Unsupported file type.")
         suggestions = await extract_bounds_from_image(contents, file.content_type, species)
         return {"status": "ok", "suggestions": suggestions}
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error in extract-bounds API: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -399,8 +628,16 @@ class RevisionRequest(BaseModel):
     version_tag: str
 
 @app.post("/api/recipes/{recipe_id}/revision", response_model=RecipeOut)
-def create_recipe_revision(recipe_id: int, request: RevisionRequest, db: Session = Depends(get_db)):
-    parent = db.query(RecipeDB).filter(RecipeDB.id == recipe_id).first()
+def create_recipe_revision(
+    recipe_id: int,
+    request: RevisionRequest,
+    db: Session = Depends(get_db),
+    tenant: TenantContext = Depends(get_tenant_context),
+):
+    parent = db.query(RecipeDB).filter(
+        RecipeDB.id == recipe_id,
+        RecipeDB.tenant_id == tenant.tenant_id,
+    ).first()
     if not parent:
         raise HTTPException(status_code=404, detail="Parent recipe not found")
         
@@ -410,6 +647,7 @@ def create_recipe_revision(recipe_id: int, request: RevisionRequest, db: Session
     
     import copy
     new_row = RecipeDB(
+        tenant_id=tenant.tenant_id,
         name=parent.name,
         demand_tons=parent.demand_tons,
         process_yield_percent=parent.process_yield_percent,
@@ -425,8 +663,16 @@ def create_recipe_revision(recipe_id: int, request: RevisionRequest, db: Session
 
 
 @app.put("/api/recipes/{recipe_id}", response_model=RecipeOut)
-def update_recipe(recipe_id: int, data: RecipeDemand, db: Session = Depends(get_db)):
-    row = db.query(RecipeDB).filter(RecipeDB.id == recipe_id).first()
+def update_recipe(
+    recipe_id: int,
+    data: RecipeDemand,
+    db: Session = Depends(get_db),
+    tenant: TenantContext = Depends(get_tenant_context),
+):
+    row = db.query(RecipeDB).filter(
+        RecipeDB.id == recipe_id,
+        RecipeDB.tenant_id == tenant.tenant_id,
+    ).first()
     if not row:
         raise HTTPException(status_code=404, detail="Recipe not found")
         
@@ -440,13 +686,23 @@ def update_recipe(recipe_id: int, data: RecipeDemand, db: Session = Depends(get_
 
 
 @app.delete("/api/recipes/{recipe_id}")
-def delete_recipe(recipe_id: int, db: Session = Depends(get_db)):
-    db_item = db.query(RecipeDB).filter(RecipeDB.id == recipe_id).first()
+def delete_recipe(
+    recipe_id: int,
+    db: Session = Depends(get_db),
+    tenant: TenantContext = Depends(get_tenant_context),
+):
+    db_item = db.query(RecipeDB).filter(
+        RecipeDB.id == recipe_id,
+        RecipeDB.tenant_id == tenant.tenant_id,
+    ).first()
     if not db_item:
         raise HTTPException(status_code=404, detail="Recipe not found")
     
     # Check if it has child revisions
-    children = db.query(RecipeDB).filter(RecipeDB.parent_id == recipe_id).all()
+    children = db.query(RecipeDB).filter(
+        RecipeDB.parent_id == recipe_id,
+        RecipeDB.tenant_id == tenant.tenant_id,
+    ).all()
     for child in children:
         db.delete(child)
 
@@ -458,7 +714,10 @@ def delete_recipe(recipe_id: int, db: Session = Depends(get_db)):
 # ═══════════════════  OPTIMIZATION ENDPOINTS  ═════════════════════════
 
 @app.post("/api/optimize")
-def optimize_recipe(request: OptimizeRequest):
+def optimize_recipe(
+    request: OptimizeRequest,
+    tenant: TenantContext = Depends(get_tenant_context),
+):
     try:
         return solve_least_cost_formulation(request.ingredients, request.constraints)
     except Exception as e:
@@ -466,9 +725,17 @@ def optimize_recipe(request: OptimizeRequest):
 
 
 @app.post("/api/optimize-multi")
-def optimize_multi_blend(request: MultiBlendRequest, db: Session = Depends(get_db)):
+def optimize_multi_blend(
+    request: MultiBlendRequest,
+    db: Session = Depends(get_db),
+    tenant: TenantContext = Depends(get_tenant_context),
+):
     try:
-        ingredients_to_use = db.query(IngredientDB).filter(IngredientDB.id.in_(request.ingredient_ids)).all()
+        ingredients_to_use = db.query(IngredientDB).filter(
+            IngredientDB.tenant_id == tenant.tenant_id,
+            IngredientDB.is_active == True,
+            IngredientDB.id.in_(request.ingredient_ids),
+        ).all()
         
         # Convert DB rows to MultiBlendIngredient schema for the solver
         ing_list = []
@@ -488,7 +755,10 @@ def optimize_multi_blend(request: MultiBlendRequest, db: Session = Depends(get_d
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.post("/api/ai-insights")
-async def get_ai_insights(recipe_result_json: dict):
+async def get_ai_insights(
+    recipe_result_json: dict,
+    tenant: TenantContext = Depends(get_tenant_context),
+):
     try:
         insight_markdown = await generate_financial_insights(recipe_result_json)
         return {"markdown": insight_markdown}
@@ -496,7 +766,10 @@ async def get_ai_insights(recipe_result_json: dict):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/ai-audit")
-async def get_ai_audit(recipe_result_json: dict):
+async def get_ai_audit(
+    recipe_result_json: dict,
+    tenant: TenantContext = Depends(get_tenant_context),
+):
     try:
         audit_markdown = await generate_formulator_audit(recipe_result_json)
         return {"markdown": audit_markdown}
@@ -510,7 +783,10 @@ class DiagnoseRequest(BaseModel):
     available_ingredients: List[str]
 
 @app.post("/api/recipes/diagnose-infeasible")
-async def api_diagnose_recipe(request: DiagnoseRequest):
+async def api_diagnose_recipe(
+    request: DiagnoseRequest,
+    tenant: TenantContext = Depends(get_tenant_context),
+):
     try:
         from ai_service import diagnose_infeasible_recipe
         markdown = await diagnose_infeasible_recipe(
@@ -527,16 +803,23 @@ class ParametricRequest(BaseModel):
     nutrient_key: str
     start_value: float
     end_value: float
-    steps: int = 10
+    steps: int = Field(default=10, ge=2, le=50)
 
 @app.post("/api/parametric-analysis")
-def run_parametric_analysis(request: ParametricRequest, db: Session = Depends(get_db)):
+def run_parametric_analysis(
+    request: ParametricRequest,
+    db: Session = Depends(get_db),
+    tenant: TenantContext = Depends(get_tenant_context),
+):
     """Run the GLOP solver multiple times over a nutrient range to generate a cost curve."""
     import copy
 
     # Load all ingredients and recipes from DB
-    db_ingredients = db.query(IngredientDB).all()
-    db_recipes = db.query(RecipeDB).all()
+    db_ingredients = db.query(IngredientDB).filter(
+        IngredientDB.tenant_id == tenant.tenant_id,
+        IngredientDB.is_active == True,
+    ).all()
+    db_recipes = db.query(RecipeDB).filter(RecipeDB.tenant_id == tenant.tenant_id).all()
 
     if not db_ingredients or not db_recipes:
         raise HTTPException(status_code=400, detail="No ingredients or recipes in the database.")
@@ -596,10 +879,17 @@ def run_parametric_analysis(request: ParametricRequest, db: Session = Depends(ge
 # ═══════════════════  DASHBOARD STATS  ════════════════════════════════
 
 @app.get("/api/dashboard/stats")
-def get_dashboard_stats(db: Session = Depends(get_db)):
+def get_dashboard_stats(
+    db: Session = Depends(get_db),
+    tenant: TenantContext = Depends(get_tenant_context),
+):
     """Return high-level factory KPIs for the home dashboard."""
-    total_ingredients = db.query(IngredientDB).count()
-    total_recipes = db.query(RecipeDB).filter(RecipeDB.parent_id == None).count()
+    _ensure_tenant(db, tenant)
+    total_ingredients = db.query(IngredientDB).filter(IngredientDB.tenant_id == tenant.tenant_id).count()
+    total_recipes = db.query(RecipeDB).filter(
+        RecipeDB.tenant_id == tenant.tenant_id,
+        RecipeDB.parent_id == None,
+    ).count()
     return {
         "total_ingredients": total_ingredients,
         "total_recipes": total_recipes,

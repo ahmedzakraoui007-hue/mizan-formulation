@@ -5,7 +5,7 @@ services:
     region: frankfurt
     plan: free
     buildCommand: "pip install -r backend/requirements.txt"
-    startCommand: "cd backend && python seed_inrae.py && uvicorn main:app --host 0.0.0.0 --port $PORT"
+    startCommand: "cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT"
     envVars:
       - key: DATABASE_URL
         sync: false
@@ -13,3 +13,9 @@ services:
         sync: false
       - key: FRONTEND_URL
         sync: false
+      - key: CLERK_JWKS_URL
+        sync: false
+      - key: CLERK_ISSUER
+        sync: false
+      - key: ALLOW_DEV_TENANT
+        value: "false"

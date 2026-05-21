@@ -13,3 +13,9 @@ out/
 
 # Backups
 *.bak
+
+# Local data / generated artifacts
+*.db
+*.zip
+*output*.txt
+error.txt
