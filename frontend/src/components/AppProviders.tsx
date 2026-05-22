@@ -4,6 +4,7 @@ import { useAuth } from "@clerk/nextjs";
 import { usePathname, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { I18nProvider } from "@/lib/i18n";
+import PlatformTranslator from "@/lib/platformTranslations";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -81,6 +82,7 @@ function ApiAuthBridge({ children }: { children: React.ReactNode }) {
 export default function AppProviders({ children }: { children: React.ReactNode }) {
   return (
     <I18nProvider>
+      <PlatformTranslator />
       <ApiAuthBridge>{children}</ApiAuthBridge>
     </I18nProvider>
   );

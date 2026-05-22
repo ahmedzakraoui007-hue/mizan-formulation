@@ -804,6 +804,8 @@ class ParametricRequest(BaseModel):
     start_value: float
     end_value: float
     steps: int = Field(default=10, ge=2, le=50)
+    ingredient_ids: List[int] = Field(default_factory=list)
+    recipes: List[RecipeDemand] = Field(default_factory=list)
 
 @app.post("/api/parametric-analysis")
 def run_parametric_analysis(
@@ -814,14 +816,33 @@ def run_parametric_analysis(
     """Run the GLOP solver multiple times over a nutrient range to generate a cost curve."""
     import copy
 
-    # Load all ingredients and recipes from DB
-    db_ingredients = db.query(IngredientDB).filter(
+    ingredient_query = db.query(IngredientDB).filter(
         IngredientDB.tenant_id == tenant.tenant_id,
         IngredientDB.is_active == True,
-    ).all()
-    db_recipes = db.query(RecipeDB).filter(RecipeDB.tenant_id == tenant.tenant_id).all()
+    )
+    if request.ingredient_ids:
+        ingredient_query = ingredient_query.filter(IngredientDB.id.in_(request.ingredient_ids))
+    db_ingredients = ingredient_query.all()
 
-    if not db_ingredients or not db_recipes:
+    source_recipes = request.recipes
+    if not source_recipes:
+        db_recipes = db.query(RecipeDB).filter(
+            RecipeDB.tenant_id == tenant.tenant_id,
+            RecipeDB.parent_id == None,
+        ).all()
+        source_recipes = [
+            RecipeDemand(
+                name=row.name,
+                demand_tons=row.demand_tons,
+                process_yield_percent=row.process_yield_percent or 100.0,
+                bag_size_kg=row.bag_size_kg or 50.0,
+                constraints=row.constraints or {},
+                species=row.species or "General",
+            )
+            for row in db_recipes
+        ]
+
+    if not db_ingredients or not source_recipes:
         raise HTTPException(status_code=400, detail="No ingredients or recipes in the database.")
 
     # Build ingredient list as simple objects the solver accepts
@@ -845,20 +866,20 @@ def run_parametric_analysis(
 
         # Deep-copy recipes and override the target nutrient constraint
         modified_recipes = []
-        for row in db_recipes:
-            constraints = copy.deepcopy(row.constraints) if row.constraints else {}
-            # Override: set min = current_val for the target nutrient
-            if request.nutrient_key in constraints:
-                constraints[request.nutrient_key]["min"] = current_val
-            else:
-                constraints[request.nutrient_key] = {"min": current_val}
+        for recipe in source_recipes:
+            constraints = copy.deepcopy(recipe.model_dump().get("constraints", {}))
+            constraint = constraints.get(request.nutrient_key, {})
+            constraint.pop("exact", None)
+            constraint["min"] = current_val
+            constraints[request.nutrient_key] = constraint
 
             modified_recipes.append(RecipeDemand(
-                name=row.name,
-                demand_tons=row.demand_tons,
-                process_yield_percent=row.process_yield_percent or 100.0,
-                bag_size_kg=row.bag_size_kg or 50.0,
+                name=recipe.name,
+                demand_tons=recipe.demand_tons,
+                process_yield_percent=recipe.process_yield_percent or 100.0,
+                bag_size_kg=recipe.bag_size_kg or 50.0,
                 constraints=constraints,
+                species=recipe.species or "General",
             ))
 
         try:

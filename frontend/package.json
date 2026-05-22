@@ -32,6 +32,7 @@
     "typescript": "^5"
   },
   "overrides": {
+    "js-cookie": "^3.0.6",
     "postcss": "^8.5.15"
   }
 }

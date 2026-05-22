@@ -64,6 +64,7 @@ export default function OptimizationPage() {
   const [paramData, setParamData] = useState<{ nutrient_value: number; cost: number | null }[]>([]);
   const [paramLoading, setParamLoading] = useState(false);
   const [paramLabel, setParamLabel] = useState("");
+  const [paramError, setParamError] = useState<string | null>(null);
 
   // ─── Dynamic Parametric Bounds ──────────────────────────────────────────
   useEffect(() => {
@@ -73,7 +74,8 @@ export default function OptimizationPage() {
     // Since parametric analysis in backend overrides ALL recipes with this value,
     // we take the first recipe that has this constraint as a reference point.
     let currentVal: number | null = null;
-    for (const r of recipes) {
+    const flat = recipes.flatMap((r: any) => [r, ...(r.versions || [])]);
+    for (const r of flat) {
       if (r.constraints?.[paramNutrient]) {
         const c = r.constraints[paramNutrient];
         if (c.min !== undefined) currentVal = c.min;
@@ -186,6 +188,31 @@ export default function OptimizationPage() {
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally { setLoading(false); }
+  };
+
+  const buildOptimizationPayload = () => {
+    const ingredientIds = ingredients
+      .filter((i: any) => i.is_active === true || i.is_active == null)
+      .map((i: any) => i.id);
+
+    const flatRecipes: any[] = [];
+    for (const master of recipes) {
+      const { id: _mid, versions, ...masterFields } = master;
+      if (!unselectedRecipeIds.includes(master.id)) {
+        flatRecipes.push(masterFields);
+      }
+
+      if (versions && versions.length > 0) {
+        for (const ver of versions) {
+          if (!unselectedRecipeIds.includes(ver.id)) {
+            const { id: _vid, parent_id: _pid, ...verFields } = ver;
+            flatRecipes.push(verFields);
+          }
+        }
+      }
+    }
+
+    return { ingredientIds, flatRecipes };
   };
 
   const getChartData = (rec: RecipeResult, originalRec: any) => {
@@ -556,6 +583,7 @@ export default function OptimizationPage() {
                             setParamEnd(String((baseMin + (baseMin * 0.15)).toFixed(1)));
                             setParamSteps("10");
                             setParamData([]);
+                            setParamError(null);
                             setParamModalOpen(true);
                           }} className="flex-1 py-3.5 px-3 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 transition-all font-bold cursor-pointer flex items-center justify-center gap-2 shadow-sm text-sm">
                             <LucideLineChart className="w-4 h-4 text-indigo-600" /> Paramétrique
@@ -703,7 +731,12 @@ export default function OptimizationPage() {
                     <option value="" disabled>Choisir un nutriment...</option>
                     {(() => {
                       const allKeys = new Set<string>();
-                      recipes.forEach((r: any) => { if (r.constraints) Object.keys(r.constraints).forEach(k => allKeys.add(k)); });
+                      recipes.forEach((r: any) => {
+                        if (r.constraints) Object.keys(r.constraints).forEach(k => allKeys.add(k));
+                        (r.versions || []).forEach((v: any) => {
+                          if (v.constraints) Object.keys(v.constraints).forEach(k => allKeys.add(k));
+                        });
+                      });
                       return Array.from(allKeys).sort().map(k => <option key={k} value={k}>{k}</option>);
                     })()}
                   </select>
@@ -729,8 +762,9 @@ export default function OptimizationPage() {
               </div>
 
               <button onClick={async () => {
-                setParamLoading(true); setParamData([]);
+                setParamLoading(true); setParamData([]); setParamError(null);
                 try {
+                  const { ingredientIds, flatRecipes } = buildOptimizationPayload();
                   const res = await fetch(`${API}/api/parametric-analysis`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -739,19 +773,33 @@ export default function OptimizationPage() {
                       start_value: parseFloat(paramStart),
                       end_value: parseFloat(paramEnd),
                       steps: parseInt(paramSteps) || 10,
+                      ingredient_ids: ingredientIds,
+                      recipes: flatRecipes,
                     }),
                   });
-                  if (!res.ok) throw new Error("Erreur");
+                  if (!res.ok) {
+                    const payload = await res.json().catch(() => ({}));
+                    throw new Error(payload.detail || "Erreur");
+                  }
                   const json = await res.json();
                   setParamData(json.data);
                   setParamLabel(json.nutrient_key);
-                } catch { setParamData([]); }
+                } catch (err: unknown) {
+                  setParamData([]);
+                  setParamError(err instanceof Error ? err.message : "Erreur inconnue");
+                }
                 finally { setParamLoading(false); }
-              }} disabled={paramLoading}
+              }} disabled={paramLoading || !paramNutrient || !paramStart || !paramEnd}
                 className={`w-full py-3.5 rounded-xl font-black text-sm tracking-wide transition-all shadow-md mb-6 ${paramLoading ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/20 cursor-pointer"
                   }`}>
                 {paramLoading ? "Calcul en cours… (GLOP ×" + paramSteps + ")" : <><Zap className="w-4 h-4 inline mr-1" />Générer la Courbe de Coût</>}
               </button>
+
+              {paramError && (
+                <p className="mb-4 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">
+                  {paramError}
+                </p>
+              )}
 
               {paramData.length > 0 && (
                 <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6">
