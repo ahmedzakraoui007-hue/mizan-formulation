@@ -1,10 +1,44 @@
 "use client";
 
-import { Save, Plus, Search, FlaskConical, X, Edit3, Trash2, Check, AlertCircle } from "lucide-react";
+import { Save, Plus, Search, FlaskConical, X, Edit3 } from "lucide-react";
 import React, { useState, useEffect, useCallback } from "react";
+import { useI18n, type Locale } from "@/lib/i18n";
 import { getNutrientUnit } from "@/utils/nutrientUtils";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+const ingredientMessages = {
+  saveError: {
+    fr: "Erreur lors de la sauvegarde.",
+    en: "Error while saving.",
+    ar: "حدث خطأ أثناء الحفظ.",
+  },
+  newIngredientName: {
+    fr: "Nouvelle Matière",
+    en: "New ingredient",
+    ar: "مادة جديدة",
+  },
+  deleteConfirm: {
+    fr: "Supprimer cet ingrédient ?",
+    en: "Delete this ingredient?",
+    ar: "حذف هذه المادة؟",
+  },
+  sheetSaved: {
+    fr: "Fiche technique sauvegardée !",
+    en: "Technical sheet saved!",
+    ar: "تم حفظ البطاقة الفنية!",
+  },
+  sheetSaveError: {
+    fr: "Erreur lors de la sauvegarde de la fiche.",
+    en: "Error while saving the sheet.",
+    ar: "حدث خطأ أثناء حفظ البطاقة.",
+  },
+  newNutrientPrompt: {
+    fr: "Nom du nouveau nutriment :",
+    en: "New nutrient name:",
+    ar: "اسم العنصر الغذائي الجديد:",
+  },
+} satisfies Record<string, Record<Locale, string>>;
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  TYPES
@@ -72,6 +106,12 @@ function groupNutrients(nutrients: Record<string, number>) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function IngredientsPage() {
+  const { locale } = useI18n();
+  const msg = useCallback(
+    (key: keyof typeof ingredientMessages) => ingredientMessages[key][locale] ?? ingredientMessages[key].fr,
+    [locale]
+  );
+
   // The main list only holds lite data (no heavy nutrients)
   const [ingredients, setIngredients] = useState<LiteIngredient[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -140,7 +180,7 @@ export default function IngredientsPage() {
         })
       );
       setPendingRowEdits({});
-    } catch { alert("Erreur lors de la sauvegarde."); }
+    } catch { alert(msg("saveError")); }
     finally { setFetching(false); }
   };
 
@@ -164,7 +204,7 @@ export default function IngredientsPage() {
     const res = await fetch(`${API}/api/ingredients`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: "Nouvelle Matière", cost: 0, transport_cost: 0, dm: 88, inventory_limit_tons: 99999, nutrients: {}, is_active: true }),
+      body: JSON.stringify({ name: msg("newIngredientName"), cost: 0, transport_cost: 0, dm: 88, inventory_limit_tons: 99999, nutrients: {}, is_active: true }),
     });
     if (res.ok) {
       const row: LiteIngredient = await res.json();
@@ -173,7 +213,7 @@ export default function IngredientsPage() {
   };
 
   const rmIng = async (id: number) => {
-    if (!confirm("Supprimer cet ingrédient ?")) return;
+    if (!confirm(msg("deleteConfirm"))) return;
     await fetch(`${API}/api/ingredients/${id}`, { method: "DELETE" });
     setIngredients(prev => prev.filter(i => i.id !== id));
     if (panel?.id === id) setPanel(null);
@@ -240,9 +280,9 @@ export default function IngredientsPage() {
           is_active: updated.is_active,
           nutrients: proteinKey ? { [proteinKey]: updated.nutrients[proteinKey] } : {},
         }));
-        alert("✅ Fiche technique sauvegardée !");
+        alert(msg("sheetSaved"));
       }
-    } catch { alert("Erreur lors de la sauvegarde de la fiche."); }
+    } catch { alert(msg("sheetSaveError")); }
     finally { setPanelSaving(false); }
   };
 
@@ -544,7 +584,7 @@ export default function IngredientsPage() {
                   })()}
                 </select>
                 <button
-                  onClick={() => { const custom = prompt("Nom du nouveau nutriment :"); if (custom) addPanelNutrient(custom); }}
+                  onClick={() => { const custom = prompt(msg("newNutrientPrompt")); if (custom) addPanelNutrient(custom); }}
                   className="bg-blue-50 text-blue-600 border border-blue-100 hover:bg-blue-100 px-3 py-2 rounded-lg text-xs font-black transition-all">
                   <Edit3 className="w-4 h-4" />
                 </button>
