@@ -21,9 +21,10 @@ export default function Sidebar() {
 
   return (
     <aside className="w-64 bg-slate-950 border-r border-slate-800 text-slate-300 flex flex-col h-screen fixed top-0 left-0 overflow-y-auto shadow-2xl z-50">
-      <div className="p-6">
-        <h1 className="text-xl font-black tracking-tight flex items-center gap-2">
-          <span className="text-emerald-400">MIZAN</span> FORMULATION
+      <div className="px-5 py-6">
+        <h1 className="font-black tracking-tight leading-none">
+          <span className="block text-2xl text-emerald-400">MIZAN</span>
+          <span className="mt-1 block text-lg text-white tracking-wide">FORMULATION</span>
         </h1>
         <p className="text-xs text-gray-400 mt-1 uppercase font-bold tracking-widest">SaaS ERP</p>
       </div>
@@ -41,8 +42,8 @@ export default function Sidebar() {
                   : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-100"
               }`}
             >
-              <link.icon className={`w-5 h-5 ${isActive ? "text-emerald-400" : "text-slate-500"}`} />
-              {link.label}
+              <link.icon className={`w-5 h-5 shrink-0 ${isActive ? "text-emerald-400" : "text-slate-500"}`} />
+              <span className="min-w-0 truncate">{link.label}</span>
             </Link>
           );
         })}
@@ -56,7 +57,7 @@ export default function Sidebar() {
             onChange={(event) => setLocale(event.target.value as Locale)}
             className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-slate-100 outline-none focus:border-emerald-500"
           >
-            <option value="fr">Francais</option>
+            <option value="fr">Français</option>
             <option value="en">English</option>
             <option value="ar">العربية</option>
           </select>

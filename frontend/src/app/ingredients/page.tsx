@@ -375,12 +375,12 @@ export default function IngredientsPage() {
 
         {/* Table */}
         <div className="flex-1 overflow-auto px-8 pb-8">
-          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-            <table className="w-full text-sm border-collapse">
-              <thead>
-                <tr className="border-b border-gray-100 bg-gray-50/80">
+          <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-visible">
+            <table className="w-full min-w-[1180px] text-sm border-collapse">
+              <thead className="sticky top-0 z-10">
+                <tr className="border-y border-gray-200 bg-slate-100">
                   {["Nom", "Statut", "Coût TND/kg", "MS %", "Protéine %", "Stock (t)", "Fiche Technique", ""].map((h, i) => (
-                    <th key={i} className={`py-3.5 px-5 text-xs font-bold tracking-wider uppercase text-gray-400 ${h === "Nom" ? "text-left min-w-[220px]" :
+                    <th key={i} className={`py-3.5 px-5 text-xs font-black tracking-wide uppercase text-slate-600 ${h === "Nom" ? "text-left min-w-[220px]" :
                       h === "Statut" || h === "Fiche Technique" || h === "" ? "text-center" : "text-right"
                       }`}>{h}</th>
                   ))}
@@ -394,7 +394,7 @@ export default function IngredientsPage() {
                 )}
                 {filteredIngredients.map(ing => (
                   <tr key={ing.id}
-                    className={`hover:bg-blue-50/40 transition-all group ${!ing.is_active ? "opacity-40 grayscale" : ""} ${panel?.id === ing.id ? "bg-blue-50/60 ring-1 ring-inset ring-blue-200" : ""}`}>
+                    className={`hover:bg-blue-50/40 transition-all group ${!ing.is_active ? "opacity-65 grayscale" : ""} ${panel?.id === ing.id ? "bg-blue-50/60 ring-1 ring-inset ring-blue-200" : ""}`}>
 
                     {/* Nom */}
                     <td className="py-3 px-5">
