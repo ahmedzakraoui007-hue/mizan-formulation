@@ -15,6 +15,72 @@ const translations: TranslationMap = {
   "Optimisation": { en: "Optimization", ar: "التحسين" },
   "Optimisation de l'Usine": { en: "Factory optimization", ar: "تحسين المصنع" },
   "Achats & Stratégie": { en: "Purchasing & strategy", ar: "المشتريات والاستراتيجية" },
+  "Achats & stratégie": { en: "Purchasing & strategy", ar: "المشتريات والاستراتيجية" },
+  "Tableau de bord du Directeur des Achats — Prix d'Intérêt, négociations et intelligence artificielle.": {
+    en: "Purchasing director dashboard — shadow prices, negotiations and artificial intelligence.",
+    ar: "لوحة مدير المشتريات — أسعار الاهتمام، التفاوض والذكاء الاصطناعي.",
+  },
+  "Lancez d'abord une optimisation pour générer les données de Shadow Pricing.": {
+    en: "Run an optimization first to generate shadow pricing data.",
+    ar: "شغّل التحسين أولا لإنشاء بيانات التسعير الظلي.",
+  },
+  "Lancer l'Optimisation de l'Usine": {
+    en: "Run factory optimization",
+    ar: "تشغيل تحسين المصنع",
+  },
+  "Optimisation en cours…": {
+    en: "Optimization running...",
+    ar: "جار تشغيل التحسين...",
+  },
+  "Ingrédients Non Retenus": { en: "Unused ingredients", ar: "المواد غير المختارة" },
+  "Plus Proche de Rentabilité": { en: "Closest to profitability", ar: "الأقرب للربحية" },
+  "matières avec Prix d'Intérêt": { en: "items with shadow prices", ar: "مواد لها أسعار اهتمام" },
+  "Toutes les matières sont utilisées.": { en: "All ingredients are used.", ar: "كل المواد مستخدمة." },
+  "Opportunités de Négociation (Shadow Prices)": {
+    en: "Negotiation opportunities (shadow prices)",
+    ar: "فرص التفاوض (الأسعار الظلية)",
+  },
+  "Classé par proximité de rentabilité — le premier de la liste est l'effort de négociation le plus faible.": {
+    en: "Sorted by proximity to profitability — the first row needs the smallest negotiation effort.",
+    ar: "مرتبة حسب القرب من الربحية — أول سطر يحتاج أقل مجهود تفاوض.",
+  },
+  "Matière Première": { en: "Ingredient", ar: "المادة الأولية" },
+  "Formule": { en: "Recipe", ar: "التركيبة" },
+  "Coût Actuel (TND/kg)": { en: "Current cost (TND/kg)", ar: "التكلفة الحالية (TND/kg)" },
+  "Prix Cible (TND/kg)": { en: "Target price (TND/kg)", ar: "السعر المستهدف (TND/kg)" },
+  "Effort Requis": { en: "Required effort", ar: "المجهود المطلوب" },
+  "Signal": { en: "Signal", ar: "الإشارة" },
+  "Négociable": { en: "Negotiable", ar: "قابل للتفاوض" },
+  "Éloigné": { en: "Far", ar: "بعيد" },
+  "Toutes les matières premières sont utilisées dans cette optimisation.": {
+    en: "All ingredients are used in this optimization.",
+    ar: "كل المواد الأولية مستخدمة في هذا التحسين.",
+  },
+  "Aucun prix d'intérêt à exploiter.": {
+    en: "No shadow price to exploit.",
+    ar: "لا يوجد سعر اهتمام للاستغلال.",
+  },
+  "Recommandations Stratégiques de l'IA": {
+    en: "AI strategic recommendations",
+    ar: "توصيات الذكاء الاصطناعي الاستراتيجية",
+  },
+  "Analyser avec l'IA Mizan": {
+    en: "Analyze with Mizan AI",
+    ar: "تحليل بواسطة ذكاء Mizan",
+  },
+  "Analyse en cours...": { en: "Analysis running...", ar: "جار التحليل..." },
+  "Cliquez sur \"Analyser avec l'IA Mizan\" pour générer des recommandations financières ciblées.": {
+    en: "Click \"Analyze with Mizan AI\" to generate targeted financial recommendations.",
+    ar: "اضغط على \"تحليل بواسطة ذكاء Mizan\" لإنشاء توصيات مالية دقيقة.",
+  },
+  "L'IA utilisera les données de Shadow Pricing pour identifier les meilleures cibles de négociation.": {
+    en: "AI will use shadow pricing data to identify the best negotiation targets.",
+    ar: "سيستخدم الذكاء الاصطناعي بيانات التسعير الظلي لتحديد أفضل أهداف التفاوض.",
+  },
+  "Relancer une Optimisation": {
+    en: "Run another optimization",
+    ar: "إعادة تشغيل التحسين",
+  },
   "Créer une nouvelle formule": { en: "Create a new recipe", ar: "إنشاء تركيبة جديدة" },
   "Mettre à jour les stocks": { en: "Update inventory", ar: "تحديث المخزون" },
   "Lancer la production": { en: "Launch production", ar: "بدء الإنتاج" },
@@ -82,10 +148,20 @@ function normalize(text: string) {
 }
 
 function translateText(text: string, locale: Locale) {
-  if (locale === "fr") return reverseLookup.get(normalize(text)) ?? text;
   const normalized = normalize(text);
-  const source = reverseLookup.get(normalized) ?? normalized;
-  return translations[source]?.[locale] ?? text;
+  const exactSource = reverseLookup.get(normalized);
+  if (exactSource) {
+    return locale === "fr" ? exactSource : translations[exactSource]?.[locale] ?? text;
+  }
+
+  let translated = text;
+  const candidates = Array.from(reverseLookup.entries()).sort((a, b) => b[0].length - a[0].length);
+  for (const [knownText, source] of candidates) {
+    const replacement = locale === "fr" ? source : translations[source]?.[locale];
+    if (!replacement || !translated.includes(knownText)) continue;
+    translated = translated.split(knownText).join(replacement);
+  }
+  return translated;
 }
 
 function translateElementAttributes(element: Element, locale: Locale) {
@@ -104,7 +180,7 @@ function walk(node: Node, locale: Locale) {
   if (node.nodeType === Node.TEXT_NODE) {
     const raw = node.textContent ?? "";
     const trimmed = normalize(raw);
-    if (!trimmed || !reverseLookup.has(trimmed)) return;
+    if (!trimmed) return;
     const translated = translateText(trimmed, locale);
     if (translated === trimmed) return;
     const leading = raw.match(/^\s*/)?.[0] ?? "";
@@ -121,6 +197,11 @@ function walk(node: Node, locale: Locale) {
   }
 
   translateElementAttributes(element, locale);
+  if (locale === "ar") {
+    element.setAttribute("dir", "auto");
+  } else if (element.getAttribute("dir") === "auto") {
+    element.removeAttribute("dir");
+  }
   node.childNodes.forEach((child) => walk(child, locale));
 }
 

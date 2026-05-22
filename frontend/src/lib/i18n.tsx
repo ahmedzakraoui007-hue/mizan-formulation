@@ -98,12 +98,14 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     setLocaleState(nextLocale);
     window.localStorage.setItem("mizan-locale", nextLocale);
     document.documentElement.lang = nextLocale;
-    document.documentElement.dir = nextLocale === "ar" ? "rtl" : "ltr";
+    document.documentElement.dir = "ltr";
+    document.documentElement.dataset.locale = nextLocale;
   };
 
   useEffect(() => {
     document.documentElement.lang = locale;
-    document.documentElement.dir = locale === "ar" ? "rtl" : "ltr";
+    document.documentElement.dir = "ltr";
+    document.documentElement.dataset.locale = locale;
   }, [locale]);
 
   useEffect(() => {
