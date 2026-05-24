@@ -15,11 +15,12 @@ import json
 # ── Make sure local modules resolve whether we run from backend/ or root ──────
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from database import SessionLocal, engine, Base  # noqa: E402
+from database import SessionLocal               # noqa: E402
 from db_models import IngredientDB              # noqa: E402
+from migration_utils import run_migrations      # noqa: E402
 
 # ── Ensure tables exist (safe no-op if already created by FastAPI) ─────────────
-Base.metadata.create_all(bind=engine)
+run_migrations()
 
 def seed():
     json_path = os.path.join(os.path.dirname(__file__), "inrae_scraped_data_full.json")

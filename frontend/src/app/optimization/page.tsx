@@ -5,6 +5,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, LineChart, Line } from "recharts";
 import ReactMarkdown from "react-markdown";
 import FicheModal from "@/components/FicheModal";
+import { buildSolverRecipes, countSelectedRecipes, getRecipeIds } from "@/lib/optimizationSelection";
 import { getNutrientUnit, getTopNutrients } from "@/utils/nutrientUtils";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -12,21 +13,6 @@ import html2canvas from "html2canvas";
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 const COLORS = ['#2563eb', '#16a34a', '#d97706', '#dc2626', '#7c3aed', '#0891b2', '#059669', '#ea580c'];
-
-function getRecipeIds(recipeList: any[]) {
-  return recipeList.flatMap((recipe: any) => [
-    recipe.id,
-    ...(recipe.versions || []).map((version: any) => version.id),
-  ]);
-}
-
-function toSolverRecipe(recipe: any) {
-  const clean = { ...recipe };
-  delete clean.id;
-  delete clean.parent_id;
-  delete clean.versions;
-  return clean;
-}
 
 interface ResultIngredient {
   name: string;
@@ -146,7 +132,7 @@ export default function OptimizationPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const allRecipeIds = getRecipeIds(recipes);
-  const selectedRecipeCount = allRecipeIds.filter(id => !unselectedRecipeIds.includes(id)).length;
+  const selectedRecipeCount = countSelectedRecipes(recipes, unselectedRecipeIds);
   const totalRecipeCount = allRecipeIds.length;
   const hasSelectedRecipes = selectedRecipeCount > 0;
 
@@ -185,21 +171,7 @@ export default function OptimizationPage() {
       // Masters and versions are both complete Recipe objects with their own
       // demand_tons, constraints, and species — the solver optimizes all of them together
       // sharing a global ingredient inventory pool.
-      const flatRecipes: any[] = [];
-      for (const master of recipes) {
-        if (!unselectedRecipeIds.includes(master.id)) {
-          flatRecipes.push(toSolverRecipe(master));
-        }
-
-        // Include each version as a separate recipe if it is not unselected
-        if (master.versions && master.versions.length > 0) {
-          for (const ver of master.versions) {
-            if (!unselectedRecipeIds.includes(ver.id)) {
-              flatRecipes.push(toSolverRecipe(ver));
-            }
-          }
-        }
-      }
+      const flatRecipes = buildSolverRecipes(recipes, unselectedRecipeIds);
 
       if (flatRecipes.length === 0) {
         throw new Error("Sélectionnez au moins une formule à optimiser.");
@@ -225,20 +197,7 @@ export default function OptimizationPage() {
       .filter((i: any) => i.is_active === true || i.is_active == null)
       .map((i: any) => i.id);
 
-    const flatRecipes: any[] = [];
-    for (const master of recipes) {
-      if (!unselectedRecipeIds.includes(master.id)) {
-        flatRecipes.push(toSolverRecipe(master));
-      }
-
-      if (master.versions && master.versions.length > 0) {
-        for (const ver of master.versions) {
-          if (!unselectedRecipeIds.includes(ver.id)) {
-            flatRecipes.push(toSolverRecipe(ver));
-          }
-        }
-      }
-    }
+    const flatRecipes = buildSolverRecipes(recipes, unselectedRecipeIds);
 
     return { ingredientIds, flatRecipes };
   };

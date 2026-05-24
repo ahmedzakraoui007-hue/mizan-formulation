@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { saveAs } from "file-saver";
 import { X, FileSpreadsheet, Share2, Printer } from "lucide-react";
+import { buildWhatsAppMessage, buildWhatsAppUrl } from "@/lib/whatsAppShare";
 import { getNutrientUnit, getTopNutrients } from "@/utils/nutrientUtils";
 
 interface ResultIngredient {
@@ -108,15 +109,7 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
       const pdfBlob = pdf.output("blob");
       const file = new File([pdfBlob], `Fiche_${report.name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`, { type: "application/pdf" });
       const fileName = `Fiche_${report.name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
-      const message = [
-        `Fiche de fabrication Mizan - ${report.name}`,
-        `Date: ${dateStr}`,
-        `Tonnage produit: ${report.demand_tons} t`,
-        `Coût total estimé: ${report.cost_tnd.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} TND`,
-        "",
-        "Le PDF a été téléchargé depuis Mizan. Merci de le joindre à ce message WhatsApp.",
-      ].join("\n");
-      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+      const whatsappUrl = buildWhatsAppUrl(buildWhatsAppMessage(report, dateStr));
 
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({

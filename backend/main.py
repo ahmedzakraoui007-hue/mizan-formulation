@@ -1,22 +1,32 @@
-from fastapi import FastAPI, HTTPException, Depends, Query, File, UploadFile
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI, HTTPException, Depends, Query, File, UploadFile, Request
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from typing import List, Optional, Dict
 from sqlalchemy.orm import Session
+from datetime import UTC, datetime, timedelta
 
-from database import engine, get_db, Base
-from db_models import IngredientDB, RecipeDB, TenantDB
-from auth import TenantContext, get_tenant_context
+from database import get_db, SessionLocal
+from db_models import IngredientDB, RecipeDB, TenantDB, AuditLogDB, OptimizationRunDB, ApiEventDB
+from auth import TenantContext, get_tenant_context, require_role
 from solver import solve_least_cost_formulation, solve_multi_blend
 from ai_service import generate_financial_insights, generate_formulator_audit, suggest_best_practice_bounds
 
-# ─── Create tables on startup ────────────────────────────────────────
-Base.metadata.create_all(bind=engine)
-
+# Schema migrations are managed by Alembic.
 import os
+import time
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    seed_database()
+    yield
+
 
 app = FastAPI(
     title="Mizan Formulation API",
+    lifespan=lifespan,
     description="Least-Cost Livestock Feed Optimizer — Single & Multi-Blend",
 )
 
@@ -36,6 +46,101 @@ app.add_middleware(
 
 
 # ═══════════════════  PYDANTIC SCHEMAS  ═══════════════════════════════
+
+@app.middleware("http")
+async def api_event_middleware(request: Request, call_next):
+    start = time.perf_counter()
+    status_code = 500
+    error_text = None
+    try:
+        response = await call_next(request)
+        status_code = response.status_code
+        return response
+    except Exception as exc:
+        error_text = str(exc)
+        raise
+    finally:
+        duration_ms = round((time.perf_counter() - start) * 1000, 2)
+        if request.url.path.startswith("/api") and status_code >= 400:
+            tenant_id = request.headers.get("x-tenant-id") or request.headers.get("x-test-tenant")
+            if not tenant_id:
+                try:
+                    tenant_id = get_tenant_context(
+                        authorization=request.headers.get("authorization"),
+                        x_tenant_id=tenant_id,
+                    ).tenant_id
+                except Exception:
+                    tenant_id = None
+            db = SessionLocal()
+            try:
+                db.add(ApiEventDB(
+                    tenant_id=tenant_id,
+                    method=request.method,
+                    path=request.url.path,
+                    status_code=status_code,
+                    duration_ms=duration_ms,
+                    error=error_text,
+                ))
+                db.commit()
+            except Exception:
+                db.rollback()
+            finally:
+                db.close()
+
+
+def _record_audit(
+    db: Session,
+    tenant: TenantContext,
+    action: str,
+    entity_type: str,
+    entity_id: str | int | None = None,
+    metadata: dict | None = None,
+) -> None:
+    db.add(AuditLogDB(
+        tenant_id=tenant.tenant_id,
+        user_id=tenant.user_id,
+        role=tenant.role,
+        action=action,
+        entity_type=entity_type,
+        entity_id=str(entity_id) if entity_id is not None else None,
+        metadata_=metadata or {},
+    ))
+
+
+def _save_optimization_run(
+    db: Session,
+    tenant: TenantContext,
+    request_payload: dict,
+    status: str,
+    duration_ms: float,
+    result_payload: dict | None = None,
+    error: str | None = None,
+) -> OptimizationRunDB:
+    result_payload = result_payload or {}
+    run = OptimizationRunDB(
+        tenant_id=tenant.tenant_id,
+        user_id=tenant.user_id,
+        status=status,
+        total_factory_cost_tnd=result_payload.get("total_factory_cost_tnd"),
+        recipe_count=len(request_payload.get("recipes", [])),
+        ingredient_count=len(request_payload.get("ingredient_ids", [])),
+        duration_ms=round(duration_ms, 2),
+        error=error,
+        request_payload=request_payload,
+        result_payload=result_payload,
+    )
+    db.add(run)
+    db.flush()
+    _record_audit(
+        db,
+        tenant,
+        "optimization.run",
+        "optimization_run",
+        run.id,
+        {"status": status, "duration_ms": round(duration_ms, 2), "recipe_count": run.recipe_count},
+    )
+    return run
+
 
 # -- Single-blend (backward compat) --
 class Ingredient(BaseModel):
@@ -97,16 +202,13 @@ class MultiBlendRequest(BaseModel):
 # -- CRUD response schemas (include DB id) --
 class IngredientOut(MultiBlendIngredient):
     id: int
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class RecipeOut(RecipeDemand):
     id: int
     parent_id: Optional[int] = None
     version_tag: str = "V1"
-    
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class RecipeOutGrouped(RecipeOut):
     versions: List[RecipeOut] = []
@@ -122,9 +224,41 @@ class TenantUpdateRequest(BaseModel):
 
 class TenantOut(BaseModel):
     tenant_id: str
+    role: str
     name: str
     locale: str
     onboarding_completed: bool
+
+
+class AuditLogOut(BaseModel):
+    id: int
+    tenant_id: str
+    user_id: str
+    role: str
+    action: str
+    entity_type: str
+    entity_id: Optional[str] = None
+    metadata: Dict = Field(default_factory=dict)
+    created_at: str | None = None
+
+
+class OptimizationRunOut(BaseModel):
+    id: int
+    status: str
+    total_factory_cost_tnd: Optional[float] = None
+    recipe_count: int
+    ingredient_count: int
+    duration_ms: float
+    error: Optional[str] = None
+    created_at: str | None = None
+
+
+class MonitoringSummary(BaseModel):
+    total_optimization_runs: int
+    infeasible_runs: int
+    infeasibility_rate: float
+    average_solver_time_ms: float
+    api_errors_24h: int
 
 
 # ═══════════════════  SEED DATA  ══════════════════════════════════════
@@ -141,9 +275,10 @@ DEFAULT_RECIPES = [
     {"name": "Poultry Grower", "demand_tons": 25, "process_yield_percent": 100.0, "bag_size_kg": 50.0, "constraints": {"Protéine %": {"min": 17, "max": 22}, "Fibre %": {"min": 3, "max": 7},  "Énergie": {"min": 2600}}},
     {"name": "Dairy Cow",      "demand_tons": 30, "process_yield_percent": 100.0, "bag_size_kg": 50.0, "constraints": {"Protéine %": {"min": 14, "max": 18}, "Fibre %": {"min": 5, "max": 10}, "Énergie": {"min": 2200}}},
 ]
-def _tenant_out(row: TenantDB, tenant_id: str) -> TenantOut:
+def _tenant_out(row: TenantDB, tenant_id: str, role: str = "admin") -> TenantOut:
     return TenantOut(
         tenant_id=tenant_id,
+        role=role,
         name=row.name,
         locale=row.locale,
         onboarding_completed=row.onboarding_completed,
@@ -231,67 +366,11 @@ def _clone_public_seed_data(db: Session, tenant_id: str) -> None:
     db.commit()
 
 
-@app.on_event("startup")
 def seed_database():
-    """Seed defaults if tables are empty, and run safe migrations."""
+    """Seed defaults if tables are empty. Alembic owns schema migrations."""
     import os as _os, json as _json
     db = next(get_db())
     try:
-        from sqlalchemy import inspect as sa_inspect
-        try:
-            inspector = sa_inspect(engine)
-
-            # ── Recipe column migrations ──────────────────────────────────
-            if inspector.has_table("recipes"):
-                existing_cols = [col["name"] for col in inspector.get_columns("recipes")]
-
-                if "parent_id" not in existing_cols:
-                    print("⚙️  Migrating: adding 'parent_id' to recipes…")
-                    with engine.begin() as conn:
-                        conn.execute(text("ALTER TABLE recipes ADD COLUMN parent_id INTEGER"))
-
-                if "version_tag" not in existing_cols:
-                    print("⚙️  Migrating: adding 'version_tag' to recipes…")
-                    with engine.begin() as conn:
-                        conn.execute(text("ALTER TABLE recipes ADD COLUMN version_tag VARCHAR"))
-                        conn.execute(text("UPDATE recipes SET version_tag = 'V1' WHERE version_tag IS NULL"))
-
-                if "species" not in existing_cols:
-                    print("⚙️  Migrating: adding 'species' to recipes…")
-                    with engine.begin() as conn:
-                        conn.execute(text("ALTER TABLE recipes ADD COLUMN species VARCHAR"))
-                        conn.execute(text("UPDATE recipes SET species = 'General' WHERE species IS NULL"))
-
-                if "tenant_id" not in existing_cols:
-                    print("Migrating: adding 'tenant_id' to recipes...")
-                    with engine.begin() as conn:
-                        conn.execute(text("ALTER TABLE recipes ADD COLUMN tenant_id VARCHAR"))
-                        conn.execute(text("UPDATE recipes SET tenant_id = 'public' WHERE tenant_id IS NULL"))
-
-            # ── Ingredient column migrations ───────────────────────────────
-            if inspector.has_table("ingredients"):
-                existing_ing_cols = [col["name"] for col in inspector.get_columns("ingredients")]
-
-                if "is_active" not in existing_ing_cols:
-                    print("⚙️  Migrating: adding 'is_active' to ingredients…")
-                    with engine.begin() as conn:
-                        # Use integer 1 for SQLite compatibility (avoids TRUE keyword on old SQLite)
-                        conn.execute(text("ALTER TABLE ingredients ADD COLUMN is_active BOOLEAN"))
-                        conn.execute(text("UPDATE ingredients SET is_active = 1"))
-                else:
-                    # Fix any NULL rows (e.g. seeded before column existed)
-                    with engine.begin() as conn:
-                        conn.execute(text("UPDATE ingredients SET is_active = 1 WHERE is_active IS NULL"))
-
-                if "tenant_id" not in existing_ing_cols:
-                    print("Migrating: adding 'tenant_id' to ingredients...")
-                    with engine.begin() as conn:
-                        conn.execute(text("ALTER TABLE ingredients ADD COLUMN tenant_id VARCHAR"))
-                        conn.execute(text("UPDATE ingredients SET tenant_id = 'public' WHERE tenant_id IS NULL"))
-
-        except Exception as e:
-            print(f"Migration warning: {e}")
-
         # ── Seed empty tables ────────────────────────────────────────────
         if db.query(TenantDB).filter(TenantDB.tenant_key == "public").first() is None:
             db.add(TenantDB(
@@ -346,7 +425,7 @@ def get_tenant_me(
     tenant: TenantContext = Depends(get_tenant_context),
 ):
     row = _ensure_tenant(db, tenant)
-    return _tenant_out(row, tenant.tenant_id)
+    return _tenant_out(row, tenant.tenant_id, tenant.role)
 
 
 @app.post("/api/tenant/bootstrap", response_model=TenantOut)
@@ -359,25 +438,27 @@ def bootstrap_tenant(
     row.name = request.name
     row.locale = request.locale
     _clone_public_seed_data(db, tenant.tenant_id)
+    _record_audit(db, tenant, "tenant.bootstrap", "tenant", tenant.tenant_id, {"name": request.name, "locale": request.locale})
     db.commit()
     db.refresh(row)
-    return _tenant_out(row, tenant.tenant_id)
+    return _tenant_out(row, tenant.tenant_id, tenant.role)
 
 
 @app.patch("/api/tenant/me", response_model=TenantOut)
 def update_tenant_me(
     request: TenantUpdateRequest,
     db: Session = Depends(get_db),
-    tenant: TenantContext = Depends(get_tenant_context),
+    tenant: TenantContext = Depends(require_role("admin")),
 ):
     row = _ensure_tenant(db, tenant)
     update_data = request.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         if value is not None:
             setattr(row, key, value)
+    _record_audit(db, tenant, "tenant.update", "tenant", tenant.tenant_id, update_data)
     db.commit()
     db.refresh(row)
-    return _tenant_out(row, tenant.tenant_id)
+    return _tenant_out(row, tenant.tenant_id, tenant.role)
 
 
 @app.get("/api/ingredients", response_model=List[IngredientOut])
@@ -430,11 +511,13 @@ def get_ingredient(
 def create_ingredient(
     data: MultiBlendIngredient,
     db: Session = Depends(get_db),
-    tenant: TenantContext = Depends(get_tenant_context),
+    tenant: TenantContext = Depends(require_role("formulator")),
 ):
     _ensure_tenant(db, tenant)
     row = IngredientDB(tenant_id=tenant.tenant_id, **data.model_dump())
     db.add(row)
+    db.flush()
+    _record_audit(db, tenant, "ingredient.create", "ingredient", row.id, {"name": row.name})
     db.commit()
     db.refresh(row)
     return row
@@ -445,7 +528,7 @@ def update_ingredient(
     ingredient_id: int,
     data: MultiBlendIngredientUpdate,
     db: Session = Depends(get_db),
-    tenant: TenantContext = Depends(get_tenant_context),
+    tenant: TenantContext = Depends(require_role("formulator")),
 ):
     row = db.query(IngredientDB).filter(
         IngredientDB.id == ingredient_id,
@@ -457,7 +540,7 @@ def update_ingredient(
     update_data = data.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         setattr(row, key, value)
-        
+    _record_audit(db, tenant, "ingredient.update", "ingredient", ingredient_id, update_data)
     db.commit()
     db.refresh(row)
     return row
@@ -467,7 +550,7 @@ def update_ingredient(
 def delete_ingredient(
     ingredient_id: int,
     db: Session = Depends(get_db),
-    tenant: TenantContext = Depends(get_tenant_context),
+    tenant: TenantContext = Depends(require_role("formulator")),
 ):
     row = db.query(IngredientDB).filter(
         IngredientDB.id == ingredient_id,
@@ -475,6 +558,7 @@ def delete_ingredient(
     ).first()
     if not row:
         raise HTTPException(status_code=404, detail="Ingredient not found")
+    _record_audit(db, tenant, "ingredient.delete", "ingredient", ingredient_id, {"name": row.name})
     db.delete(row)
     db.commit()
     return {"ok": True}
@@ -482,7 +566,7 @@ def delete_ingredient(
 @app.post("/api/admin/restore-nutrients")
 def restore_nutrients(
     db: Session = Depends(get_db),
-    tenant: TenantContext = Depends(get_tenant_context),
+    tenant: TenantContext = Depends(require_role("admin")),
 ):
     """
     Safely restores missing nutrient profiles from the INRAE JSON file
@@ -576,11 +660,13 @@ def list_standards():
 def create_recipe(
     data: RecipeDemand,
     db: Session = Depends(get_db),
-    tenant: TenantContext = Depends(get_tenant_context),
+    tenant: TenantContext = Depends(require_role("formulator")),
 ):
     _ensure_tenant(db, tenant)
     row = RecipeDB(tenant_id=tenant.tenant_id, **data.model_dump())
     db.add(row)
+    db.flush()
+    _record_audit(db, tenant, "recipe.create", "recipe", row.id, {"name": row.name})
     db.commit()
     db.refresh(row)
     return row
@@ -593,7 +679,7 @@ class SuggestBoundsRequest(BaseModel):
 @app.post("/api/recipes/suggest-bounds")
 async def api_suggest_bounds(
     request: SuggestBoundsRequest,
-    tenant: TenantContext = Depends(get_tenant_context),
+    tenant: TenantContext = Depends(require_role("formulator")),
 ):
     try:
         suggestions = await suggest_best_practice_bounds(request.recipe_name, request.elements, request.species)
@@ -607,7 +693,7 @@ async def api_suggest_bounds(
 async def api_extract_bounds(
     file: UploadFile = File(...),
     species: str = "Standard",
-    tenant: TenantContext = Depends(get_tenant_context),
+    tenant: TenantContext = Depends(require_role("formulator")),
 ):
     try:
         from ai_service import extract_bounds_from_image
@@ -632,7 +718,7 @@ def create_recipe_revision(
     recipe_id: int,
     request: RevisionRequest,
     db: Session = Depends(get_db),
-    tenant: TenantContext = Depends(get_tenant_context),
+    tenant: TenantContext = Depends(require_role("formulator")),
 ):
     parent = db.query(RecipeDB).filter(
         RecipeDB.id == recipe_id,
@@ -657,6 +743,8 @@ def create_recipe_revision(
         version_tag=request.version_tag
     )
     db.add(new_row)
+    db.flush()
+    _record_audit(db, tenant, "recipe.revision", "recipe", new_row.id, {"source_id": recipe_id, "version_tag": request.version_tag})
     db.commit()
     db.refresh(new_row)
     return new_row
@@ -667,7 +755,7 @@ def update_recipe(
     recipe_id: int,
     data: RecipeDemand,
     db: Session = Depends(get_db),
-    tenant: TenantContext = Depends(get_tenant_context),
+    tenant: TenantContext = Depends(require_role("formulator")),
 ):
     row = db.query(RecipeDB).filter(
         RecipeDB.id == recipe_id,
@@ -679,7 +767,7 @@ def update_recipe(
     update_data = data.model_dump()
     for key, value in update_data.items():
         setattr(row, key, value)
-        
+    _record_audit(db, tenant, "recipe.update", "recipe", recipe_id, {"name": row.name})
     db.commit()
     db.refresh(row)
     return row
@@ -689,7 +777,7 @@ def update_recipe(
 def delete_recipe(
     recipe_id: int,
     db: Session = Depends(get_db),
-    tenant: TenantContext = Depends(get_tenant_context),
+    tenant: TenantContext = Depends(require_role("formulator")),
 ):
     db_item = db.query(RecipeDB).filter(
         RecipeDB.id == recipe_id,
@@ -706,6 +794,7 @@ def delete_recipe(
     for child in children:
         db.delete(child)
 
+    _record_audit(db, tenant, "recipe.delete", "recipe", recipe_id, {"name": db_item.name, "children": len(children)})
     db.delete(db_item)
     db.commit()
     return {"status": "ok", "deleted_id": recipe_id}
@@ -716,7 +805,7 @@ def delete_recipe(
 @app.post("/api/optimize")
 def optimize_recipe(
     request: OptimizeRequest,
-    tenant: TenantContext = Depends(get_tenant_context),
+    tenant: TenantContext = Depends(require_role("formulator", "purchasing")),
 ):
     try:
         return solve_least_cost_formulation(request.ingredients, request.constraints)
@@ -728,8 +817,10 @@ def optimize_recipe(
 def optimize_multi_blend(
     request: MultiBlendRequest,
     db: Session = Depends(get_db),
-    tenant: TenantContext = Depends(get_tenant_context),
+    tenant: TenantContext = Depends(require_role("formulator", "purchasing")),
 ):
+    started = time.perf_counter()
+    request_payload = request.model_dump()
     try:
         ingredients_to_use = db.query(IngredientDB).filter(
             IngredientDB.tenant_id == tenant.tenant_id,
@@ -750,14 +841,22 @@ def optimize_multi_blend(
                 is_active=row.is_active
             ))
             
-        return solve_multi_blend(ing_list, request.recipes)
+        result = solve_multi_blend(ing_list, request.recipes)
+        duration_ms = (time.perf_counter() - started) * 1000
+        _save_optimization_run(db, tenant, request_payload, "optimal", duration_ms, result_payload=result)
+        db.commit()
+        return result
     except Exception as e:
+        duration_ms = (time.perf_counter() - started) * 1000
+        db.rollback()
+        _save_optimization_run(db, tenant, request_payload, "infeasible", duration_ms, error=str(e))
+        db.commit()
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.post("/api/ai-insights")
 async def get_ai_insights(
     recipe_result_json: dict,
-    tenant: TenantContext = Depends(get_tenant_context),
+    tenant: TenantContext = Depends(require_role("purchasing")),
 ):
     try:
         insight_markdown = await generate_financial_insights(recipe_result_json)
@@ -768,7 +867,7 @@ async def get_ai_insights(
 @app.post("/api/ai-audit")
 async def get_ai_audit(
     recipe_result_json: dict,
-    tenant: TenantContext = Depends(get_tenant_context),
+    tenant: TenantContext = Depends(require_role("formulator", "purchasing")),
 ):
     try:
         audit_markdown = await generate_formulator_audit(recipe_result_json)
@@ -785,7 +884,7 @@ class DiagnoseRequest(BaseModel):
 @app.post("/api/recipes/diagnose-infeasible")
 async def api_diagnose_recipe(
     request: DiagnoseRequest,
-    tenant: TenantContext = Depends(get_tenant_context),
+    tenant: TenantContext = Depends(require_role("formulator")),
 ):
     try:
         from ai_service import diagnose_infeasible_recipe
@@ -811,7 +910,7 @@ class ParametricRequest(BaseModel):
 def run_parametric_analysis(
     request: ParametricRequest,
     db: Session = Depends(get_db),
-    tenant: TenantContext = Depends(get_tenant_context),
+    tenant: TenantContext = Depends(require_role("formulator", "purchasing")),
 ):
     """Run the GLOP solver multiple times over a nutrient range to generate a cost curve."""
     import copy
@@ -898,6 +997,105 @@ def run_parametric_analysis(
 
 
 # ═══════════════════  DASHBOARD STATS  ════════════════════════════════
+
+@app.get("/api/optimization-runs", response_model=List[OptimizationRunOut])
+def list_optimization_runs(
+    limit: int = Query(default=20, ge=1, le=100),
+    db: Session = Depends(get_db),
+    tenant: TenantContext = Depends(get_tenant_context),
+):
+    rows = db.query(OptimizationRunDB).filter(
+        OptimizationRunDB.tenant_id == tenant.tenant_id,
+    ).order_by(OptimizationRunDB.created_at.desc()).limit(limit).all()
+    return [
+        OptimizationRunOut(
+            id=row.id,
+            status=row.status,
+            total_factory_cost_tnd=row.total_factory_cost_tnd,
+            recipe_count=row.recipe_count,
+            ingredient_count=row.ingredient_count,
+            duration_ms=row.duration_ms,
+            error=row.error,
+            created_at=row.created_at.isoformat() if row.created_at else None,
+        )
+        for row in rows
+    ]
+
+
+@app.get("/api/optimization-runs/{run_id}")
+def get_optimization_run(
+    run_id: int,
+    db: Session = Depends(get_db),
+    tenant: TenantContext = Depends(get_tenant_context),
+):
+    row = db.query(OptimizationRunDB).filter(
+        OptimizationRunDB.id == run_id,
+        OptimizationRunDB.tenant_id == tenant.tenant_id,
+    ).first()
+    if not row:
+        raise HTTPException(status_code=404, detail="Optimization run not found")
+    return {
+        "id": row.id,
+        "status": row.status,
+        "total_factory_cost_tnd": row.total_factory_cost_tnd,
+        "recipe_count": row.recipe_count,
+        "ingredient_count": row.ingredient_count,
+        "duration_ms": row.duration_ms,
+        "error": row.error,
+        "request_payload": row.request_payload,
+        "result_payload": row.result_payload,
+        "created_at": row.created_at.isoformat() if row.created_at else None,
+    }
+
+
+@app.get("/api/audit-logs", response_model=List[AuditLogOut])
+def list_audit_logs(
+    limit: int = Query(default=50, ge=1, le=200),
+    db: Session = Depends(get_db),
+    tenant: TenantContext = Depends(require_role("admin")),
+):
+    rows = db.query(AuditLogDB).filter(
+        AuditLogDB.tenant_id == tenant.tenant_id,
+    ).order_by(AuditLogDB.created_at.desc()).limit(limit).all()
+    return [
+        AuditLogOut(
+            id=row.id,
+            tenant_id=row.tenant_id,
+            user_id=row.user_id,
+            role=row.role,
+            action=row.action,
+            entity_type=row.entity_type,
+            entity_id=row.entity_id,
+            metadata=row.metadata_ or {},
+            created_at=row.created_at.isoformat() if row.created_at else None,
+        )
+        for row in rows
+    ]
+
+
+@app.get("/api/monitoring/summary", response_model=MonitoringSummary)
+def get_monitoring_summary(
+    db: Session = Depends(get_db),
+    tenant: TenantContext = Depends(require_role("admin")),
+):
+    runs = db.query(OptimizationRunDB).filter(OptimizationRunDB.tenant_id == tenant.tenant_id).all()
+    total_runs = len(runs)
+    infeasible_runs = len([run for run in runs if run.status != "optimal"])
+    avg_duration = sum(run.duration_ms for run in runs) / total_runs if total_runs else 0.0
+    error_cutoff = datetime.now(UTC) - timedelta(hours=24)
+    api_errors = db.query(ApiEventDB).filter(
+        ApiEventDB.tenant_id == tenant.tenant_id,
+        ApiEventDB.status_code >= 500,
+        ApiEventDB.created_at >= error_cutoff,
+    ).count()
+    return MonitoringSummary(
+        total_optimization_runs=total_runs,
+        infeasible_runs=infeasible_runs,
+        infeasibility_rate=round((infeasible_runs / total_runs) * 100, 2) if total_runs else 0.0,
+        average_solver_time_ms=round(avg_duration, 2),
+        api_errors_24h=api_errors,
+    )
+
 
 @app.get("/api/dashboard/stats")
 def get_dashboard_stats(

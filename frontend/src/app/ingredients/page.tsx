@@ -3,6 +3,7 @@
 import { Save, Plus, Search, FlaskConical, X, Edit3 } from "lucide-react";
 import React, { useState, useEffect, useCallback } from "react";
 import { useI18n, type Locale } from "@/lib/i18n";
+import { DEFAULT_INGREDIENT_FILTER_STATUS, ingredientMatchesStatus } from "@/lib/ingredientFilters";
 import { getNutrientUnit } from "@/utils/nutrientUtils";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -115,7 +116,7 @@ export default function IngredientsPage() {
   // The main list only holds lite data (no heavy nutrients)
   const [ingredients, setIngredients] = useState<LiteIngredient[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState("Stock Actif");
+  const [filterStatus, setFilterStatus] = useState(DEFAULT_INGREDIENT_FILTER_STATUS);
   const [fetching, setFetching] = useState(true);
 
   // Track inline row edits (name, cost, dm, stock only — never nutrients from the table)
@@ -289,10 +290,7 @@ export default function IngredientsPage() {
   // ── Derived ───────────────────────────────────────────────────────────────
   const filteredIngredients = ingredients.filter(ing => {
     const matchesSearch = ing.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      filterStatus === "Tous" ? true :
-        filterStatus === "Stock Actif" ? ing.is_active :
-          filterStatus === "Base Inactive" ? !ing.is_active : true;
+    const matchesStatus = ingredientMatchesStatus(ing, filterStatus);
     return matchesSearch && matchesStatus;
   });
 

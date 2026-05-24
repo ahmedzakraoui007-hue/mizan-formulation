@@ -1,7 +1,8 @@
 import json
 import logging
-from database import engine, SessionLocal, Base
+from database import SessionLocal
 from db_models import IngredientDB
+from migration_utils import run_migrations
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
@@ -9,8 +10,7 @@ def seed_inrae_data():
     """Seeds the database with INRAE scraped data."""
     logging.info("Starting database seeding process...")
     
-    # Ensure tables exist
-    Base.metadata.create_all(bind=engine)
+    run_migrations()
     logging.info("Database tables verified.")
 
     # Load JSON data

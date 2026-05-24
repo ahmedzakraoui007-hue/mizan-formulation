@@ -4,6 +4,7 @@ import { useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Boxes, FileText, Activity, Hand, Factory, Zap, ChevronRight, BarChart3 } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -14,6 +15,7 @@ interface DashboardStats {
 
 export default function HomePage() {
   const { user } = useUser();
+  const { t } = useI18n();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
 
@@ -25,30 +27,30 @@ export default function HomePage() {
       .finally(() => setLoadingStats(false));
   }, []);
 
-  const firstName = user?.firstName ?? user?.fullName?.split(" ")[0] ?? "Directeur";
+  const firstName = user?.firstName ?? user?.fullName?.split(" ")[0] ?? t("dashboardFallbackName");
 
   const kpis = [
     {
       icon: <Boxes className="w-5 h-5" />,
-      label: "Matières Premières Actives",
+      label: t("activeIngredientsKpi"),
       value: loadingStats ? "—" : stats?.total_ingredients ?? 0,
-      sub: "dans l'inventaire",
+      sub: t("inInventory"),
       accent: "blue",
       href: "/ingredients",
     },
     {
       icon: <FileText className="w-5 h-5" />,
-      label: "Formules Master",
+      label: t("masterRecipesKpi"),
       value: loadingStats ? "—" : stats?.total_recipes ?? 0,
-      sub: "en production",
+      sub: t("inProduction"),
       accent: "indigo",
       href: "/recipes",
     },
     {
       icon: <Activity className="w-5 h-5" />,
-      label: "Statut du Solveur",
-      value: "GLOP Actif",
-      sub: "En ligne",
+      label: t("solverStatusKpi"),
+      value: t("solverOnline"),
+      sub: t("online"),
       accent: "emerald",
       href: "/optimization",
       statusDot: true,
@@ -58,22 +60,22 @@ export default function HomePage() {
   const actions = [
     {
       icon: <FileText className="w-6 h-6" />,
-      title: "Créer une nouvelle formule",
-      desc: "Définir tonnage, rendement et cibles nutritionnelles",
+      title: t("createRecipeAction"),
+      desc: t("createRecipeDesc"),
       href: "/recipes",
       accent: "blue",
     },
     {
       icon: <Boxes className="w-6 h-6" />,
-      title: "Mettre à jour les stocks",
-      desc: "Éditer les coûts et valeurs nutritives des matières premières",
+      title: t("updateStockAction"),
+      desc: t("updateStockDesc"),
       href: "/ingredients",
       accent: "amber",
     },
     {
       icon: <Zap className="w-6 h-6" />,
-      title: "Lancer la production",
-      desc: "Optimiser le mix multi-formule et générer les bons de commande",
+      title: t("launchProductionAction"),
+      desc: t("launchProductionDesc"),
       href: "/optimization",
       accent: "emerald",
     },
@@ -97,10 +99,10 @@ export default function HomePage() {
         {/* ── Header ── */}
         <div className="mb-14">
           <h1 className="text-[2.5rem] font-black text-slate-900 tracking-tight flex items-center gap-3">
-            Bonjour, {firstName} <Hand className="w-8 h-8 text-amber-400 rotate-12" />
+            {t("dashboardGreeting")}, {firstName} <Hand className="w-8 h-8 text-amber-400 rotate-12" />
           </h1>
           <p className="text-slate-500 mt-3 text-lg font-medium tracking-wide">
-            Voici l'état opérationnel de votre usine aujourd'hui.
+            {t("dashboardSubtitle")}
           </p>
           <div className="mt-5 flex items-center gap-2.5 text-xs font-bold uppercase tracking-widest text-slate-400 bg-white/50 backdrop-blur-md px-4 py-2 rounded-full w-fit border border-slate-200/60 shadow-sm">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse inline-block" />
@@ -117,7 +119,7 @@ export default function HomePage() {
           <div className="flex items-center gap-2 mb-6 text-slate-800">
             <BarChart3 className="w-5 h-5" />
             <h2 className="text-sm font-black uppercase tracking-widest">
-              Indicateurs Clés
+              {t("keyIndicators")}
             </h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -136,7 +138,7 @@ export default function HomePage() {
                     {kpi.statusDot && (
                       <span className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.7)] animate-pulse" />
-                        En ligne
+                        {t("online")}
                       </span>
                     )}
                   </div>
@@ -161,7 +163,7 @@ export default function HomePage() {
           <div className="flex items-center gap-2 mb-6 text-slate-800">
             <Factory className="w-5 h-5" />
             <h2 className="text-sm font-black uppercase tracking-widest">
-              Raccourcis Rapides
+              {t("quickActions")}
             </h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -192,7 +194,7 @@ export default function HomePage() {
                   </div>
                   <div className="mt-5 flex items-center gap-2 p-0">
                     <span className={`px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest shadow-md transition-all group-hover:translate-x-1.5 duration-300 flex items-center gap-1.5 ${a.badge}`}>
-                      Accéder <ChevronRight className="w-3.5 h-3.5" />
+                      {t("open")} <ChevronRight className="w-3.5 h-3.5" />
                     </span>
                   </div>
                 </Link>

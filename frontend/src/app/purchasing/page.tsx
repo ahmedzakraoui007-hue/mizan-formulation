@@ -3,6 +3,7 @@
 import { Zap, AlertTriangle, TrendingDown, BrainCircuit, Sparkles, RefreshCcw, HandCoins } from "lucide-react";
 import React, { useState, useEffect, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
+import { toSolverRecipe } from "@/lib/optimizationSelection";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -71,7 +72,7 @@ export default function PurchasingPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ingredient_ids: ingredientIds,
-          recipes: recipes.map(({ id, ...rest }: any) => rest),
+          recipes: recipes.map(toSolverRecipe),
         }),
       });
       if (!res.ok) { const e = await res.json(); throw new Error(e.detail || "Échec"); }

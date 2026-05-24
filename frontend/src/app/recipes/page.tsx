@@ -1,8 +1,8 @@
 "use client";
 
-import { Sparkles, Save, Scan, Edit3, Trash2, AlertTriangle, BookMarked, Layers, GitMerge, X, FlaskConical, Wheat, Plus, ChevronRight } from "lucide-react";
+import { Sparkles, Save, Scan, Edit3, Trash2, AlertTriangle, BookMarked, Layers, X, FlaskConical, Wheat, ChevronRight } from "lucide-react";
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { getFilteredNutrients, SPECIES_OPTIONS, SPECIES_REGEX, getNutrientUnit } from "@/utils/nutrientUtils";
+import { getFilteredNutrients, SPECIES_OPTIONS, getNutrientUnit } from "@/utils/nutrientUtils";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -355,7 +355,7 @@ export default function RecipesPage() {
 
       alert(`✅ L'IA a suggéré des limites pour: ${Object.keys(suggestions).join(', ')}`);
 
-    } catch (e) {
+    } catch {
       alert("Impossible de joindre le service IA.");
     } finally {
       setAiLoadingFor(null);
@@ -459,7 +459,7 @@ export default function RecipesPage() {
 
       alert(`✅ Scan réussi ! ${Object.keys(suggestions).length} paramètres extraits.`);
 
-    } catch (e) {
+    } catch {
       alert("Erreur réseau lors du scan.");
     } finally {
       setOcrLoadingFor(null);
@@ -485,10 +485,6 @@ export default function RecipesPage() {
   };
 
   const cell = "bg-white border border-gray-300 rounded-md px-2 py-1.5 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm transition-shadow [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
-  const label = "text-gray-600 text-[10px] font-bold uppercase tracking-wider mb-1 block";
-
-
-
   // ── Categorise nutrient keys into optgroups ─────────────────────────────────
   type NutrientGroups = Record<string, string[]>;
 
@@ -735,7 +731,6 @@ export default function RecipesPage() {
                   {/* UI Segregation logic */}
                   {isExpanded && (() => {
                     const activeNutritionalCols = nutrientColumns.filter(c => !globalIngredientNames.includes(c));
-                    const activeIngredientCols = nutrientColumns.filter(c => globalIngredientNames.includes(c));
 
                     return (
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

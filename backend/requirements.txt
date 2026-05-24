@@ -1,6 +1,7 @@
 fastapi
 uvicorn
 sqlalchemy
+alembic
 psycopg2-binary>=2.9.0
 python-dotenv
 ortools
@@ -8,3 +9,5 @@ google-genai
 PyJWT[crypto]>=2.8.0
 pydantic
 python-multipart
+pytest
+httpx

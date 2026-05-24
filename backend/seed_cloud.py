@@ -3,7 +3,8 @@ import sys
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from db_models import IngredientDB, Base
+from db_models import IngredientDB
+from migration_utils import run_migrations
 
 load_dotenv()
 
@@ -258,8 +259,7 @@ ingredients_data = [
 ]
 
 def seed_cloud():
-    # Attempt to create relevant tables if they don't exist in the remote DB yet
-    Base.metadata.create_all(bind=engine)
+    run_migrations()
     
     session = SessionLocal()
     

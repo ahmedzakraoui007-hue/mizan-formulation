@@ -8,6 +8,8 @@ Plateforme d'optimisation least-cost formulation pour les usines d'aliments de b
 
 ```bash
 cd backend
+python -m pip install -r requirements.txt
+alembic upgrade head
 python -m uvicorn main:app --reload --port 8000
 ```
 
@@ -25,6 +27,15 @@ Ouvrez [http://localhost:3000](http://localhost:3000).
 
 Le frontend utilise Clerk pour l'authentification. Le backend isole les donnees par tenant avec `org_id` Clerk si disponible, sinon l'identifiant utilisateur.
 
+Les roles applicatifs supportes sont :
+
+- `admin` : administration tenant, audit, monitoring et toutes les actions metier.
+- `formulator` : ingredients, formules, optimisation et diagnostic.
+- `purchasing` : optimisation, achats, strategie et insights.
+- `viewer` : lecture seule.
+
+Le role peut venir des claims Clerk `org_role`, `role`, `public_metadata.role`, `public_metadata.mizan_role` ou `unsafe_metadata.role`.
+
 Variables backend recommandees :
 
 ```bash
@@ -37,6 +48,42 @@ ALLOW_DEV_TENANT=false
 ```
 
 En local, `ALLOW_DEV_TENANT=true` permet de tester avec `X-Tenant-ID: dev` si Clerk/JWKS n'est pas encore configure.
+
+## Migrations
+
+Les migrations de schema sont gerees par Alembic. Le backend ne lance plus `Base.metadata.create_all` au demarrage de l'application.
+
+```bash
+cd backend
+alembic upgrade head
+```
+
+Sur Render, la commande de demarrage lance aussi `alembic upgrade head` avant Uvicorn.
+
+## Tests et qualite
+
+Backend :
+
+```bash
+python -m pytest backend/tests
+```
+
+Frontend :
+
+```bash
+cd frontend
+npm run lint
+npm run test
+npm run build
+```
+
+## Observabilite
+
+Le backend conserve :
+
+- un audit trail par tenant via `/api/audit-logs` ;
+- un historique d'optimisation via `/api/optimization-runs` ;
+- un resume monitoring via `/api/monitoring/summary` avec temps solveur moyen, taux d'infaisabilite et erreurs API recentes.
 
 ## Onboarding
 

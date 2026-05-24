@@ -105,7 +105,7 @@ export default function OnboardingPage() {
                 onChange={(event) => setLocale(event.target.value as Locale)}
                 className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900 outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
               >
-                <option value="fr">Francais</option>
+                <option value="fr">Français</option>
                 <option value="en">English</option>
                 <option value="ar">العربية</option>
               </select>
