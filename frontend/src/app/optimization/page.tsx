@@ -1,17 +1,32 @@
 "use client";
 
-import { Zap, Target, AlertTriangle, Bot, BrainCircuit, LineChart as LucideLineChart, FileText, Download, Printer, Search, Eye, X } from "lucide-react";
+import { Zap, Target, AlertTriangle, Bot, BrainCircuit, LineChart as LucideLineChart, FileText, Printer, Search, Eye, X } from "lucide-react";
 import React, { useState, useEffect, useCallback } from "react";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, LineChart, Line } from "recharts";
 import ReactMarkdown from "react-markdown";
 import FicheModal from "@/components/FicheModal";
-import { isNutrientSpecificToSpecies, getNutrientUnit, getTopNutrients } from "@/utils/nutrientUtils";
+import { getNutrientUnit, getTopNutrients } from "@/utils/nutrientUtils";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 const COLORS = ['#2563eb', '#16a34a', '#d97706', '#dc2626', '#7c3aed', '#0891b2', '#059669', '#ea580c'];
+
+function getRecipeIds(recipeList: any[]) {
+  return recipeList.flatMap((recipe: any) => [
+    recipe.id,
+    ...(recipe.versions || []).map((version: any) => version.id),
+  ]);
+}
+
+function toSolverRecipe(recipe: any) {
+  const clean = { ...recipe };
+  delete clean.id;
+  delete clean.parent_id;
+  delete clean.versions;
+  return clean;
+}
 
 interface ResultIngredient {
   name: string;
@@ -111,6 +126,7 @@ export default function OptimizationPage() {
         const recs = await recRes.json();
         setIngredients(ings);
         setRecipes(recs);
+        setUnselectedRecipeIds(getRecipeIds(recs));
 
         // Active = explicitly true (the migration now ensures all rows have a value)
         const activeIngs = ings.filter((i: any) => i.is_active === true || i.is_active == null);
@@ -121,8 +137,6 @@ export default function OptimizationPage() {
           const versionsDemand = (r.versions || []).reduce((vs: number, v: any) => vs + (v.demand_tons || 0), 0);
           return s + masterDemand + versionsDemand;
         }, 0);
-        // Count total recipe count (masters + versions)
-        const totalRecipeCount = recs.reduce((count: number, r: any) => count + 1 + (r.versions?.length || 0), 0);
         setStockStats({ total_stock: tStock, total_demand: tDemand });
       }
     } catch { /* ignored */ }
@@ -130,6 +144,21 @@ export default function OptimizationPage() {
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  const allRecipeIds = getRecipeIds(recipes);
+  const selectedRecipeCount = allRecipeIds.filter(id => !unselectedRecipeIds.includes(id)).length;
+  const totalRecipeCount = allRecipeIds.length;
+  const hasSelectedRecipes = selectedRecipeCount > 0;
+
+  const setRecipeSelected = (id: number, selected: boolean) => {
+    setUnselectedRecipeIds(prev => {
+      if (selected) return prev.filter(recipeId => recipeId !== id);
+      return prev.includes(id) ? prev : [...prev, id];
+    });
+  };
+
+  const selectAllRecipes = () => setUnselectedRecipeIds([]);
+  const deselectAllRecipes = () => setUnselectedRecipeIds(allRecipeIds);
 
   const getOriginalRecipe = (name: string) => {
     // Search in masters and versions
@@ -158,21 +187,22 @@ export default function OptimizationPage() {
       // sharing a global ingredient inventory pool.
       const flatRecipes: any[] = [];
       for (const master of recipes) {
-        // Strip UI-only fields (id, versions) before sending to the solver
-        const { id: _mid, versions, ...masterFields } = master;
         if (!unselectedRecipeIds.includes(master.id)) {
-          flatRecipes.push(masterFields);
+          flatRecipes.push(toSolverRecipe(master));
         }
 
         // Include each version as a separate recipe if it is not unselected
-        if (versions && versions.length > 0) {
-          for (const ver of versions) {
+        if (master.versions && master.versions.length > 0) {
+          for (const ver of master.versions) {
             if (!unselectedRecipeIds.includes(ver.id)) {
-              const { id: _vid, parent_id: _pid, ...verFields } = ver;
-              flatRecipes.push(verFields);
+              flatRecipes.push(toSolverRecipe(ver));
             }
           }
         }
+      }
+
+      if (flatRecipes.length === 0) {
+        throw new Error("Sélectionnez au moins une formule à optimiser.");
       }
 
       const res = await fetch(`${API}/api/optimize-multi`, {
@@ -197,16 +227,14 @@ export default function OptimizationPage() {
 
     const flatRecipes: any[] = [];
     for (const master of recipes) {
-      const { id: _mid, versions, ...masterFields } = master;
       if (!unselectedRecipeIds.includes(master.id)) {
-        flatRecipes.push(masterFields);
+        flatRecipes.push(toSolverRecipe(master));
       }
 
-      if (versions && versions.length > 0) {
-        for (const ver of versions) {
+      if (master.versions && master.versions.length > 0) {
+        for (const ver of master.versions) {
           if (!unselectedRecipeIds.includes(ver.id)) {
-            const { id: _vid, parent_id: _pid, ...verFields } = ver;
-            flatRecipes.push(verFields);
+            flatRecipes.push(toSolverRecipe(ver));
           }
         }
       }
@@ -229,7 +257,7 @@ export default function OptimizationPage() {
       });
   };
 
-  const exportPDF = async (rec: RecipeResult, originalRec: any) => {
+  const exportPDF = async (rec: RecipeResult) => {
     setExportingPdf(rec.name);
     try {
       const el = document.getElementById(`pdf-template-${rec.name}`);
@@ -399,30 +427,52 @@ export default function OptimizationPage() {
           </div>
 
           <div className="mb-10 bg-white/60 backdrop-blur-3xl p-8 rounded-[2rem] border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-            <h3 className="text-lg font-black text-slate-900 mb-6 flex items-center gap-2">
-              <Target className="w-5 h-5 text-indigo-600" /> Sélectionner les Formules à Optimiser
-            </h3>
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+              <div>
+                <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
+                  <Target className="w-5 h-5 text-indigo-600" /> Sélectionner les Formules à Optimiser
+                </h3>
+                <p className="text-sm text-slate-500 font-semibold mt-1">
+                  {selectedRecipeCount} / {totalRecipeCount} formules sélectionnées
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={selectAllRecipes}
+                  className="px-4 py-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 text-sm font-black transition-colors"
+                >
+                  Tout sélectionner
+                </button>
+                <button
+                  type="button"
+                  onClick={deselectAllRecipes}
+                  className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200 text-sm font-black transition-colors"
+                >
+                  Tout désélectionner
+                </button>
+              </div>
+            </div>
+            {!hasSelectedRecipes && (
+              <div className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800">
+                Par défaut, aucune formule n'est sélectionnée. Choisissez les formules à inclure avant de lancer le solveur.
+              </div>
+            )}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5">
               {recipes.map((master: any) => (
                 <div key={master.id} className="flex flex-col gap-2">
-                  <label className="flex items-center gap-3 cursor-pointer p-4 bg-white hover:bg-slate-50/80 rounded-2xl border border-slate-100 transition-all shadow-sm hover:shadow-md">
+                  <label className={`flex items-center gap-3 cursor-pointer p-4 bg-white hover:bg-slate-50/80 rounded-2xl border transition-all shadow-sm hover:shadow-md ${!unselectedRecipeIds.includes(master.id) ? "border-emerald-300 ring-2 ring-emerald-100" : "border-slate-100"}`}>
                     <input type="checkbox" className="w-5 h-5 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 flex-shrink-0"
                       checked={!unselectedRecipeIds.includes(master.id)}
-                      onChange={(e) => {
-                        if (e.target.checked) setUnselectedRecipeIds(prev => prev.filter(id => id !== master.id));
-                        else setUnselectedRecipeIds(prev => [...prev, master.id]);
-                      }}
+                      onChange={(e) => setRecipeSelected(master.id, e.target.checked)}
                     />
                     <span className="text-sm font-black text-slate-800 line-clamp-1">{master.name}</span>
                   </label>
                   {master.versions?.map((v: any) => (
-                    <label key={v.id} className="flex items-center gap-3 cursor-pointer p-2.5 pl-8 bg-slate-50/50 hover:bg-slate-100 rounded-xl border border-transparent transition-colors">
+                    <label key={v.id} className={`flex items-center gap-3 cursor-pointer p-2.5 pl-8 rounded-xl border transition-colors ${!unselectedRecipeIds.includes(v.id) ? "bg-emerald-50 border-emerald-100" : "bg-slate-50/50 hover:bg-slate-100 border-transparent"}`}>
                       <input type="checkbox" className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 flex-shrink-0"
                         checked={!unselectedRecipeIds.includes(v.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) setUnselectedRecipeIds(prev => prev.filter(id => id !== v.id));
-                          else setUnselectedRecipeIds(prev => [...prev, v.id]);
-                        }}
+                        onChange={(e) => setRecipeSelected(v.id, e.target.checked)}
                       />
                       <span className="text-xs font-bold text-slate-500 line-clamp-1">↳ {v.version_tag}</span>
                     </label>
@@ -432,10 +482,10 @@ export default function OptimizationPage() {
             </div>
           </div>
 
-          <button onClick={runFactory} disabled={loading}
-            className={`relative w-full py-6 rounded-[2rem] font-black text-xl tracking-wide transition-all overflow-hidden ${loading ? "bg-slate-200 cursor-not-allowed text-slate-400 shadow-none" : "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white shadow-[0_8px_30px_rgba(16,185,129,0.3)] hover:shadow-[0_8px_40px_rgba(16,185,129,0.5)] hover:-translate-y-1 cursor-pointer"
+          <button onClick={runFactory} disabled={loading || !hasSelectedRecipes}
+            className={`relative w-full py-6 rounded-[2rem] font-black text-xl tracking-wide transition-all overflow-hidden ${loading || !hasSelectedRecipes ? "bg-slate-200 cursor-not-allowed text-slate-400 shadow-none" : "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white shadow-[0_8px_30px_rgba(16,185,129,0.3)] hover:shadow-[0_8px_40px_rgba(16,185,129,0.5)] hover:-translate-y-1 cursor-pointer"
               }`}>
-            {loading ? "Optimisation en cours…" : <span className="flex items-center justify-center gap-3"><Zap className="w-7 h-7" /> Lancer l'Optimisation de l'Usine</span>}
+            {loading ? "Optimisation en cours…" : <span className="flex items-center justify-center gap-3"><Zap className="w-7 h-7" /> {hasSelectedRecipes ? "Lancer l'Optimisation de l'Usine" : "Sélectionnez au moins une formule"}</span>}
           </button>
 
           {error && (
@@ -588,7 +638,7 @@ export default function OptimizationPage() {
                           }} className="flex-1 py-3.5 px-3 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 transition-all font-bold cursor-pointer flex items-center justify-center gap-2 shadow-sm text-sm">
                             <LucideLineChart className="w-4 h-4 text-indigo-600" /> Paramétrique
                           </button>
-                          <button onClick={() => exportPDF(rec, originalRec)} disabled={exportingPdf === rec.name} className="flex-1 py-3 px-2 rounded-xl bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 transition-all font-bold cursor-pointer flex items-center justify-center gap-1.5 shadow-sm text-xs">
+                          <button onClick={() => exportPDF(rec)} disabled={exportingPdf === rec.name} className="flex-1 py-3 px-2 rounded-xl bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 transition-all font-bold cursor-pointer flex items-center justify-center gap-1.5 shadow-sm text-xs">
                             {exportingPdf === rec.name ? (
                               <>
                                 <div className="w-4 h-4 rounded-full border-2 border-red-300 border-r-red-700 animate-spin" />

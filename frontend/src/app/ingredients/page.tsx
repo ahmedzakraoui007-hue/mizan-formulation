@@ -115,7 +115,7 @@ export default function IngredientsPage() {
   // The main list only holds lite data (no heavy nutrients)
   const [ingredients, setIngredients] = useState<LiteIngredient[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState("Tous");
+  const [filterStatus, setFilterStatus] = useState("Stock Actif");
   const [fetching, setFetching] = useState(true);
 
   // Track inline row edits (name, cost, dm, stock only — never nutrients from the table)

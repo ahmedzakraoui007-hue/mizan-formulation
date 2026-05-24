@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { saveAs } from "file-saver";
 import { X, FileSpreadsheet, Share2, Printer } from "lucide-react";
-import { isNutrientSpecificToSpecies, getNutrientUnit, getTopNutrients } from "@/utils/nutrientUtils";
+import { getNutrientUnit, getTopNutrients } from "@/utils/nutrientUtils";
 
 interface ResultIngredient {
   name: string;
@@ -73,9 +73,13 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
 
   const shareToWhatsApp = async () => {
     setSharing(true);
+    const whatsappTab = window.open("about:blank", "_blank");
     try {
       const el = document.getElementById(`modal-pdf-template`);
-      if (!el) return;
+      if (!el) {
+        whatsappTab?.close();
+        return;
+      }
 
       const { default: html2canvas } = await import("html2canvas");
       const { default: jsPDF } = await import("jspdf");
@@ -103,6 +107,16 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
 
       const pdfBlob = pdf.output("blob");
       const file = new File([pdfBlob], `Fiche_${report.name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`, { type: "application/pdf" });
+      const fileName = `Fiche_${report.name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+      const message = [
+        `Fiche de fabrication Mizan - ${report.name}`,
+        `Date: ${dateStr}`,
+        `Tonnage produit: ${report.demand_tons} t`,
+        `Coût total estimé: ${report.cost_tnd.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} TND`,
+        "",
+        "Le PDF a été téléchargé depuis Mizan. Merci de le joindre à ce message WhatsApp.",
+      ].join("\n");
+      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
 
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
@@ -110,19 +124,23 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
           title: `Fiche de Fabrication - ${report.name}`,
           text: `Voici la fiche de fabrication pour ${report.name}`,
         });
+        whatsappTab?.close();
       } else {
-        pdf.save(`Fiche_${report.name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`);
-        alert("Votre appareil ne supporte pas le partage direct de fichiers PDF via WhatsApp. Le PDF a été téléchargé, vous pouvez l'envoyer manuellement en pièce jointe.");
+        pdf.save(fileName);
+        if (whatsappTab) {
+          whatsappTab.location.href = whatsappUrl;
+        } else {
+          window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+        }
       }
     } catch (err) {
       console.error(err);
+      whatsappTab?.close();
       alert("Erreur lors de la génération du PDF pour WhatsApp.");
     } finally {
       setSharing(false);
     }
   };
-
-  const hrLine = "border-t border-gray-300 my-6";
 
   const printStyles = `
     @media print {
