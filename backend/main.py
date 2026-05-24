@@ -12,6 +12,7 @@ from db_models import IngredientDB, RecipeDB, TenantDB, AuditLogDB, Optimization
 from auth import TenantContext, get_tenant_context, require_role
 from solver import solve_least_cost_formulation, solve_multi_blend
 from ai_service import generate_financial_insights, generate_formulator_audit, suggest_best_practice_bounds
+from migration_utils import run_migrations
 
 # Schema migrations are managed by Alembic.
 import os
@@ -20,6 +21,7 @@ import time
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    run_migrations()
     seed_database()
     yield
 
