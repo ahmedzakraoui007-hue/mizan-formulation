@@ -8,6 +8,17 @@ import PlatformTranslator from "@/lib/platformTranslations";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+function OpeningLoader() {
+  return (
+    <div className="fixed inset-0 z-[100] grid min-h-dvh place-items-center bg-slate-50">
+      <div className="flex flex-col items-center justify-center gap-4">
+        <div className="h-10 w-10 rounded-full border-4 border-slate-200 border-r-emerald-600 animate-spin" />
+        <p className="text-sm font-bold text-slate-500">Chargement...</p>
+      </div>
+    </div>
+  );
+}
+
 function ApiAuthBridge({ children }: { children: React.ReactNode }) {
   const { getToken, isLoaded, isSignedIn } = useAuth();
   const pathname = usePathname();
@@ -69,11 +80,7 @@ function ApiAuthBridge({ children }: { children: React.ReactNode }) {
   }, [getToken, isLoaded, isSignedIn, pathname, router]);
 
   if (isLoaded && isSignedIn && !checkedTenant && pathname !== "/onboarding") {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="h-8 w-8 rounded-full border-4 border-slate-200 border-r-emerald-600 animate-spin" />
-      </div>
-    );
+    return <OpeningLoader />;
   }
 
   return <>{children}</>;
