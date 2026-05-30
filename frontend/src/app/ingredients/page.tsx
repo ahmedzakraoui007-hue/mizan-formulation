@@ -6,6 +6,7 @@ import { useI18n, type Locale } from "@/lib/i18n";
 import { DEFAULT_INGREDIENT_FILTER_STATUS, ingredientMatchesStatus } from "@/lib/ingredientFilters";
 import { getNutrientUnit } from "@/utils/nutrientUtils";
 import PageLoader from "@/components/PageLoader";
+import { canManageIngredients, useTenantRole } from "@/lib/tenantRole";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -109,6 +110,8 @@ function groupNutrients(nutrients: Record<string, number>) {
 
 export default function IngredientsPage() {
   const { locale } = useI18n();
+  const tenantRole = useTenantRole();
+  const canManage = canManageIngredients(tenantRole);
   const msg = useCallback(
     (key: keyof typeof ingredientMessages) => ingredientMessages[key][locale] ?? ingredientMessages[key].fr,
     [locale]
@@ -144,6 +147,7 @@ export default function IngredientsPage() {
   // ── Inline row edit helpers ────────────────────────────────────────────────
   // Only fields that are safe to edit from lite data — NEVER nutrients
   const editRow = (id: number, field: "name" | "cost" | "transport_cost" | "dm" | "inventory_limit_tons", val: string) => {
+    if (!canManage) return;
     const parsed = field === "name" ? val : parseFloat(val) || 0;
     setIngredients(prev => prev.map(i => i.id !== id ? i : { ...i, [field]: parsed }));
     setPendingRowEdits(prev => ({
@@ -155,6 +159,7 @@ export default function IngredientsPage() {
   // ── Save inline row edits ─────────────────────────────────────────────────
   // We only send the fields that were actually changed, never nutrients
   const saveRowEdits = async () => {
+    if (!canManage) return;
     setFetching(true);
     try {
       await Promise.all(
@@ -188,6 +193,7 @@ export default function IngredientsPage() {
 
   // ── Toggle active ─────────────────────────────────────────────────────────
   const toggleActive = async (id: number) => {
+    if (!canManage) return;
     const ing = ingredients.find(i => i.id === id);
     if (!ing) return;
     const newActive = !ing.is_active;
@@ -203,6 +209,7 @@ export default function IngredientsPage() {
 
   // ── Add / Delete ingredient ───────────────────────────────────────────────
   const addIng = async () => {
+    if (!canManage) return;
     const res = await fetch(`${API}/api/ingredients`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -215,6 +222,7 @@ export default function IngredientsPage() {
   };
 
   const rmIng = async (id: number) => {
+    if (!canManage) return;
     if (!confirm(msg("deleteConfirm"))) return;
     await fetch(`${API}/api/ingredients/${id}`, { method: "DELETE" });
     setIngredients(prev => prev.filter(i => i.id !== id));
@@ -233,17 +241,17 @@ export default function IngredientsPage() {
 
   // ── Panel nutrient edit helpers ────────────────────────────────────────────
   const updatePanelNutrient = (key: string, val: string) => {
-    if (!panel) return;
+    if (!panel || !canManage) return;
     setPanel(prev => prev ? { ...prev, nutrients: { ...prev.nutrients, [key]: parseFloat(val) || 0 } } : null);
   };
 
   const addPanelNutrient = (key: string) => {
-    if (!key || !panel || key in panel.nutrients) return;
+    if (!key || !panel || !canManage || key in panel.nutrients) return;
     setPanel(prev => prev ? { ...prev, nutrients: { ...prev.nutrients, [key]: 0 } } : null);
   };
 
   const removePanelNutrient = (key: string) => {
-    if (!panel) return;
+    if (!panel || !canManage) return;
     const n = { ...panel.nutrients };
     delete n[key];
     setPanel(prev => prev ? { ...prev, nutrients: n } : null);
@@ -251,7 +259,7 @@ export default function IngredientsPage() {
 
   // ── Save panel (nutrients + panel-editable fields) ─────────────────────────
   const savePanel = async () => {
-    if (!panel) return;
+    if (!panel || !canManage) return;
     setPanelSaving(true);
     try {
       const res = await fetch(`${API}/api/ingredients/${panel.id}`, {
@@ -335,16 +343,21 @@ export default function IngredientsPage() {
                 {filteredIngredients.length} matière{filteredIngredients.length > 1 ? "s" : ""} première{filteredIngredients.length > 1 ? "s" : ""}
                 {filterStatus !== "Tous" ? ` · ${filterStatus}` : ""}
               </p>
+              {!canManage && (
+                <p className="mt-2 inline-flex rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-black text-slate-500">
+                  Lecture seule
+                </p>
+              )}
             </div>
             <div className="flex items-center gap-3">
               {hasRowEdits && (
-                <button onClick={saveRowEdits}
-                  className="bg-emerald-600 text-white hover:bg-emerald-700 px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-md flex items-center gap-2 animate-pulse">
+                <button onClick={saveRowEdits} disabled={!canManage}
+                  className="bg-emerald-600 text-white hover:bg-emerald-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-md flex items-center gap-2 animate-pulse">
                   <Save className="w-4 h-4" /> Sauvegarder
                 </button>
               )}
-              <button onClick={addIng}
-                className="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-md shadow-blue-600/20 flex items-center gap-1">
+              <button onClick={addIng} disabled={!canManage}
+                className="bg-blue-600 text-white hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none disabled:cursor-not-allowed px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-md shadow-blue-600/20 flex items-center gap-1">
                 <Plus className="w-4 h-4" /> Ajouter
               </button>
             </div>
@@ -392,14 +405,14 @@ export default function IngredientsPage() {
 
                     {/* Nom */}
                     <td className="py-3 px-5">
-                      <input type="text" value={ing.name} onChange={e => editRow(ing.id, "name", e.target.value)}
-                        className="w-full min-w-[180px] bg-transparent outline-none text-gray-900 font-semibold focus:ring-2 focus:ring-blue-500 rounded-lg px-2 py-1 transition-all" />
+                      <input type="text" value={ing.name} onChange={e => editRow(ing.id, "name", e.target.value)} disabled={!canManage}
+                        className="w-full min-w-[180px] bg-transparent outline-none text-gray-900 font-semibold focus:ring-2 focus:ring-blue-500 rounded-lg px-2 py-1 transition-all disabled:text-slate-500 disabled:cursor-not-allowed" />
                     </td>
 
                     {/* Statut */}
                     <td className="py-3 px-5 text-center">
-                      <button onClick={() => toggleActive(ing.id)}
-                        className={`px-3 py-1 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1.5 mx-auto ${ing.is_active ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-200" : "bg-gray-100 text-gray-500 hover:bg-gray-200 border border-gray-200"}`}>
+                      <button onClick={() => toggleActive(ing.id)} disabled={!canManage}
+                        className={`px-3 py-1 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1.5 mx-auto disabled:cursor-not-allowed ${ing.is_active ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-200" : "bg-gray-100 text-gray-500 hover:bg-gray-200 border border-gray-200"}`}>
                         <div className={`w-2 h-2 rounded-full ${ing.is_active ? "bg-emerald-500" : "bg-gray-400"}`} />
                         {ing.is_active ? "Actif" : "Inactif"}
                       </button>
@@ -407,14 +420,14 @@ export default function IngredientsPage() {
 
                     {/* Coût */}
                     <td className="py-3 px-5 text-right">
-                      <input type="number" step="0.01" value={ing.cost} onChange={e => editRow(ing.id, "cost", e.target.value)}
-                        className={`${cell} w-24 text-right font-semibold text-blue-700`} />
+                      <input type="number" step="0.01" value={ing.cost} onChange={e => editRow(ing.id, "cost", e.target.value)} disabled={!canManage}
+                        className={`${cell} w-24 text-right font-semibold text-blue-700 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed`} />
                     </td>
 
                     {/* MS % */}
                     <td className="py-3 px-5 text-right">
-                      <input type="number" step="0.1" value={ing.dm} onChange={e => editRow(ing.id, "dm", e.target.value)}
-                        className={`${cell} w-20 text-right font-semibold text-gray-700`} />
+                      <input type="number" step="0.1" value={ing.dm} onChange={e => editRow(ing.id, "dm", e.target.value)} disabled={!canManage}
+                        className={`${cell} w-20 text-right font-semibold text-gray-700 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed`} />
                     </td>
 
                     {/* Protéine % — display only from lite data */}
@@ -429,8 +442,8 @@ export default function IngredientsPage() {
 
                     {/* Stock (t) */}
                     <td className="py-3 px-5 text-right">
-                      <input type="number" step="1" value={ing.inventory_limit_tons} onChange={e => editRow(ing.id, "inventory_limit_tons", e.target.value)}
-                        className={`${cell} w-24 text-right font-bold text-purple-700`} />
+                      <input type="number" step="1" value={ing.inventory_limit_tons} onChange={e => editRow(ing.id, "inventory_limit_tons", e.target.value)} disabled={!canManage}
+                        className={`${cell} w-24 text-right font-bold text-purple-700 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed`} />
                     </td>
 
                     {/* Fiche Technique */}
@@ -446,8 +459,8 @@ export default function IngredientsPage() {
 
                     {/* Delete */}
                     <td className="py-3 px-5 text-center">
-                      <button onClick={() => rmIng(ing.id)}
-                        className="text-red-400 hover:text-white hover:bg-red-500 border border-transparent hover:border-red-500 px-2.5 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-all text-xs font-bold">
+                      <button onClick={() => rmIng(ing.id)} disabled={!canManage}
+                        className="text-red-400 hover:text-white hover:bg-red-500 border border-transparent hover:border-red-500 px-2.5 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-all text-xs font-bold disabled:pointer-events-none disabled:opacity-0">
                         <X className="w-3.5 h-3.5" />
                       </button>
                     </td>
@@ -480,12 +493,14 @@ export default function IngredientsPage() {
                     <span className="text-xs text-slate-400 font-mono">MS:
                       <input type="number" step="0.1" value={panel.dm}
                         onChange={e => setPanel(prev => prev ? { ...prev, dm: parseFloat(e.target.value) || 0 } : null)}
-                        className="w-16 bg-white/10 border-none outline-none text-white font-bold ml-1 rounded px-1" />
+                        disabled={!canManage}
+                        className="w-16 bg-white/10 border-none outline-none text-white font-bold ml-1 rounded px-1 disabled:text-slate-400 disabled:cursor-not-allowed" />
                       %</span>
                     <span className="text-xs text-slate-400 font-mono">Coût:
                       <input type="number" step="0.01" value={panel.cost}
                         onChange={e => setPanel(prev => prev ? { ...prev, cost: parseFloat(e.target.value) || 0 } : null)}
-                        className="w-20 bg-white/10 border-none outline-none text-white font-bold ml-1 rounded px-1" />
+                        disabled={!canManage}
+                        className="w-20 bg-white/10 border-none outline-none text-white font-bold ml-1 rounded px-1 disabled:text-slate-400 disabled:cursor-not-allowed" />
                       TND/kg</span>
                     <span className="text-xs bg-blue-800/60 text-blue-200 px-2 py-0.5 rounded-full font-bold border border-blue-700">
                       {totalNutrients} paramètres
@@ -531,14 +546,16 @@ export default function IngredientsPage() {
                                 step="0.01"
                                 value={value}
                                 onChange={e => updatePanelNutrient(key, e.target.value)}
-                                className="w-24 bg-white/50 border border-gray-200 rounded px-2 py-0.5 text-xs font-mono font-bold text-right outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
+                                disabled={!canManage}
+                                className="w-24 bg-white/50 border border-gray-200 rounded px-2 py-0.5 text-xs font-mono font-bold text-right outline-none focus:ring-1 focus:ring-blue-500 text-gray-900 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
                               />
                               <span className="text-[10px] text-slate-500 font-bold">{getNutrientUnit(key)}</span>
                             </div>
                           </div>
                           <button
                             onClick={() => removePanelNutrient(key)}
-                            className="text-red-400 hover:text-red-600 transition-colors ml-2">
+                            disabled={!canManage}
+                            className="text-red-400 hover:text-red-600 transition-colors ml-2 disabled:text-slate-300 disabled:cursor-not-allowed">
                             <X className="w-4 h-4" />
                           </button>
                         </div>
@@ -562,7 +579,8 @@ export default function IngredientsPage() {
               {/* Add nutrient row */}
               <div className="flex items-center gap-2">
                 <select
-                  className="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 text-xs font-bold outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer text-gray-900"
+                  className="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 text-xs font-bold outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer text-gray-900 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
+                  disabled={!canManage}
                   onChange={e => { if (e.target.value && e.target.value !== "NEW_PROMPT") { addPanelNutrient(e.target.value); e.target.value = ""; } }}
                   defaultValue="">
                   <option value="" disabled>+ Ajouter un nutriment...</option>
@@ -579,7 +597,8 @@ export default function IngredientsPage() {
                 </select>
                 <button
                   onClick={() => { const custom = prompt(msg("newNutrientPrompt")); if (custom) addPanelNutrient(custom); }}
-                  className="bg-blue-50 text-blue-600 border border-blue-100 hover:bg-blue-100 px-3 py-2 rounded-lg text-xs font-black transition-all">
+                  disabled={!canManage}
+                  className="bg-blue-50 text-blue-600 border border-blue-100 hover:bg-blue-100 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed px-3 py-2 rounded-lg text-xs font-black transition-all">
                   <Edit3 className="w-4 h-4" />
                 </button>
               </div>
@@ -594,7 +613,7 @@ export default function IngredientsPage() {
                     className="bg-gray-100 text-gray-600 hover:bg-gray-200 px-4 py-2 rounded-xl text-sm font-bold transition-all">
                     Fermer
                   </button>
-                  <button onClick={savePanel} disabled={panelSaving}
+                  <button onClick={savePanel} disabled={panelSaving || !canManage}
                     className="bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 px-5 py-2 rounded-xl text-sm font-bold transition-all shadow-sm flex items-center gap-2">
                     {panelSaving ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
                     Sauvegarder la fiche

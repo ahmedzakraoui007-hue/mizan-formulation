@@ -39,3 +39,19 @@ export function useTenantRole() {
 export function canRunOptimization(role: TenantRole) {
   return role === "admin" || role === "formulator" || role === "purchasing";
 }
+
+export function canManageIngredients(role: TenantRole) {
+  return role === "admin" || role === "formulator";
+}
+
+export function canManageRecipes(role: TenantRole) {
+  return role === "admin" || role === "formulator";
+}
+
+export function canUsePurchasing(role: TenantRole) {
+  return role === "admin" || role === "purchasing";
+}
+
+export function canViewAdmin(role: TenantRole) {
+  return role === "admin";
+}

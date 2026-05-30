@@ -5,6 +5,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import { toSolverRecipe } from "@/lib/optimizationSelection";
 import PageLoader from "@/components/PageLoader";
+import { canRunOptimization, canUsePurchasing, useTenantRole } from "@/lib/tenantRole";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -33,6 +34,9 @@ interface MultiBlendResult {
 }
 
 export default function PurchasingPage() {
+  const tenantRole = useTenantRole();
+  const canOptimize = canRunOptimization(tenantRole);
+  const canAnalyzePurchasing = canUsePurchasing(tenantRole);
   const [ingredients, setIngredients] = useState<any[]>([]);
   const [recipes, setRecipes] = useState<any[]>([]);
   const [result, setResult] = useState<MultiBlendResult | null>(null);
@@ -62,6 +66,10 @@ export default function PurchasingPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const runOptimization = async () => {
+    if (!canOptimize) {
+      setError("Votre rôle ne permet pas de lancer cette optimisation.");
+      return;
+    }
     setLoading(true); setError(null); setResult(null); setAiInsights(null);
     try {
       const allowedNames = new Set<string>();
@@ -85,6 +93,10 @@ export default function PurchasingPage() {
 
   const runAiAnalysis = async () => {
     if (!result) return;
+    if (!canAnalyzePurchasing) {
+      setAiInsights("Votre rôle ne permet pas de générer l'analyse achats IA.");
+      return;
+    }
     setAiLoading(true);
     setAiInsights(null);
     try {
@@ -126,16 +138,21 @@ export default function PurchasingPage() {
           <HandCoins className="w-8 h-8 text-emerald-600" /> Achats & Stratégie
         </h1>
         <p className="text-gray-500 mt-1">Tableau de bord du Directeur des Achats — Prix d'Intérêt, négociations et intelligence artificielle.</p>
+        {!canAnalyzePurchasing && (
+          <p className="mt-3 inline-flex rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-black text-slate-500">
+            Accès achats limité
+          </p>
+        )}
       </div>
 
       {/* Step 1 — Run Optimization */}
       {!result && (
         <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm mb-8">
           <p className="text-gray-600 font-medium mb-4">Lancez d'abord une optimisation pour générer les données de Shadow Pricing.</p>
-          <button onClick={runOptimization} disabled={loading}
-            className={`w-full py-4 rounded-xl font-black text-lg tracking-wide transition-all shadow-lg ${loading ? "bg-gray-300 cursor-not-allowed text-gray-500" : "bg-gray-900 hover:bg-gray-800 text-white shadow-gray-900/20 cursor-pointer"
+          <button onClick={runOptimization} disabled={loading || !canOptimize}
+            className={`w-full py-4 rounded-xl font-black text-lg tracking-wide transition-all shadow-lg ${loading || !canOptimize ? "bg-gray-300 cursor-not-allowed text-gray-500" : "bg-gray-900 hover:bg-gray-800 text-white shadow-gray-900/20 cursor-pointer"
               }`}>
-            {loading ? "Optimisation en cours…" : <span className="flex items-center justify-center gap-2"><Zap className="w-5 h-5" /> Lancer l'Optimisation de l'Usine</span>}
+            {loading ? "Optimisation en cours…" : <span className="flex items-center justify-center gap-2"><Zap className="w-5 h-5" /> {canOptimize ? "Lancer l'Optimisation de l'Usine" : "Lecture seule"}</span>}
           </button>
           {error && <p className="text-red-600 mt-4 font-bold flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> {error}</p>}
         </div>
@@ -228,8 +245,8 @@ export default function PurchasingPage() {
                 <BrainCircuit className="w-6 h-6 text-indigo-600" />
                 <h2 className="text-xl font-black text-gray-900">Recommandations Stratégiques de l'IA</h2>
               </div>
-              <button onClick={runAiAnalysis} disabled={aiLoading}
-                className="py-2.5 px-5 rounded-xl font-bold bg-purple-100 text-purple-700 hover:bg-purple-200 border border-purple-200 transition-colors shadow-sm flex items-center gap-2 text-sm">
+              <button onClick={runAiAnalysis} disabled={aiLoading || !canAnalyzePurchasing}
+                className="py-2.5 px-5 rounded-xl font-bold bg-purple-100 text-purple-700 hover:bg-purple-200 border border-purple-200 transition-colors shadow-sm flex items-center gap-2 text-sm disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-200 disabled:cursor-not-allowed">
                 {aiLoading ? (
                   <>
                     <div className="w-4 h-4 rounded-full border-2 border-purple-300 border-r-purple-700 animate-spin" />

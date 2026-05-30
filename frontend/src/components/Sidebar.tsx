@@ -3,13 +3,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserButton, useUser } from "@clerk/nextjs";
-import { Activity, Boxes, FileText, LayoutDashboard, TrendingUp } from "lucide-react";
+import { Activity, Boxes, FileText, LayoutDashboard, ShieldCheck, TrendingUp } from "lucide-react";
 import { useI18n, type Locale } from "@/lib/i18n";
+import { canViewAdmin, useTenantRole } from "@/lib/tenantRole";
 
 export default function Sidebar() {
   const pathname = usePathname();
   const { user } = useUser();
   const { locale, setLocale, t } = useI18n();
+  const tenantRole = useTenantRole();
 
   const links = [
     { href: "/", label: t("dashboard"), icon: LayoutDashboard },
@@ -17,6 +19,7 @@ export default function Sidebar() {
     { href: "/recipes", label: t("recipes"), icon: FileText },
     { href: "/optimization", label: t("optimization"), icon: Activity },
     { href: "/purchasing", label: t("purchasing"), icon: TrendingUp },
+    ...(canViewAdmin(tenantRole) ? [{ href: "/admin", label: "Admin", icon: ShieldCheck }] : []),
   ];
 
   return (

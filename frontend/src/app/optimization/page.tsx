@@ -1,6 +1,6 @@
 "use client";
 
-import { Zap, Target, AlertTriangle, Bot, BrainCircuit, LineChart as LucideLineChart, FileText, Printer, Search, Eye, X } from "lucide-react";
+import { Zap, Target, AlertTriangle, Bot, BrainCircuit, LineChart as LucideLineChart, FileText, Printer, Search, Eye, X, History } from "lucide-react";
 import React, { useState, useEffect, useCallback } from "react";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, LineChart, Line } from "recharts";
 import ReactMarkdown from "react-markdown";
@@ -68,7 +68,22 @@ interface MultiBlendResult {
   recipes: RecipeResult[];
 }
 
+interface OptimizationRun {
+  id: number;
+  status: string;
+  total_factory_cost_tnd: number | null;
+  recipe_count: number;
+  ingredient_count: number;
+  duration_ms: number;
+  created_at: string | null;
+}
+
 const isActiveIngredient = (ingredient: IngredientLite) => ingredient.is_active === true || ingredient.is_active == null;
+
+const formatRunDate = (value: string | null) => {
+  if (!value) return "-";
+  return new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "short" }).format(new Date(value));
+};
 
 export default function OptimizationPage() {
   const { t } = useI18n();
@@ -136,6 +151,14 @@ export default function OptimizationPage() {
   const [stockStats, setStockStats] = useState({ total_stock: 0, total_demand: 0 });
   const [selectedReport, setSelectedReport] = useState<RecipeResult | null>(null);
   const [exportingPdf, setExportingPdf] = useState<string | null>(null);
+  const [recentRuns, setRecentRuns] = useState<OptimizationRun[]>([]);
+
+  const fetchRecentRuns = useCallback(async () => {
+    try {
+      const res = await fetch(`${API}/api/optimization-runs?limit=5`);
+      if (res.ok) setRecentRuns(await res.json());
+    } catch { /* non-critical */ }
+  }, []);
 
   const fetchData = useCallback(async () => {
     setFetching(true);
@@ -168,6 +191,7 @@ export default function OptimizationPage() {
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { fetchRecentRuns(); }, [fetchRecentRuns]);
 
   const allRecipeIds = getRecipeIds(recipes);
   const selectedRecipeCount = countSelectedRecipes(recipes, unselectedRecipeIds);
@@ -231,7 +255,9 @@ export default function OptimizationPage() {
         }),
       });
       if (!res.ok) { const e = await res.json(); throw new Error(e.detail || "Échec de l'optimisation"); }
-      setResult(await res.json());
+      const json = await res.json();
+      setResult(json);
+      fetchRecentRuns();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally { setLoading(false); }
@@ -422,6 +448,40 @@ export default function OptimizationPage() {
               <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">{t("siloCapacity")}</p>
               <div className="text-[2.5rem] font-black text-slate-900 tracking-tighter">{stockStats.total_stock.toFixed(1)} <span className="text-xl text-slate-400 font-bold">{t("tons")}</span></div>
               <p className="text-sm font-bold text-emerald-600 mt-2 bg-emerald-50 px-3 py-1.5 rounded-full inline-block text-center">{ingredients.length} {t("availableIngredients")}</p>
+            </div>
+          </div>
+
+          <div className="mb-10 bg-white/60 backdrop-blur-3xl p-6 rounded-[2rem] border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+            <div className="mb-4 flex items-center justify-between gap-4">
+              <h3 className="flex items-center gap-2 text-lg font-black text-slate-900">
+                <History className="h-5 w-5 text-emerald-600" /> Historique recent
+              </h3>
+              <button
+                type="button"
+                onClick={fetchRecentRuns}
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-600 transition-colors hover:bg-slate-50"
+              >
+                Actualiser
+              </button>
+            </div>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
+              {recentRuns.map((run) => (
+                <div key={run.id} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+                  <span className={`inline-flex rounded-full px-2 py-1 text-[10px] font-black uppercase ${run.status === "optimal" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
+                    {run.status}
+                  </span>
+                  <p className="mt-3 text-sm font-black text-slate-900">
+                    {run.total_factory_cost_tnd == null ? "-" : `${run.total_factory_cost_tnd.toLocaleString("fr-FR", { maximumFractionDigits: 0 })} TND`}
+                  </p>
+                  <p className="mt-1 text-xs font-semibold text-slate-400">{run.recipe_count} formules · {Math.round(run.duration_ms)} ms</p>
+                  <p className="mt-2 text-[10px] font-bold text-slate-400">{formatRunDate(run.created_at)}</p>
+                </div>
+              ))}
+              {recentRuns.length === 0 && (
+                <div className="rounded-2xl border border-dashed border-slate-200 bg-white/70 p-5 text-sm font-semibold text-slate-400 md:col-span-5">
+                  Aucun historique solveur pour le moment.
+                </div>
+              )}
             </div>
           </div>
 

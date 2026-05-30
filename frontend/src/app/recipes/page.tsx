@@ -4,6 +4,7 @@ import { Sparkles, Save, Scan, Edit3, Trash2, AlertTriangle, BookMarked, Layers,
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { getFilteredNutrients, SPECIES_OPTIONS, getNutrientUnit } from "@/utils/nutrientUtils";
 import PageLoader from "@/components/PageLoader";
+import { canManageRecipes, useTenantRole } from "@/lib/tenantRole";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -30,6 +31,8 @@ interface RecipeGrouped extends Recipe {
 }
 
 export default function RecipesPage() {
+  const tenantRole = useTenantRole();
+  const canManage = canManageRecipes(tenantRole);
   const [recipes, setRecipes] = useState<RecipeGrouped[]>([]);
   // activeVersionId maps a Master Recipe ID to the ID of the version currently selected in the dropdown
   // If activeVersionId[masterId] === masterId, the Master is selected.
@@ -112,6 +115,7 @@ export default function RecipesPage() {
   const saveTimeouts = useRef<Record<number, NodeJS.Timeout>>({});
 
   const saveToBackend = async (rec: Recipe) => {
+    if (!canManage) return;
     try {
       await fetch(`${API}/api/recipes/${rec.id}`, {
         method: "PUT",
@@ -129,11 +133,13 @@ export default function RecipesPage() {
   };
 
   const scheduleSave = (rec: Recipe) => {
+    if (!canManage) return;
     if (saveTimeouts.current[rec.id]) clearTimeout(saveTimeouts.current[rec.id]);
     saveTimeouts.current[rec.id] = setTimeout(() => saveToBackend(rec), 700);
   };
 
   const editRec = (masterId: number, targetId: number, key: keyof Recipe, v: string | number | null) => {
+    if (!canManage) return;
     setRecipes(prev => {
       const newRecs = prev.map(master => {
         if (master.id !== masterId) return master;
@@ -164,6 +170,7 @@ export default function RecipesPage() {
   };
 
   const editRecConstraint = (masterId: number, targetId: number, nutrKey: string, field: "min" | "max" | "exact", v: string) => {
+    if (!canManage) return;
     setRecipes(prev => {
       const newRecs = prev.map(master => {
         if (master.id !== masterId) return master;
@@ -204,6 +211,7 @@ export default function RecipesPage() {
   };
 
   const removeIngredientFromRecipe = (masterId: number, targetId: number, ingredientKey: string) => {
+    if (!canManage) return;
     // IMPORTANT: do NOT remove from global nutrientColumns — that would hide rows in OTHER recipes.
     // The ingredient/nutrient row is conditionally rendered based on Object.keys(activeItem.constraints),
     // so removing it from constraints is sufficient to hide the row in this recipe.
@@ -233,6 +241,7 @@ export default function RecipesPage() {
   };
 
   const addRec = async () => {
+    if (!canManage) return;
     try {
       const res = await fetch(`${API}/api/recipes`, {
         method: "POST",
@@ -253,6 +262,7 @@ export default function RecipesPage() {
   };
 
   const rmRec = async (masterId: number, targetId: number) => {
+    if (!canManage) return;
     try {
       const res = await fetch(`${API}/api/recipes/${targetId}`, { method: "DELETE" });
       if (!res.ok) {
@@ -281,6 +291,7 @@ export default function RecipesPage() {
   };
 
   const askAIForBounds = async (masterId: number, targetId: number, recipeName: string) => {
+    if (!canManage) return;
     setAiLoadingFor(targetId);
     try {
       // 1. Gather all elements currently active in the form (nutrients + manually added ingredient constraints)
@@ -364,6 +375,7 @@ export default function RecipesPage() {
   };
 
   const applyStandard = (masterId: number, targetId: number, standardId: string) => {
+    if (!canManage) return;
     try {
       const std = standards.find(s => s.id === standardId);
       if (!std) { alert("Standard introuvable !"); return; }
@@ -400,6 +412,7 @@ export default function RecipesPage() {
   };
 
   const scanFiche = async (masterId: number, targetId: number, species: string, file: File) => {
+    if (!canManage) return;
     setOcrLoadingFor(targetId);
     try {
       const formData = new FormData();
@@ -468,6 +481,7 @@ export default function RecipesPage() {
   };
 
   const createRevision = async (masterId: number, sourceId: number) => {
+    if (!canManage) return;
     const tagName = prompt("Nom de la version (ex: Hiver 2026, Sans Plume, V2...) ?");
     if (!tagName) return;
 
@@ -548,9 +562,14 @@ export default function RecipesPage() {
             <p className="text-slate-500 mt-2 text-lg font-medium tracking-wide">
               Définir les formules maîtresses, leurs révisions, et encadrer la nutrition.
             </p>
+            {!canManage && (
+              <p className="mt-3 inline-flex rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-black text-slate-500">
+                Lecture seule
+              </p>
+            )}
           </div>
           <div className="flex gap-4">
-            <button onClick={addRec} className="bg-indigo-600 text-white hover:bg-indigo-700 px-6 py-3 rounded-2xl text-sm font-black tracking-wide transition-all shadow-[0_8px_20px_rgba(79,70,229,0.3)] hover:-translate-y-0.5 hover:shadow-[0_8px_30px_rgba(79,70,229,0.4)] flex items-center gap-2">
+            <button onClick={addRec} disabled={!canManage} className="bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none disabled:cursor-not-allowed px-6 py-3 rounded-2xl text-sm font-black tracking-wide transition-all shadow-[0_8px_20px_rgba(79,70,229,0.3)] hover:-translate-y-0.5 hover:shadow-[0_8px_30px_rgba(79,70,229,0.4)] flex items-center gap-2">
               <Layers className="w-4 h-4" /> Nouvelle Formule
             </button>
           </div>
@@ -601,8 +620,8 @@ export default function RecipesPage() {
                   <div className="flex items-start justify-between mb-6">
                     <div className="flex-1 w-full">
                       <div className="flex items-center justify-between mb-3">
-                        <input type="text" value={masterRec.name} onChange={e => editRec(masterRec.id, masterRec.id, "name", e.target.value)}
-                          className="text-slate-900 font-black text-2xl bg-transparent border-b-2 border-transparent hover:border-slate-200 outline-none w-2/3 focus:border-indigo-500 rounded-none px-1 pb-1 transition-colors tracking-tight" />
+                        <input type="text" value={masterRec.name} onChange={e => editRec(masterRec.id, masterRec.id, "name", e.target.value)} disabled={!canManage}
+                          className="text-slate-900 font-black text-2xl bg-transparent border-b-2 border-transparent hover:border-slate-200 outline-none w-2/3 focus:border-indigo-500 rounded-none px-1 pb-1 transition-colors tracking-tight disabled:text-slate-500 disabled:cursor-not-allowed" />
 
                         <div className="flex items-center gap-2">
                           {/* Espèce Cible segmented control */}
@@ -613,6 +632,7 @@ export default function RecipesPage() {
                                 <button
                                   key={opt.value}
                                   onClick={() => editRec(masterRec.id, activeItem.id, "species", opt.value)}
+                                  disabled={!canManage}
                                   className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all ${isActive
                                     ? "bg-white text-gray-900 shadow-sm"
                                     : "text-gray-400 hover:text-gray-700"
@@ -637,6 +657,7 @@ export default function RecipesPage() {
                       <div className="flex items-center gap-2 flex-wrap">
 
                         <select
+                          disabled={!canManage}
                           onChange={(e) => {
                             const val = e.target.value;
                             if (val) {
@@ -644,13 +665,13 @@ export default function RecipesPage() {
                               setTimeout(() => { e.target.value = ""; }, 10);
                             }
                           }}
-                          className="text-emerald-700 hover:text-emerald-900 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold shadow-sm outline-none"
+                          className="text-emerald-700 hover:text-emerald-900 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold shadow-sm outline-none disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-200 disabled:cursor-not-allowed"
                         >
                           <option value="">Appliquer une Norme</option>
                           {standards.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                         </select>
 
-                        <button onClick={() => askAIForBounds(masterRec.id, activeItem.id, activeItem.name)} disabled={aiLoadingFor === activeItem.id}
+                        <button onClick={() => askAIForBounds(masterRec.id, activeItem.id, activeItem.name)} disabled={aiLoadingFor === activeItem.id || !canManage}
                           className="text-amber-700 hover:text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold flex items-center shadow-sm disabled:opacity-50">
                           {aiLoadingFor === activeItem.id ? "Analyse IA..." : <><Sparkles className="w-3.5 h-3.5 mr-1" /> Best Practices</>}
                         </button>
@@ -658,7 +679,7 @@ export default function RecipesPage() {
                         <div className="relative">
                           <button
                             onClick={() => document.getElementById(`file-upload-${activeItem.id}`)?.click()}
-                            disabled={ocrLoadingFor === activeItem.id}
+                            disabled={ocrLoadingFor === activeItem.id || !canManage}
                             className="text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold flex items-center shadow-sm disabled:opacity-50"
                           >
                             {ocrLoadingFor === activeItem.id ? "Scan en cours..." : <><Scan className="w-3.5 h-3.5 mr-1" /> Scanner Fiche</>}
@@ -668,6 +689,7 @@ export default function RecipesPage() {
                             type="file"
                             accept="image/*,.pdf"
                             className="hidden"
+                            disabled={!canManage}
                             onChange={(e) => {
                               const file = e.target.files?.[0];
                               if (file) scanFiche(masterRec.id, activeItem.id, activeItem.species || "General", file);
@@ -676,24 +698,24 @@ export default function RecipesPage() {
                           />
                         </div>
 
-                        <button onClick={() => createRevision(masterRec.id, activeItem.id)} title="Nouvelle Version"
+                        <button onClick={() => createRevision(masterRec.id, activeItem.id)} disabled={!canManage} title="Nouvelle Version"
                           className="text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold flex items-center gap-1 shadow-sm">
                           <Save className="w-3.5 h-3.5" /> Révision
                         </button>
                         {!isMasterActive && (
-                          <button onClick={() => { editRec(masterRec.id, activeItem.id, "version_tag", prompt("Nouveau nom de version ?", activeItem.version_tag) || activeItem.version_tag); }}
+                          <button onClick={() => { editRec(masterRec.id, activeItem.id, "version_tag", prompt("Nouveau nom de version ?", activeItem.version_tag) || activeItem.version_tag); }} disabled={!canManage}
                             className="text-gray-500 hover:text-gray-800 bg-gray-50 hover:bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold flex items-center shadow-sm">
                             <Edit3 className="w-3.5 h-3.5 mr-1" /> Renommer
                           </button>
                         )}
 
                         {confirmDeleteId === activeItem.id ? (
-                          <button onClick={() => rmRec(masterRec.id, activeItem.id)}
+                          <button onClick={() => rmRec(masterRec.id, activeItem.id)} disabled={!canManage}
                             className="ml-auto text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold flex items-center shadow-md animate-pulse">
                             <AlertTriangle className="w-3.5 h-3.5 mr-1" /> Confirmer suppression
                           </button>
                         ) : (
-                          <button onClick={() => setConfirmDeleteId(activeItem.id)}
+                          <button onClick={() => setConfirmDeleteId(activeItem.id)} disabled={!canManage}
                             className="ml-auto text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-100 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold flex items-center shadow-sm">
                             <Trash2 className="w-3.5 h-3.5 mr-1" /> Supprimer
                           </button>
@@ -707,18 +729,18 @@ export default function RecipesPage() {
                   <div className="grid grid-cols-3 gap-4 mb-8 bg-slate-50/80 p-5 rounded-2xl border border-slate-100">
                     <div>
                       <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-[0.15em] mb-1.5 block">Tonnage (t)</label>
-                      <input type="number" step="1" value={activeItem.demand_tons} onChange={e => editRecNum(masterRec.id, activeItem.id, "demand_tons", e.target.value)}
-                        className="w-full py-2.5 px-3 bg-white border border-slate-200 rounded-xl text-sm font-black text-slate-800 text-right focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all" />
+                      <input type="number" step="1" value={activeItem.demand_tons} onChange={e => editRecNum(masterRec.id, activeItem.id, "demand_tons", e.target.value)} disabled={!canManage}
+                        className="w-full py-2.5 px-3 bg-white border border-slate-200 rounded-xl text-sm font-black text-slate-800 text-right focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed" />
                     </div>
                     <div>
                       <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-[0.15em] mb-1.5 block">Rendement (%)</label>
-                      <input type="number" step="0.5" value={activeItem.process_yield_percent} onChange={e => editRecNum(masterRec.id, activeItem.id, "process_yield_percent", e.target.value)}
-                        className="w-full py-2.5 px-3 bg-white border border-slate-200 rounded-xl text-sm font-black text-slate-800 text-right focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all" />
+                      <input type="number" step="0.5" value={activeItem.process_yield_percent} onChange={e => editRecNum(masterRec.id, activeItem.id, "process_yield_percent", e.target.value)} disabled={!canManage}
+                        className="w-full py-2.5 px-3 bg-white border border-slate-200 rounded-xl text-sm font-black text-slate-800 text-right focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed" />
                     </div>
                     <div>
                       <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-[0.15em] mb-1.5 block">Sac (kg)</label>
-                      <input type="number" step="1" value={activeItem.bag_size_kg} onChange={e => editRecNum(masterRec.id, activeItem.id, "bag_size_kg", e.target.value)}
-                        className="w-full py-2.5 px-3 bg-white border border-slate-200 rounded-xl text-sm font-black text-slate-800 text-right focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all" />
+                      <input type="number" step="1" value={activeItem.bag_size_kg} onChange={e => editRecNum(masterRec.id, activeItem.id, "bag_size_kg", e.target.value)} disabled={!canManage}
+                        className="w-full py-2.5 px-3 bg-white border border-slate-200 rounded-xl text-sm font-black text-slate-800 text-right focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed" />
                     </div>
                   </div>
 
@@ -760,19 +782,20 @@ export default function RecipesPage() {
                                       {getNutrientUnit(nc) && <span className="ml-1.5 text-[10px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">{getNutrientUnit(nc)}</span>}
                                     </td>
                                     <td className="py-2.5 pr-2">
-                                      <input type="number" step="0.1" placeholder="—" value={activeItem.constraints?.[nc]?.min ?? ""} onChange={e => editRecConstraint(masterRec.id, activeItem.id, nc, "min", e.target.value)} className={`${cell} w-full text-right bg-transparent group-hover/row:bg-white border-slate-200 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-100`} />
+                                      <input type="number" step="0.1" placeholder="—" value={activeItem.constraints?.[nc]?.min ?? ""} onChange={e => editRecConstraint(masterRec.id, activeItem.id, nc, "min", e.target.value)} disabled={!canManage} className={`${cell} w-full text-right bg-transparent group-hover/row:bg-white border-slate-200 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-100 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed`} />
                                     </td>
                                     <td className="py-2.5 pr-2">
-                                      <input type="number" step="0.1" placeholder="—" value={activeItem.constraints?.[nc]?.max ?? ""} onChange={e => editRecConstraint(masterRec.id, activeItem.id, nc, "max", e.target.value)} className={`${cell} w-full text-right bg-transparent group-hover/row:bg-white border-slate-200 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-100`} />
+                                      <input type="number" step="0.1" placeholder="—" value={activeItem.constraints?.[nc]?.max ?? ""} onChange={e => editRecConstraint(masterRec.id, activeItem.id, nc, "max", e.target.value)} disabled={!canManage} className={`${cell} w-full text-right bg-transparent group-hover/row:bg-white border-slate-200 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-100 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed`} />
                                     </td>
                                     <td className="py-2.5">
-                                      <input type="number" step="0.1" placeholder="—" value={activeItem.constraints?.[nc]?.exact ?? ""} onChange={e => editRecConstraint(masterRec.id, activeItem.id, nc, "exact", e.target.value)} className={`${cell} w-full text-right bg-transparent group-hover/row:bg-white border-slate-200 ${activeItem.constraints?.[nc]?.exact !== undefined ? "font-bold text-amber-700 !bg-amber-50 border-amber-300" : ""} focus:border-indigo-400 focus:ring-1 focus:ring-indigo-100`} />
+                                      <input type="number" step="0.1" placeholder="—" value={activeItem.constraints?.[nc]?.exact ?? ""} onChange={e => editRecConstraint(masterRec.id, activeItem.id, nc, "exact", e.target.value)} disabled={!canManage} className={`${cell} w-full text-right bg-transparent group-hover/row:bg-white border-slate-200 ${activeItem.constraints?.[nc]?.exact !== undefined ? "font-bold text-amber-700 !bg-amber-50 border-amber-300" : ""} focus:border-indigo-400 focus:ring-1 focus:ring-indigo-100 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed`} />
                                     </td>
                                     <td className="py-2.5 pl-1">
                                       <button
                                         onClick={() => removeIngredientFromRecipe(masterRec.id, activeItem.id, nc)}
+                                        disabled={!canManage}
                                         title="Retirer cette cible"
-                                        className="opacity-0 group-hover/row:opacity-100 transition-all text-slate-300 hover:text-white hover:bg-red-500 w-6 h-6 rounded-lg flex items-center justify-center cursor-pointer"
+                                        className="opacity-0 group-hover/row:opacity-100 transition-all text-slate-300 hover:text-white hover:bg-red-500 w-6 h-6 rounded-lg flex items-center justify-center cursor-pointer disabled:pointer-events-none disabled:opacity-0"
                                       >
                                         <X className="w-3.5 h-3.5" />
                                       </button>
@@ -787,7 +810,9 @@ export default function RecipesPage() {
                               <select
                                 key={`nutrient-dropdown-${masterRec.id}-${activeItem.species}`}
                                 value=""
+                                disabled={!canManage}
                                 onChange={(e) => {
+                                  if (!canManage) return;
                                   const val = e.target.value;
                                   if (!val) return;
                                   // Add to global nutrientColumns so the row renders
@@ -815,7 +840,7 @@ export default function RecipesPage() {
                                     }
                                   }));
                                 }}
-                                className="w-full bg-white border border-slate-200 text-slate-600 hover:border-indigo-300 hover:bg-indigo-50/30 px-3 py-2.5 rounded-xl text-xs font-bold transition-all outline-none cursor-pointer"
+                                className="w-full bg-white border border-slate-200 text-slate-600 hover:border-indigo-300 hover:bg-indigo-50/30 px-3 py-2.5 rounded-xl text-xs font-bold transition-all outline-none cursor-pointer disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
                               >
                                 <option value="" disabled>+ Ajouter une cible nutritionnelle...</option>
                                 {Object.entries(
@@ -883,19 +908,20 @@ export default function RecipesPage() {
                                       <span className="ml-1.5 text-[10px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">%</span>
                                     </td>
                                     <td className="py-2.5 pr-2">
-                                      <input type="number" step="0.1" placeholder="—" value={activeItem.constraints?.[nc]?.min ?? ""} onChange={e => editRecConstraint(masterRec.id, activeItem.id, nc, "min", e.target.value)} className={`${cell} w-full text-right bg-transparent group-hover/row:bg-white border-slate-200 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-100`} />
+                                      <input type="number" step="0.1" placeholder="—" value={activeItem.constraints?.[nc]?.min ?? ""} onChange={e => editRecConstraint(masterRec.id, activeItem.id, nc, "min", e.target.value)} disabled={!canManage} className={`${cell} w-full text-right bg-transparent group-hover/row:bg-white border-slate-200 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-100 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed`} />
                                     </td>
                                     <td className="py-2.5 pr-2">
-                                      <input type="number" step="0.1" placeholder="—" value={activeItem.constraints?.[nc]?.max ?? ""} onChange={e => editRecConstraint(masterRec.id, activeItem.id, nc, "max", e.target.value)} className={`${cell} w-full text-right bg-transparent group-hover/row:bg-white border-slate-200 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-100`} />
+                                      <input type="number" step="0.1" placeholder="—" value={activeItem.constraints?.[nc]?.max ?? ""} onChange={e => editRecConstraint(masterRec.id, activeItem.id, nc, "max", e.target.value)} disabled={!canManage} className={`${cell} w-full text-right bg-transparent group-hover/row:bg-white border-slate-200 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-100 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed`} />
                                     </td>
                                     <td className="py-2.5">
-                                      <input type="number" step="0.1" placeholder="—" value={activeItem.constraints?.[nc]?.exact ?? ""} onChange={e => editRecConstraint(masterRec.id, activeItem.id, nc, "exact", e.target.value)} className={`${cell} w-full text-right bg-transparent group-hover/row:bg-white border-slate-200 ${activeItem.constraints?.[nc]?.exact !== undefined ? "font-bold text-emerald-800 !bg-emerald-50 border-emerald-400" : ""} focus:border-indigo-400 focus:ring-1 focus:ring-indigo-100`} />
+                                      <input type="number" step="0.1" placeholder="—" value={activeItem.constraints?.[nc]?.exact ?? ""} onChange={e => editRecConstraint(masterRec.id, activeItem.id, nc, "exact", e.target.value)} disabled={!canManage} className={`${cell} w-full text-right bg-transparent group-hover/row:bg-white border-slate-200 ${activeItem.constraints?.[nc]?.exact !== undefined ? "font-bold text-emerald-800 !bg-emerald-50 border-emerald-400" : ""} focus:border-indigo-400 focus:ring-1 focus:ring-indigo-100 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed`} />
                                     </td>
                                     <td className="py-2.5 pl-1">
                                       <button
                                         onClick={() => removeIngredientFromRecipe(masterRec.id, activeItem.id, nc)}
+                                        disabled={!canManage}
                                         title="Retirer cet ingrédient"
-                                        className="opacity-0 group-hover/row:opacity-100 transition-all text-slate-300 hover:text-white hover:bg-red-500 w-6 h-6 rounded-lg flex items-center justify-center cursor-pointer"
+                                        className="opacity-0 group-hover/row:opacity-100 transition-all text-slate-300 hover:text-white hover:bg-red-500 w-6 h-6 rounded-lg flex items-center justify-center cursor-pointer disabled:pointer-events-none disabled:opacity-0"
                                       >
                                         <X className="w-3.5 h-3.5" />
                                       </button>
@@ -909,7 +935,9 @@ export default function RecipesPage() {
                             <div className="mt-2">
                               <select
                                 value=""
+                                disabled={!canManage}
                                 onChange={(e) => {
+                                  if (!canManage) return;
                                   const val = e.target.value;
                                   if (!val) return;
                                   // Add to nutrientColumns so the row renders
@@ -937,7 +965,7 @@ export default function RecipesPage() {
                                     }
                                   }));
                                 }}
-                                className="w-full bg-white border border-slate-200 text-slate-600 hover:border-emerald-300 hover:bg-emerald-50/30 px-3 py-2.5 rounded-xl text-xs font-bold transition-all outline-none cursor-pointer"
+                                className="w-full bg-white border border-slate-200 text-slate-600 hover:border-emerald-300 hover:bg-emerald-50/30 px-3 py-2.5 rounded-xl text-xs font-bold transition-all outline-none cursor-pointer disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
                               >
                                 <option value="" disabled>+ Ajouter une matière première...</option>
                                 {globalIngredientNames
