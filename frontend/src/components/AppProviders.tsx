@@ -5,19 +5,10 @@ import { usePathname, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { I18nProvider } from "@/lib/i18n";
 import PlatformTranslator from "@/lib/platformTranslations";
+import PageLoader from "@/components/PageLoader";
+import { persistTenantRole } from "@/lib/tenantRole";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
-function OpeningLoader() {
-  return (
-    <div className="fixed inset-0 z-[100] grid min-h-dvh place-items-center bg-slate-50">
-      <div className="flex flex-col items-center justify-center gap-4">
-        <div className="h-10 w-10 rounded-full border-4 border-slate-200 border-r-emerald-600 animate-spin" />
-        <p className="text-sm font-bold text-slate-500">Chargement...</p>
-      </div>
-    </div>
-  );
-}
 
 function ApiAuthBridge({ children }: { children: React.ReactNode }) {
   const { getToken, isLoaded, isSignedIn } = useAuth();
@@ -67,6 +58,7 @@ function ApiAuthBridge({ children }: { children: React.ReactNode }) {
           window.localStorage.setItem("mizan-locale", savedLocale);
           window.dispatchEvent(new CustomEvent("mizan-locale-change"));
         }
+        persistTenantRole(tenant.role);
         if (!tenant.onboarding_completed) router.replace("/onboarding");
       } finally {
         if (!cancelled) setCheckedTenant(true);
@@ -80,7 +72,7 @@ function ApiAuthBridge({ children }: { children: React.ReactNode }) {
   }, [getToken, isLoaded, isSignedIn, pathname, router]);
 
   if (isLoaded && isSignedIn && !checkedTenant && pathname !== "/onboarding") {
-    return <OpeningLoader />;
+    return <PageLoader fullscreen />;
   }
 
   return <>{children}</>;

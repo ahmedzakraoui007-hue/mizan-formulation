@@ -5,7 +5,10 @@ import React, { useState, useEffect, useCallback } from "react";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, LineChart, Line } from "recharts";
 import ReactMarkdown from "react-markdown";
 import FicheModal from "@/components/FicheModal";
+import PageLoader from "@/components/PageLoader";
 import { buildSolverRecipes, countSelectedRecipes, getRecipeIds } from "@/lib/optimizationSelection";
+import { useI18n } from "@/lib/i18n";
+import { canRunOptimization, useTenantRole } from "@/lib/tenantRole";
 import { getNutrientUnit, getTopNutrients } from "@/utils/nutrientUtils";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -13,6 +16,33 @@ import html2canvas from "html2canvas";
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 const COLORS = ['#2563eb', '#16a34a', '#d97706', '#dc2626', '#7c3aed', '#0891b2', '#059669', '#ea580c'];
+
+interface ConstraintConfig {
+  min?: number;
+  max?: number;
+  exact?: number;
+}
+
+interface IngredientLite {
+  id: number;
+  name: string;
+  inventory_limit_tons?: number;
+  is_active?: boolean | null;
+}
+
+interface RecipeItem {
+  id: number;
+  name: string;
+  demand_tons: number;
+  constraints?: Record<string, ConstraintConfig>;
+  process_yield_percent?: number;
+  bag_size_kg?: number;
+  parent_id?: number | null;
+  version_tag?: string;
+  species?: string;
+  versions?: RecipeItem[];
+  [key: string]: unknown;
+}
 
 interface ResultIngredient {
   name: string;
@@ -38,9 +68,15 @@ interface MultiBlendResult {
   recipes: RecipeResult[];
 }
 
+const isActiveIngredient = (ingredient: IngredientLite) => ingredient.is_active === true || ingredient.is_active == null;
+
 export default function OptimizationPage() {
-  const [ingredients, setIngredients] = useState<any[]>([]);
-  const [recipes, setRecipes] = useState<any[]>([]);
+  const { t } = useI18n();
+  const tenantRole = useTenantRole();
+  const canOptimize = canRunOptimization(tenantRole);
+
+  const [ingredients, setIngredients] = useState<IngredientLite[]>([]);
+  const [recipes, setRecipes] = useState<RecipeItem[]>([]);
   const [unselectedRecipeIds, setUnselectedRecipeIds] = useState<number[]>([]);
 
   const [result, setResult] = useState<MultiBlendResult | null>(null);
@@ -66,6 +102,8 @@ export default function OptimizationPage() {
   const [paramLoading, setParamLoading] = useState(false);
   const [paramLabel, setParamLabel] = useState("");
   const [paramError, setParamError] = useState<string | null>(null);
+  const [paramTargetRecipeName, setParamTargetRecipeName] = useState("");
+  const [paramConstraintMode, setParamConstraintMode] = useState<"min" | "max" | "exact">("min");
 
   // ─── Dynamic Parametric Bounds ──────────────────────────────────────────
   useEffect(() => {
@@ -75,7 +113,7 @@ export default function OptimizationPage() {
     // Since parametric analysis in backend overrides ALL recipes with this value,
     // we take the first recipe that has this constraint as a reference point.
     let currentVal: number | null = null;
-    const flat = recipes.flatMap((r: any) => [r, ...(r.versions || [])]);
+    const flat = recipes.flatMap((r) => [r, ...(r.versions || [])]);
     for (const r of flat) {
       if (r.constraints?.[paramNutrient]) {
         const c = r.constraints[paramNutrient];
@@ -115,12 +153,12 @@ export default function OptimizationPage() {
         setUnselectedRecipeIds(getRecipeIds(recs));
 
         // Active = explicitly true (the migration now ensures all rows have a value)
-        const activeIngs = ings.filter((i: any) => i.is_active === true || i.is_active == null);
-        const tStock = activeIngs.reduce((s: number, i: any) => s + (i.inventory_limit_tons || 0), 0);
+        const activeIngs = (ings as IngredientLite[]).filter(isActiveIngredient);
+        const tStock = activeIngs.reduce((s, i) => s + (i.inventory_limit_tons || 0), 0);
         // Count all recipes: masters + their versions
-        const tDemand = recs.reduce((s: number, r: any) => {
+        const tDemand = (recs as RecipeItem[]).reduce((s, r) => {
           const masterDemand = r.demand_tons || 0;
-          const versionsDemand = (r.versions || []).reduce((vs: number, v: any) => vs + (v.demand_tons || 0), 0);
+          const versionsDemand = (r.versions || []).reduce((vs, v) => vs + (v.demand_tons || 0), 0);
           return s + masterDemand + versionsDemand;
         }, 0);
         setStockStats({ total_stock: tStock, total_demand: tDemand });
@@ -135,6 +173,9 @@ export default function OptimizationPage() {
   const selectedRecipeCount = countSelectedRecipes(recipes, unselectedRecipeIds);
   const totalRecipeCount = allRecipeIds.length;
   const hasSelectedRecipes = selectedRecipeCount > 0;
+  const selectedSolverRecipeOptions = buildSolverRecipes(recipes, unselectedRecipeIds)
+    .map((recipe) => String(recipe.name || ""))
+    .filter(Boolean);
 
   const setRecipeSelected = (id: number, selected: boolean) => {
     setUnselectedRecipeIds(prev => {
@@ -151,7 +192,7 @@ export default function OptimizationPage() {
     for (const master of recipes) {
       if (master.name === name) return master;
       if (master.versions) {
-        const v = master.versions.find((v: any) => v.version_tag === name || `${master.name} (${v.version_tag})` === name || v.name === name);
+        const v = master.versions.find((version) => version.version_tag === name || `${master.name} (${version.version_tag})` === name || version.name === name);
         if (v) return v;
       }
     }
@@ -159,12 +200,16 @@ export default function OptimizationPage() {
   };
 
   const runFactory = async () => {
+    if (!canOptimize) {
+      setError(t("roleReadOnlyOptimization"));
+      return;
+    }
     setLoading(true); setError(null); setResult(null); setDiagnoseResult(null);
     try {
       // Send ALL active ingredients to the solver.
       const ingredientIds = ingredients
-        .filter((i: any) => i.is_active === true || i.is_active == null)
-        .map((i: any) => i.id);
+        .filter(isActiveIngredient)
+        .map((i) => i.id);
 
       // Flatten the recipe list: include the master recipe AND every version.
       // The backend solver treats each entry as a separate independent formula.
@@ -174,7 +219,7 @@ export default function OptimizationPage() {
       const flatRecipes = buildSolverRecipes(recipes, unselectedRecipeIds);
 
       if (flatRecipes.length === 0) {
-        throw new Error("Sélectionnez au moins une formule à optimiser.");
+        throw new Error(t("selectAtLeastOneRecipe"));
       }
 
       const res = await fetch(`${API}/api/optimize-multi`, {
@@ -194,15 +239,15 @@ export default function OptimizationPage() {
 
   const buildOptimizationPayload = () => {
     const ingredientIds = ingredients
-      .filter((i: any) => i.is_active === true || i.is_active == null)
-      .map((i: any) => i.id);
+      .filter(isActiveIngredient)
+      .map((i) => i.id);
 
     const flatRecipes = buildSolverRecipes(recipes, unselectedRecipeIds);
 
     return { ingredientIds, flatRecipes };
   };
 
-  const getChartData = (rec: RecipeResult, originalRec: any) => {
+  const getChartData = (rec: RecipeResult, originalRec?: RecipeItem) => {
     const species = originalRec?.species || "General";
     return getTopNutrients(rec.nutrients, originalRec?.constraints, species)
       .map(([key, val]) => {
@@ -262,7 +307,7 @@ export default function OptimizationPage() {
     return getTopNutrients(nutrients, constraints, species);
   };
 
-  const exportCSV = (rec: RecipeResult, originalRec: any) => {
+  const exportCSV = (rec: RecipeResult, originalRec?: RecipeItem) => {
     const constraintKeys = originalRec?.constraints ?? {};
     const species = originalRec?.species || "General";
     const filteredNutrients = getKeysToPrint(rec.nutrients, constraintKeys, species);
@@ -346,12 +391,7 @@ export default function OptimizationPage() {
   };
 
   if (fetching) {
-    return (
-      <div className="flex items-center justify-center py-20 min-h-screen">
-        <div className="w-8 h-8 rounded-full border-4 border-gray-200 border-r-blue-600 animate-spin" />
-        <span className="ml-3 text-gray-500 text-sm font-medium">Chargement des données ERP…</span>
-      </div>
-    );
+    return <PageLoader label={t("loadingErpData")} />;
   }
 
   return (
@@ -363,25 +403,25 @@ export default function OptimizationPage() {
         <div className="relative p-10 max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700 pb-24 print:hidden z-10">
           <div className="mb-12">
             <h1 className="text-[2.5rem] font-black text-slate-900 tracking-tight flex items-center gap-3">
-              <Zap className="w-9 h-9 text-emerald-500" /> Optimisation de l'Usine
+              <Zap className="w-9 h-9 text-emerald-500" /> {t("factoryOptimization")}
             </h1>
             <p className="text-slate-500 mt-2 text-lg font-medium tracking-wide">
-              Lancer le solveur multi-blend pour distribuer les stocks et satisfaire la demande au moindre coût.
+              {t("optimizationSubtitle")}
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
             <div className="bg-white/60 backdrop-blur-3xl p-8 rounded-[2rem] border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all">
-              <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Demande Totale du Carnet</p>
-              <div className="text-[2.5rem] font-black text-slate-900 tracking-tighter">{stockStats.total_demand.toFixed(1)} <span className="text-xl text-slate-400 font-bold">tonnes</span></div>
+              <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">{t("totalDemandBook")}</p>
+              <div className="text-[2.5rem] font-black text-slate-900 tracking-tighter">{stockStats.total_demand.toFixed(1)} <span className="text-xl text-slate-400 font-bold">{t("tons")}</span></div>
               <p className="text-sm font-bold text-blue-600 mt-2 bg-blue-50 px-3 py-1.5 rounded-full inline-block">
-                {recipes.reduce((c: number, r: any) => c + 1 + (r.versions?.length || 0), 0)} formules à produire
+                {recipes.reduce((c, r) => c + 1 + (r.versions?.length || 0), 0)} {t("recipesToProduce")}
               </p>
             </div>
             <div className="bg-white/60 backdrop-blur-3xl p-8 rounded-[2rem] border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all">
-              <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Capacité des Silos</p>
-              <div className="text-[2.5rem] font-black text-slate-900 tracking-tighter">{stockStats.total_stock.toFixed(1)} <span className="text-xl text-slate-400 font-bold">tonnes</span></div>
-              <p className="text-sm font-bold text-emerald-600 mt-2 bg-emerald-50 px-3 py-1.5 rounded-full inline-block text-center">{ingredients.length} matières premières disponibles</p>
+              <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">{t("siloCapacity")}</p>
+              <div className="text-[2.5rem] font-black text-slate-900 tracking-tighter">{stockStats.total_stock.toFixed(1)} <span className="text-xl text-slate-400 font-bold">{t("tons")}</span></div>
+              <p className="text-sm font-bold text-emerald-600 mt-2 bg-emerald-50 px-3 py-1.5 rounded-full inline-block text-center">{ingredients.length} {t("availableIngredients")}</p>
             </div>
           </div>
 
@@ -389,10 +429,10 @@ export default function OptimizationPage() {
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
               <div>
                 <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
-                  <Target className="w-5 h-5 text-indigo-600" /> Sélectionner les Formules à Optimiser
+                  <Target className="w-5 h-5 text-indigo-600" /> {t("selectRecipesToOptimize")}
                 </h3>
                 <p className="text-sm text-slate-500 font-semibold mt-1">
-                  {selectedRecipeCount} / {totalRecipeCount} formules sélectionnées
+                  {selectedRecipeCount} / {totalRecipeCount} {t("selectedRecipes")}
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -401,24 +441,24 @@ export default function OptimizationPage() {
                   onClick={selectAllRecipes}
                   className="px-4 py-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 text-sm font-black transition-colors"
                 >
-                  Tout sélectionner
+                  {t("selectAll")}
                 </button>
                 <button
                   type="button"
                   onClick={deselectAllRecipes}
                   className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200 text-sm font-black transition-colors"
                 >
-                  Tout désélectionner
+                  {t("deselectAll")}
                 </button>
               </div>
             </div>
             {!hasSelectedRecipes && (
               <div className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800">
-                Par défaut, aucune formule n'est sélectionnée. Choisissez les formules à inclure avant de lancer le solveur.
+                {t("noRecipeSelectedHint")}
               </div>
             )}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5">
-              {recipes.map((master: any) => (
+              {recipes.map((master) => (
                 <div key={master.id} className="flex flex-col gap-2">
                   <label className={`flex items-center gap-3 cursor-pointer p-4 bg-white hover:bg-slate-50/80 rounded-2xl border transition-all shadow-sm hover:shadow-md ${!unselectedRecipeIds.includes(master.id) ? "border-emerald-300 ring-2 ring-emerald-100" : "border-slate-100"}`}>
                     <input type="checkbox" className="w-5 h-5 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 flex-shrink-0"
@@ -427,7 +467,7 @@ export default function OptimizationPage() {
                     />
                     <span className="text-sm font-black text-slate-800 line-clamp-1">{master.name}</span>
                   </label>
-                  {master.versions?.map((v: any) => (
+                  {master.versions?.map((v) => (
                     <label key={v.id} className={`flex items-center gap-3 cursor-pointer p-2.5 pl-8 rounded-xl border transition-colors ${!unselectedRecipeIds.includes(v.id) ? "bg-emerald-50 border-emerald-100" : "bg-slate-50/50 hover:bg-slate-100 border-transparent"}`}>
                       <input type="checkbox" className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 flex-shrink-0"
                         checked={!unselectedRecipeIds.includes(v.id)}
@@ -441,10 +481,10 @@ export default function OptimizationPage() {
             </div>
           </div>
 
-          <button onClick={runFactory} disabled={loading || !hasSelectedRecipes}
-            className={`relative w-full py-6 rounded-[2rem] font-black text-xl tracking-wide transition-all overflow-hidden ${loading || !hasSelectedRecipes ? "bg-slate-200 cursor-not-allowed text-slate-400 shadow-none" : "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white shadow-[0_8px_30px_rgba(16,185,129,0.3)] hover:shadow-[0_8px_40px_rgba(16,185,129,0.5)] hover:-translate-y-1 cursor-pointer"
+          <button onClick={runFactory} disabled={loading || !hasSelectedRecipes || !canOptimize}
+            className={`relative w-full py-6 rounded-[2rem] font-black text-xl tracking-wide transition-all overflow-hidden ${loading || !hasSelectedRecipes || !canOptimize ? "bg-slate-200 cursor-not-allowed text-slate-400 shadow-none" : "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white shadow-[0_8px_30px_rgba(16,185,129,0.3)] hover:shadow-[0_8px_40px_rgba(16,185,129,0.5)] hover:-translate-y-1 cursor-pointer"
               }`}>
-            {loading ? "Optimisation en cours…" : <span className="flex items-center justify-center gap-3"><Zap className="w-7 h-7" /> {hasSelectedRecipes ? "Lancer l'Optimisation de l'Usine" : "Sélectionnez au moins une formule"}</span>}
+            {loading ? t("optimizationRunning") : <span className="flex items-center justify-center gap-3"><Zap className="w-7 h-7" /> {!canOptimize ? t("readOnlyMode") : hasSelectedRecipes ? t("runFactoryOptimization") : t("selectAtLeastOneRecipe")}</span>}
           </button>
 
           {error && (
@@ -550,7 +590,7 @@ export default function OptimizationPage() {
                                 <Pie data={rec.ingredients} cx="50%" cy="50%" innerRadius={45} outerRadius={75} paddingAngle={2} dataKey="percentage" nameKey="name">
                                   {rec.ingredients.map((e, i) => <Cell key={`cell-${i}`} fill={COLORS[i % COLORS.length]} />)}
                                 </Pie>
-                                <RechartsTooltip formatter={(val: any) => `${Number(val).toFixed(1)}%`} />
+                                <RechartsTooltip formatter={(val: unknown) => `${Number(val).toFixed(1)}%`} />
                                 <Legend verticalAlign="bottom" wrapperStyle={{ fontSize: '10px' }} />
                               </PieChart>
                             </ResponsiveContainer>
@@ -587,9 +627,11 @@ export default function OptimizationPage() {
                             const keys = originalRec2?.constraints ? Object.keys(originalRec2.constraints) : [];
                             setParamNutrient(keys[0] || "");
                             const existing = originalRec2?.constraints?.[keys[0]];
-                            const baseMin = existing?.min ?? 0;
-                            setParamStart(String(Math.max(0, baseMin - (baseMin * 0.15)).toFixed(1)));
-                            setParamEnd(String((baseMin + (baseMin * 0.15)).toFixed(1)));
+                            const baseValue = existing?.exact ?? existing?.min ?? existing?.max ?? 0;
+                            setParamTargetRecipeName(rec.name);
+                            setParamConstraintMode(existing?.exact !== undefined ? "exact" : existing?.max !== undefined && existing?.min === undefined ? "max" : "min");
+                            setParamStart(String(Math.max(0, baseValue - (baseValue * 0.15)).toFixed(1)));
+                            setParamEnd(String((baseValue + (baseValue * 0.15)).toFixed(1)));
                             setParamSteps("10");
                             setParamData([]);
                             setParamError(null);
@@ -725,24 +767,32 @@ export default function OptimizationPage() {
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h2 className="text-2xl font-black text-gray-900 flex items-center gap-2">
-                    <LucideLineChart className="w-6 h-6 text-indigo-600" /> Analyse Paramétrique
+                    <LucideLineChart className="w-6 h-6 text-indigo-600" /> {t("parametricAnalysis")}
                   </h2>
-                  <p className="text-gray-500 text-sm mt-1">Faites varier un nutriment pour visualiser l'impact sur le coût total de l'usine.</p>
+                  <p className="text-gray-500 text-sm mt-1">{t("parametricSubtitle")}</p>
                 </div>
                 <button onClick={() => setParamModalOpen(false)} className="text-gray-400 hover:text-gray-600 cursor-pointer"><X className="w-6 h-6" /></button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div className="md:col-span-1">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 block">Nutriment</label>
+              <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6">
+                <div className="md:col-span-2">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 block">{t("targetRecipe")}</label>
+                  <select value={paramTargetRecipeName} onChange={e => setParamTargetRecipeName(e.target.value)}
+                    className="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium">
+                    <option value="">{t("allSelectedRecipes")}</option>
+                    {selectedSolverRecipeOptions.map(name => <option key={name} value={name}>{name}</option>)}
+                  </select>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 block">{t("nutrient")}</label>
                   <select value={paramNutrient} onChange={e => setParamNutrient(e.target.value)}
                     className="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium">
-                    <option value="" disabled>Choisir un nutriment...</option>
+                    <option value="" disabled>{t("chooseNutrient")}</option>
                     {(() => {
                       const allKeys = new Set<string>();
-                      recipes.forEach((r: any) => {
+                      recipes.forEach((r) => {
                         if (r.constraints) Object.keys(r.constraints).forEach(k => allKeys.add(k));
-                        (r.versions || []).forEach((v: any) => {
+                        (r.versions || []).forEach((v) => {
                           if (v.constraints) Object.keys(v.constraints).forEach(k => allKeys.add(k));
                         });
                       });
@@ -750,18 +800,27 @@ export default function OptimizationPage() {
                     })()}
                   </select>
                 </div>
+                <div className="md:col-span-2">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 block">{t("constraintMode")}</label>
+                  <select value={paramConstraintMode} onChange={e => setParamConstraintMode(e.target.value as "min" | "max" | "exact")}
+                    className="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium">
+                    <option value="min">{t("minConstraint")}</option>
+                    <option value="max">{t("maxConstraint")}</option>
+                    <option value="exact">{t("exactConstraint")}</option>
+                  </select>
+                </div>
                 <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 block">Min</label>
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 block">{t("rangeStart")}</label>
                   <input type="number" value={paramStart} onChange={e => setParamStart(e.target.value)}
                     className="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium" />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 block">Max</label>
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 block">{t("rangeEnd")}</label>
                   <input type="number" value={paramEnd} onChange={e => setParamEnd(e.target.value)}
                     className="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium" />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 block">Pas</label>
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 block">{t("steps")}</label>
                   <div className="flex items-center gap-1">
                     <input type="number" value={paramSteps} onChange={e => setParamSteps(e.target.value)}
                       className="flex-1 py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium" />
@@ -784,6 +843,8 @@ export default function OptimizationPage() {
                       steps: parseInt(paramSteps) || 10,
                       ingredient_ids: ingredientIds,
                       recipes: flatRecipes,
+                      target_recipe_name: paramTargetRecipeName || null,
+                      constraint_mode: paramConstraintMode,
                     }),
                   });
                   if (!res.ok) {
@@ -801,7 +862,7 @@ export default function OptimizationPage() {
               }} disabled={paramLoading || !paramNutrient || !paramStart || !paramEnd}
                 className={`w-full py-3.5 rounded-xl font-black text-sm tracking-wide transition-all shadow-md mb-6 ${paramLoading ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/20 cursor-pointer"
                   }`}>
-                {paramLoading ? "Calcul en cours… (GLOP ×" + paramSteps + ")" : <><Zap className="w-4 h-4 inline mr-1" />Générer la Courbe de Coût</>}
+                {paramLoading ? `${t("calculatingParametric")} (GLOP x${paramSteps})` : <><Zap className="w-4 h-4 inline mr-1" />{t("generateCostCurve")}</>}
               </button>
 
               {paramError && (
@@ -812,7 +873,7 @@ export default function OptimizationPage() {
 
               {paramData.length > 0 && (
                 <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6">
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 text-center">Coût Total Usine (TND) en fonction de {paramLabel}</p>
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 text-center">{t("factoryCostBy")} {paramLabel}</p>
                   <div className="w-full h-72">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={paramData} margin={{ top: 10, right: 30, left: 20, bottom: 10 }}>
@@ -823,8 +884,8 @@ export default function OptimizationPage() {
                           label={{ value: 'Coût (TND)', angle: -90, position: 'insideLeft', offset: -5, style: { fontSize: 11, fill: '#9ca3af', fontWeight: 700 } }} />
                         <RechartsTooltip
                           contentStyle={{ borderRadius: '12px', fontSize: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', background: 'white' }}
-                          formatter={(val: any) => val === null ? ['Infaisable', 'Coût'] : [`${Number(val).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} TND`, 'Coût']}
-                          labelFormatter={(label: any) => `${paramLabel}: ${label}`}
+                          formatter={(val: unknown) => val === null ? ['Infaisable', 'Coût'] : [`${Number(val).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} TND`, 'Coût']}
+                          labelFormatter={(label: unknown) => `${paramLabel}: ${label}`}
                         />
                         <Line type="monotone" dataKey="cost" stroke="#4f46e5" strokeWidth={3} connectNulls={false} dot={{ r: 5, fill: '#4f46e5', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 7 }} />
                       </LineChart>
@@ -832,7 +893,7 @@ export default function OptimizationPage() {
                   </div>
                   {paramData.some(d => d.cost === null) && (
                     <p className="flex justify-center items-center gap-1.5 text-center text-orange-600 text-xs font-bold mt-3">
-                      <AlertTriangle className="w-4 h-4" /> Certains points sont infaisables.
+                      <AlertTriangle className="w-4 h-4" /> {t("infeasiblePoints")}
                     </p>
                   )}
                 </div>

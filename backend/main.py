@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Depends, Query, File, UploadFile, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Literal
 from sqlalchemy.orm import Session
 from datetime import UTC, datetime, timedelta
 
@@ -907,6 +907,8 @@ class ParametricRequest(BaseModel):
     steps: int = Field(default=10, ge=2, le=50)
     ingredient_ids: List[int] = Field(default_factory=list)
     recipes: List[RecipeDemand] = Field(default_factory=list)
+    target_recipe_name: Optional[str] = None
+    constraint_mode: Literal["min", "max", "exact"] = "min"
 
 @app.post("/api/parametric-analysis")
 def run_parametric_analysis(
@@ -945,6 +947,8 @@ def run_parametric_analysis(
 
     if not db_ingredients or not source_recipes:
         raise HTTPException(status_code=400, detail="No ingredients or recipes in the database.")
+    if request.target_recipe_name and not any(recipe.name == request.target_recipe_name for recipe in source_recipes):
+        raise HTTPException(status_code=400, detail="Target recipe is not included in the optimization payload.")
 
     # Build ingredient list as simple objects the solver accepts
     ing_list = []
@@ -965,14 +969,24 @@ def run_parametric_analysis(
         current_val = request.start_value + (step_idx * (request.end_value - request.start_value) / (steps - 1))
         current_val = round(current_val, 4)
 
-        # Deep-copy recipes and override the target nutrient constraint
+        # Deep-copy recipes and override the target nutrient constraint.
+        # If target_recipe_name is provided, only that formula is varied;
+        # otherwise the curve keeps the legacy behavior and varies all formulas.
         modified_recipes = []
         for recipe in source_recipes:
             constraints = copy.deepcopy(recipe.model_dump().get("constraints", {}))
-            constraint = constraints.get(request.nutrient_key, {})
-            constraint.pop("exact", None)
-            constraint["min"] = current_val
-            constraints[request.nutrient_key] = constraint
+            should_vary = not request.target_recipe_name or recipe.name == request.target_recipe_name
+
+            if should_vary:
+                constraint = constraints.get(request.nutrient_key, {})
+                if request.constraint_mode == "exact":
+                    constraint.pop("min", None)
+                    constraint.pop("max", None)
+                    constraint["exact"] = current_val
+                else:
+                    constraint.pop("exact", None)
+                    constraint[request.constraint_mode] = current_val
+                constraints[request.nutrient_key] = constraint
 
             modified_recipes.append(RecipeDemand(
                 name=recipe.name,
@@ -995,7 +1009,12 @@ def run_parametric_analysis(
         except Exception:
             results.append({"nutrient_value": current_val, "cost": None})
 
-    return {"nutrient_key": request.nutrient_key, "data": results}
+    return {
+        "nutrient_key": request.nutrient_key,
+        "target_recipe_name": request.target_recipe_name,
+        "constraint_mode": request.constraint_mode,
+        "data": results,
+    }
 
 
 # ═══════════════════  DASHBOARD STATS  ════════════════════════════════

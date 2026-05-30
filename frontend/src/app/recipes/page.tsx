@@ -3,6 +3,7 @@
 import { Sparkles, Save, Scan, Edit3, Trash2, AlertTriangle, BookMarked, Layers, X, FlaskConical, Wheat, ChevronRight } from "lucide-react";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { getFilteredNutrients, SPECIES_OPTIONS, getNutrientUnit } from "@/utils/nutrientUtils";
+import PageLoader from "@/components/PageLoader";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -530,12 +531,7 @@ export default function RecipesPage() {
   };
 
   if (fetching) {
-    return (
-      <div className="flex items-center justify-center py-20 min-h-screen">
-        <div className="w-8 h-8 rounded-full border-4 border-gray-200 border-r-blue-600 animate-spin" />
-        <span className="ml-3 text-gray-500 text-sm font-medium">Chargement des données ERP…</span>
-      </div>
-    );
+    return <PageLoader label="Chargement des donnees ERP..." />;
   }
 
   return (

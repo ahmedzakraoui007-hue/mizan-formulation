@@ -80,3 +80,25 @@ def test_monitoring_counts_infeasible_optimization(client):
     assert summary["total_optimization_runs"] == 1
     assert summary["infeasible_runs"] == 1
     assert summary["infeasibility_rate"] == 100
+
+
+def test_parametric_analysis_targets_one_recipe_with_mode(client):
+    ing = client.post("/api/ingredients", json=_ingredient("Corn", protein=14), headers={"X-Test-Tenant": "tenant-a"}).json()
+    payload = {
+        "ingredient_ids": [ing["id"]],
+        "recipes": [_recipe("Starter"), _recipe("Finisher")],
+        "nutrient_key": "Protein %",
+        "target_recipe_name": "Starter",
+        "constraint_mode": "exact",
+        "start_value": 14,
+        "end_value": 14,
+        "steps": 2,
+    }
+
+    res = client.post("/api/parametric-analysis", json=payload, headers={"X-Test-Tenant": "tenant-a"})
+    assert res.status_code == 200
+    body = res.json()
+    assert body["target_recipe_name"] == "Starter"
+    assert body["constraint_mode"] == "exact"
+    assert len(body["data"]) == 2
+    assert all(point["cost"] is not None for point in body["data"])

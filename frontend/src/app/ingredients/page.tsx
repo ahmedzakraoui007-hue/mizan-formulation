@@ -5,6 +5,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useI18n, type Locale } from "@/lib/i18n";
 import { DEFAULT_INGREDIENT_FILTER_STATUS, ingredientMatchesStatus } from "@/lib/ingredientFilters";
 import { getNutrientUnit } from "@/utils/nutrientUtils";
+import PageLoader from "@/components/PageLoader";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -316,12 +317,7 @@ export default function IngredientsPage() {
   // ─────────────────────────────────────────────────────────────────────────
 
   if (fetching && ingredients.length === 0) {
-    return (
-      <div className="flex items-center justify-center min-h-screen text-gray-900">
-        <div className="w-8 h-8 rounded-full border-4 border-gray-200 border-r-blue-600 animate-spin" />
-        <span className="ml-3 text-gray-500 text-sm font-medium">Chargement des données ERP…</span>
-      </div>
-    );
+    return <PageLoader label="Chargement des donnees ERP..." />;
   }
 
   return (
