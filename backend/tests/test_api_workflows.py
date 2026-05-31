@@ -90,6 +90,10 @@ def test_optimize_multi_persists_history_and_audit(client):
     assert runs[0]["status"] == "optimal"
     assert runs[0]["recipe_count"] == 1
 
+    detail = client.get(f"/api/optimization-runs/{runs[0]['id']}", headers={"X-Test-Tenant": "tenant-a"}).json()
+    assert detail["result_payload"]["status"] == "Optimal"
+    assert detail["request_payload"]["ingredient_ids"] == [ing["id"]]
+
     audit = client.get("/api/audit-logs", headers={"X-Test-Tenant": "tenant-a"}).json()
     assert any(row["action"] == "optimization.run" for row in audit)
 
@@ -116,6 +120,7 @@ def test_ai_business_review_is_grounded_in_active_solver_context(client):
     assert 0 <= body["global_score"] <= 100
     assert body["guardrails"]
     assert set(body["scores"].keys()) == {"feasibility", "nutrition", "purchasing", "process", "data"}
+    assert len(body["recommendations"]) >= 2
     assert all("validation" in rec for rec in body["recommendations"])
 
 

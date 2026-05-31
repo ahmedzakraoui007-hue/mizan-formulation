@@ -413,6 +413,168 @@ def _build_constraint_recommendations(
     return recommendations
 
 
+def _first_relaxable_constraint(
+    recipes: list[Any],
+    result: dict[str, Any],
+    ingredient_names: set[str],
+) -> tuple[int, str, str, float] | None:
+    for index, recipe in enumerate(recipes):
+        result_recipe = _result_recipe_for(recipe, result)
+        if result_recipe:
+            tight = _constraint_tightness(recipe, result_recipe, ingredient_names)
+            for item in tight:
+                if item["mode"] in {"min", "max", "exact"}:
+                    return index, str(item["key"]), str(item["mode"]), float(item["target"])
+
+        for key, limit in _constraints(recipe).items():
+            if key in ingredient_names:
+                continue
+            exact = _bound(limit, "exact")
+            minimum = _bound(limit, "min")
+            maximum = _bound(limit, "max")
+            if exact is not None and exact > 0:
+                return index, key, "exact", exact
+            if minimum is not None and minimum > 0:
+                return index, key, "min", minimum
+            if maximum is not None and maximum > 0:
+                return index, key, "max", maximum
+    return None
+
+
+def _apply_relaxed_constraint(limit: Any, mode: str, value: float) -> tuple[str, float]:
+    if mode == "exact":
+        _set_bound(limit, "exact", None)
+        _set_bound(limit, "min", round(value * 0.985, 4))
+        _set_bound(limit, "max", round(value * 1.015, 4))
+        return "transformer la cible exacte en fourchette", value
+    if mode == "min":
+        new_value = round(max(0.0, value * 0.98), 4)
+        _set_bound(limit, "min", new_value)
+        return "baisser le minimum", new_value
+    new_value = round(value * 1.02, 4)
+    _set_bound(limit, "max", new_value)
+    return "augmenter le maximum", new_value
+
+
+def _build_precise_next_actions(
+    ingredients: list[Any],
+    recipes: list[Any],
+    result: dict[str, Any],
+    usage_by_name: dict[str, float],
+    cost_shares: dict[str, float],
+    ingredient_names: set[str],
+    missing_nutrient_rows: list[str],
+    process_risks: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    recommendations: list[dict[str, Any]] = []
+    base_total = float(result.get("total_factory_cost_tnd") or 0.0)
+
+    if cost_shares:
+        top_cost_name, top_share = max(cost_shares.items(), key=lambda item: item[1])
+        if top_share > 0 and usage_by_name.get(top_cost_name, 0.0) > 0:
+            candidate_ingredients = copy.deepcopy(ingredients)
+            candidate = _find_ingredient(candidate_ingredients, top_cost_name)
+            source = _find_ingredient(ingredients, top_cost_name)
+            if candidate and source:
+                transport = float(_get(candidate, "transport_cost", 0.0) or 0.0)
+                current_price = float(_get(candidate, "cost", 0.0) or 0.0) + transport
+                target_price = round(current_price * 0.97, 4)
+                _set(candidate, "cost", max(0.001, target_price - transport))
+                solved = _try_solve(candidate_ingredients, copy.deepcopy(recipes))
+                if solved:
+                    savings = max(0.0, base_total - float(solved.get("total_factory_cost_tnd") or base_total))
+                    recommendations.append({
+                        "type": "purchasing",
+                        "priority": "high" if top_share >= 0.35 else "medium",
+                        "title": f"Action achat: {top_cost_name}",
+                        "action": f"Demander une baisse de 3% sur {top_cost_name}: prix rendu cible {target_price:.3f} TND/kg.",
+                        "impact": f"Cette matiere represente {top_share * 100:.1f}% du cout du plan. Simulation GLOP: gain estime {savings:.2f} TND.",
+                        "ingredient_name": top_cost_name,
+                        "estimated_savings_tnd": _round(savings),
+                        "validation": _validation("validated", "Prix -3% rejoue dans GLOP avec les memes stocks et formules."),
+                    })
+
+    if usage_by_name:
+        top_used_name, used = max(usage_by_name.items(), key=lambda item: item[1])
+        source = _find_ingredient(ingredients, top_used_name)
+        if source and used > 0:
+            stock = float(_get(source, "inventory_limit_tons", 0.0) or 0.0)
+            free_stock = max(0.0, stock - used)
+            reserve = round(max(0.5, used * 0.03), 2)
+            buy_qty = round(max(0.0, reserve - free_stock), 2)
+            recommendations.append({
+                "type": "supply",
+                "priority": "high" if buy_qty > 0 else "medium",
+                "title": f"Action stock: {top_used_name}",
+                "action": (
+                    f"Bloquer une reserve de securite de {reserve:.2f} t sur {top_used_name}. "
+                    f"{'Acheter ' + format(buy_qty, '.2f') + ' t avant production.' if buy_qty > 0 else 'Stock libre suffisant, a reserver dans le silo.'}"
+                ),
+                "impact": f"Le plan consomme {used:.2f} t sur {stock:.2f} t disponibles; stock libre {free_stock:.2f} t.",
+                "ingredient_name": top_used_name,
+                "validation": _validation("data_check", "Controle stock calcule sur les quantites retenues par GLOP."),
+            })
+
+    relaxable = _first_relaxable_constraint(recipes, result, ingredient_names)
+    if relaxable:
+        recipe_index, key, mode, current = relaxable
+        candidate_recipes = copy.deepcopy(recipes)
+        limit = _constraints(candidate_recipes[recipe_index]).get(key)
+        if limit:
+            direction, new_value = _apply_relaxed_constraint(limit, mode, current)
+            solved = _try_solve(copy.deepcopy(ingredients), candidate_recipes)
+            recipe_name = str(_get(recipes[recipe_index], "name", ""))
+            if solved:
+                savings = max(0.0, base_total - float(solved.get("total_factory_cost_tnd") or base_total))
+                recommendations.append({
+                    "type": "formulation",
+                    "priority": "medium",
+                    "title": f"Action formule: {recipe_name}",
+                    "action": f"Creer une variante test et {direction} de {key}: {current:.2f} -> {new_value:.2f}.",
+                    "impact": f"Scenario faisable avec les matieres actives. Gain estime {savings:.2f} TND; valider nutrition avant adoption.",
+                    "recipe_name": recipe_name,
+                    "estimated_savings_tnd": _round(savings),
+                    "validation": _validation("simulation_only", "Contrainte ajustee puis plan rejoue dans GLOP; validation nutrition requise."),
+                })
+
+    if missing_nutrient_rows:
+        recommendations.append({
+            "type": "data",
+            "priority": "medium",
+            "title": "Action qualite donnees",
+            "action": f"Completer l'analyse labo de {missing_nutrient_rows[0]} avant la prochaine optimisation.",
+            "impact": "Priorite: proteine, energie, fibre, calcium, phosphore. Cela evite des recommandations IA trop fragiles.",
+            "validation": _validation("data_check", "Controle deterministe des nutriments manquants."),
+        })
+    elif process_risks:
+        risk = process_risks[0]
+        recommendations.append({
+            "type": "process",
+            "priority": "medium",
+            "title": "Action usine",
+            "action": "Faire valider la tenue granule sur un lot pilote avant lancement complet.",
+            "impact": risk["detail"],
+            "validation": _validation("data_check", "Alerte process deduite des valeurs nutritionnelles atteintes."),
+        })
+
+    return recommendations
+
+
+def _dedupe_recommendations(recommendations: list[dict[str, Any]], limit: int = 6) -> list[dict[str, Any]]:
+    seen: set[str] = set()
+    result: list[dict[str, Any]] = []
+    priority_order = {"high": 0, "medium": 1, "low": 2}
+    for recommendation in sorted(recommendations, key=lambda item: priority_order.get(str(item.get("priority")), 3)):
+        key = f"{recommendation.get('type')}|{recommendation.get('title')}|{recommendation.get('action')}"
+        if key in seen:
+            continue
+        seen.add(key)
+        result.append(recommendation)
+        if len(result) >= limit:
+            break
+    return result
+
+
 def generate_business_review(ingredients: list[Any], recipes: list[Any], result: dict[str, Any]) -> dict[str, Any]:
     usage_by_name = _total_usage_by_name(result)
     cost_shares = _cost_share_by_name(ingredients, usage_by_name)
@@ -501,6 +663,16 @@ def generate_business_review(ingredients: list[Any], recipes: list[Any], result:
     recommendations.extend(_build_shadow_price_recommendations(ingredients, recipes, result, usage_by_name))
     recommendations.extend(_build_stock_recommendations(ingredients, recipes, result, usage_by_name))
     recommendations.extend(_build_constraint_recommendations(ingredients, recipes, result, ingredient_names))
+    recommendations.extend(_build_precise_next_actions(
+        ingredients,
+        recipes,
+        result,
+        usage_by_name,
+        cost_shares,
+        ingredient_names,
+        missing_nutrient_rows,
+        process_risks,
+    ))
     if missing_nutrient_rows:
         recommendations.append({
             "type": "data",
@@ -511,7 +683,7 @@ def generate_business_review(ingredients: list[Any], recipes: list[Any], result:
             "validation": _validation("data_check", "Controle deterministe des champs nutriments disponibles."),
         })
 
-    recommendations = recommendations[:6]
+    recommendations = _dedupe_recommendations(recommendations)
     if not alerts:
         alerts.append({
             "severity": "success",

@@ -1,6 +1,6 @@
 "use client";
 
-import { Zap, Target, AlertTriangle, Bot, BrainCircuit, LineChart as LucideLineChart, FileText, Printer, Search, Eye, X, History, ShieldCheck, CheckCircle2, Lightbulb, ClipboardCheck } from "lucide-react";
+import { Zap, Target, AlertTriangle, Bot, BrainCircuit, LineChart as LucideLineChart, FileText, Printer, Search, Eye, X, History, ShieldCheck, CheckCircle2, Lightbulb, ClipboardCheck, ChevronDown, ChevronUp, MousePointerClick } from "lucide-react";
 import React, { useState, useEffect, useCallback } from "react";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, LineChart, Line } from "recharts";
 import ReactMarkdown from "react-markdown";
@@ -80,6 +80,15 @@ interface OptimizationRun {
   ingredient_count: number;
   duration_ms: number;
   created_at: string | null;
+}
+
+interface OptimizationRunDetail extends OptimizationRun {
+  error?: string | null;
+  request_payload?: {
+    ingredient_ids?: number[];
+    recipes?: Record<string, unknown>[];
+  };
+  result_payload?: MultiBlendResult;
 }
 
 interface BusinessScore {
@@ -168,6 +177,7 @@ export default function OptimizationPage() {
   const [businessReview, setBusinessReview] = useState<BusinessReview | null>(null);
   const [businessLoading, setBusinessLoading] = useState(false);
   const [businessError, setBusinessError] = useState<string | null>(null);
+  const [aiExpanded, setAiExpanded] = useState(false);
   const businessStatusLabel = businessReview?.is_grounded
     ? t("aiGuardedBySolver")
     : businessError
@@ -225,6 +235,8 @@ export default function OptimizationPage() {
   const [selectedReport, setSelectedReport] = useState<RecipeResult | null>(null);
   const [exportingPdf, setExportingPdf] = useState<string | null>(null);
   const [recentRuns, setRecentRuns] = useState<OptimizationRun[]>([]);
+  const [loadingRunId, setLoadingRunId] = useState<number | null>(null);
+  const [activeRunId, setActiveRunId] = useState<number | null>(null);
 
   const fetchRecentRuns = useCallback(async () => {
     try {
@@ -296,6 +308,41 @@ export default function OptimizationPage() {
     return recipes.find(r => name.startsWith(r.name));
   };
 
+  const runBusinessReview = (
+    ingredientIds: number[],
+    flatRecipes: Record<string, unknown>[],
+    optimizationResult: MultiBlendResult,
+  ) => {
+    setBusinessLoading(true);
+    setBusinessReview(null);
+    setBusinessError(null);
+    fetch(apiUrl("/api/ai-business-review"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ingredient_ids: ingredientIds,
+        recipes: flatRecipes,
+        result: optimizationResult,
+        locale,
+      }),
+    })
+      .then(async (reviewRes) => {
+        if (!reviewRes.ok) {
+          const payload = await reviewRes.json().catch(() => ({}));
+          const detail = String(payload.detail || "");
+          if (reviewRes.status === 404 || detail.toLowerCase() === "not found") {
+            throw new Error(t("aiBusinessReviewBackendPending"));
+          }
+          throw new Error(detail || t("aiBusinessReviewError"));
+        }
+        setBusinessReview(await reviewRes.json());
+      })
+      .catch((reviewErr: unknown) => {
+        setBusinessError(reviewErr instanceof Error ? reviewErr.message : t("aiBusinessReviewError"));
+      })
+      .finally(() => setBusinessLoading(false));
+  };
+
   const runFactory = async () => {
     if (!canOptimize) {
       setError(t("roleReadOnlyOptimization"));
@@ -330,32 +377,8 @@ export default function OptimizationPage() {
       if (!res.ok) { const e = await res.json(); throw new Error(e.detail || "Échec de l'optimisation"); }
       const json = await res.json();
       setResult(json);
-      setBusinessLoading(true);
-      fetch(apiUrl("/api/ai-business-review"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ingredient_ids: ingredientIds,
-          recipes: flatRecipes,
-          result: json,
-          locale,
-        }),
-      })
-        .then(async (reviewRes) => {
-          if (!reviewRes.ok) {
-            const payload = await reviewRes.json().catch(() => ({}));
-            const detail = String(payload.detail || "");
-            if (reviewRes.status === 404 || detail.toLowerCase() === "not found") {
-              throw new Error(t("aiBusinessReviewBackendPending"));
-            }
-            throw new Error(detail || t("aiBusinessReviewError"));
-          }
-          setBusinessReview(await reviewRes.json());
-        })
-        .catch((reviewErr: unknown) => {
-          setBusinessError(reviewErr instanceof Error ? reviewErr.message : t("aiBusinessReviewError"));
-        })
-        .finally(() => setBusinessLoading(false));
+      setActiveRunId(null);
+      runBusinessReview(ingredientIds, flatRecipes, json);
       fetchRecentRuns();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");
@@ -370,6 +393,44 @@ export default function OptimizationPage() {
     const flatRecipes = buildSolverRecipes(recipes, unselectedRecipeIds);
 
     return { ingredientIds, flatRecipes };
+  };
+
+  const loadOptimizationRun = async (runId: number) => {
+    setLoadingRunId(runId);
+    setError(null);
+    setDiagnoseResult(null);
+    setAuditResult(null);
+    setBusinessReview(null);
+    setBusinessError(null);
+    try {
+      const res = await fetch(apiUrl(`/api/optimization-runs/${runId}`));
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        throw new Error(payload.detail || t("historyLoadError"));
+      }
+      const detail: OptimizationRunDetail = await res.json();
+      if (detail.status !== "optimal" || !detail.result_payload?.recipes?.length) {
+        setResult(null);
+        setActiveRunId(runId);
+        setError(detail.error || t("historyRunInfeasible"));
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+
+      setResult(detail.result_payload);
+      setActiveRunId(runId);
+
+      const ingredientIds = detail.request_payload?.ingredient_ids ?? [];
+      const flatRecipes = detail.request_payload?.recipes ?? [];
+      if (ingredientIds.length > 0 && flatRecipes.length > 0) {
+        runBusinessReview(ingredientIds, flatRecipes, detail.result_payload);
+      }
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : t("historyLoadError"));
+    } finally {
+      setLoadingRunId(null);
+    }
   };
 
   const getChartData = (rec: RecipeResult, originalRec?: RecipeItem) => {
@@ -515,6 +576,20 @@ export default function OptimizationPage() {
     } finally { setDiagnoseLoading(false); }
   };
 
+  const visibleBusinessAlerts = businessReview
+    ? (aiExpanded ? businessReview.alerts : businessReview.alerts.slice(0, 2))
+    : [];
+  const visibleBusinessRecommendations = businessReview
+    ? (aiExpanded ? businessReview.recommendations : businessReview.recommendations.slice(0, 3))
+    : [];
+  const hasHiddenBusinessDetails = Boolean(
+    businessReview && (
+      businessReview.alerts.length > visibleBusinessAlerts.length ||
+      businessReview.recommendations.length > visibleBusinessRecommendations.length ||
+      !aiExpanded
+    ),
+  );
+
   if (fetching) {
     return <PageLoader label={t("loadingErpData")} />;
   }
@@ -565,16 +640,24 @@ export default function OptimizationPage() {
             </div>
             <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
               {recentRuns.map((run) => (
-                <div key={run.id} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+                <button
+                  key={run.id}
+                  type="button"
+                  onClick={() => loadOptimizationRun(run.id)}
+                  className={`rounded-2xl border p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md ${activeRunId === run.id ? "border-emerald-300 bg-emerald-50 ring-2 ring-emerald-100" : "border-slate-100 bg-white"}`}
+                >
                   <span className={`inline-flex rounded-full px-2 py-1 text-[10px] font-black uppercase ${run.status === "optimal" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
-                    {run.status}
+                    {loadingRunId === run.id ? t("loading") : run.status}
                   </span>
                   <p className="mt-3 text-sm font-black text-slate-900">
                     {run.total_factory_cost_tnd == null ? "-" : `${run.total_factory_cost_tnd.toLocaleString("fr-FR", { maximumFractionDigits: 0 })} TND`}
                   </p>
                   <p className="mt-1 text-xs font-semibold text-slate-400">{run.recipe_count} formules · {Math.round(run.duration_ms)} ms</p>
                   <p className="mt-2 text-[10px] font-bold text-slate-400">{formatRunDate(run.created_at)}</p>
-                </div>
+                  <p className="mt-3 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-emerald-600">
+                    <MousePointerClick className="h-3.5 w-3.5" /> {t("openHistoryRun")}
+                  </p>
+                </button>
               ))}
               {recentRuns.length === 0 && (
                 <div className="rounded-2xl border border-dashed border-slate-200 bg-white/70 p-5 text-sm font-semibold text-slate-400 md:col-span-5">
@@ -729,23 +812,25 @@ export default function OptimizationPage() {
 
                 {businessReview && (
                   <div className="mt-8 space-y-8">
-                    <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
-                      {Object.entries(businessReview.scores).map(([key, score]) => (
-                        <div key={key} className={`rounded-2xl border p-4 ${scoreTone(score.status)}`}>
-                          <p className="text-[10px] font-black uppercase tracking-widest opacity-70">{score.label}</p>
-                          <p className="mt-2 text-3xl font-black">{score.score}<span className="text-base opacity-60">/100</span></p>
-                          <p className="mt-2 text-xs font-semibold leading-5 opacity-80">{score.detail}</p>
-                        </div>
-                      ))}
-                    </div>
+                    {aiExpanded && (
+                      <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
+                        {Object.entries(businessReview.scores).map(([key, score]) => (
+                          <div key={key} className={`rounded-2xl border p-4 ${scoreTone(score.status)}`}>
+                            <p className="text-[10px] font-black uppercase tracking-widest opacity-70">{score.label}</p>
+                            <p className="mt-2 text-3xl font-black">{score.score}<span className="text-base opacity-60">/100</span></p>
+                            <p className="mt-2 text-xs font-semibold leading-5 opacity-80">{score.detail}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
 
                     <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-                      <div>
+                      <div className="xl:order-2">
                         <h3 className="mb-3 flex items-center gap-2 text-sm font-black uppercase tracking-widest text-slate-500">
                           <ClipboardCheck className="h-4 w-4 text-indigo-600" /> {t("aiBusinessAlerts")}
                         </h3>
                         <div className="space-y-3">
-                          {businessReview.alerts.map((alert, index) => (
+                          {visibleBusinessAlerts.map((alert, index) => (
                             <div key={`${alert.title}-${index}`} className={`rounded-2xl border p-4 ${alertTone(alert.severity)}`}>
                               <p className="flex items-center gap-2 text-sm font-black">
                                 {alert.severity === "success" ? <CheckCircle2 className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}
@@ -758,7 +843,7 @@ export default function OptimizationPage() {
                         </div>
                       </div>
 
-                      <div>
+                      <div className="order-1">
                         <h3 className="mb-3 flex items-center gap-2 text-sm font-black uppercase tracking-widest text-slate-500">
                           <Lightbulb className="h-4 w-4 text-amber-500" /> {t("aiBusinessActions")}
                         </h3>
@@ -768,7 +853,7 @@ export default function OptimizationPage() {
                               {t("aiNoRecommendation")}
                             </div>
                           )}
-                          {businessReview.recommendations.map((rec, index) => (
+                          {visibleBusinessRecommendations.map((rec, index) => (
                             <div key={`${rec.title}-${index}`} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
                               <div className="flex flex-wrap items-start justify-between gap-3">
                                 <p className="text-sm font-black text-slate-950">{rec.title}</p>
@@ -785,16 +870,29 @@ export default function OptimizationPage() {
                       </div>
                     </div>
 
-                    <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
-                      <p className="mb-3 flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-500">
-                        <ShieldCheck className="h-4 w-4 text-emerald-600" /> {t("aiGuardrails")}
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {businessReview.guardrails.map((item) => (
-                          <span key={item} className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-slate-600 ring-1 ring-slate-200">{item}</span>
-                        ))}
+                    {hasHiddenBusinessDetails && (
+                      <button
+                        type="button"
+                        onClick={() => setAiExpanded((value) => !value)}
+                        className="mx-auto flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-black uppercase tracking-widest text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
+                      >
+                        {aiExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                        {aiExpanded ? t("reduceDetails") : t("showMoreDetails")}
+                      </button>
+                    )}
+
+                    {aiExpanded && (
+                      <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                        <p className="mb-3 flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-500">
+                          <ShieldCheck className="h-4 w-4 text-emerald-600" /> {t("aiGuardrails")}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {businessReview.guardrails.map((item) => (
+                            <span key={item} className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-slate-600 ring-1 ring-slate-200">{item}</span>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 )}
               </div>
