@@ -2,45 +2,12 @@
 
 import { Save, Plus, Search, FlaskConical, X, Edit3 } from "lucide-react";
 import React, { useState, useEffect, useCallback } from "react";
-import { useI18n, type Locale } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n";
 import { DEFAULT_INGREDIENT_FILTER_STATUS, ingredientMatchesStatus } from "@/lib/ingredientFilters";
 import { getNutrientUnit } from "@/utils/nutrientUtils";
 import PageLoader from "@/components/PageLoader";
 import { canManageIngredients, useTenantRole } from "@/lib/tenantRole";
 import { apiUrl } from "@/lib/api";
-
-const ingredientMessages = {
-  saveError: {
-    fr: "Erreur lors de la sauvegarde.",
-    en: "Error while saving.",
-    ar: "حدث خطأ أثناء الحفظ.",
-  },
-  newIngredientName: {
-    fr: "Nouvelle Matière",
-    en: "New ingredient",
-    ar: "مادة جديدة",
-  },
-  deleteConfirm: {
-    fr: "Supprimer cet ingrédient ?",
-    en: "Delete this ingredient?",
-    ar: "حذف هذه المادة؟",
-  },
-  sheetSaved: {
-    fr: "Fiche technique sauvegardée !",
-    en: "Technical sheet saved!",
-    ar: "تم حفظ البطاقة الفنية!",
-  },
-  sheetSaveError: {
-    fr: "Erreur lors de la sauvegarde de la fiche.",
-    en: "Error while saving the sheet.",
-    ar: "حدث خطأ أثناء حفظ البطاقة.",
-  },
-  newNutrientPrompt: {
-    fr: "Nom du nouveau nutriment :",
-    en: "New nutrient name:",
-    ar: "اسم العنصر الغذائي الجديد:",
-  },
-} satisfies Record<string, Record<Locale, string>>;
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  TYPES
@@ -108,13 +75,9 @@ function groupNutrients(nutrients: Record<string, number>) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function IngredientsPage() {
-  const { locale } = useI18n();
+  const { t } = useI18n();
   const tenantRole = useTenantRole();
   const canManage = canManageIngredients(tenantRole);
-  const msg = useCallback(
-    (key: keyof typeof ingredientMessages) => ingredientMessages[key][locale] ?? ingredientMessages[key].fr,
-    [locale]
-  );
 
   // The main list only holds lite data (no heavy nutrients)
   const [ingredients, setIngredients] = useState<LiteIngredient[]>([]);
@@ -186,7 +149,7 @@ export default function IngredientsPage() {
         })
       );
       setPendingRowEdits({});
-    } catch { alert(msg("saveError")); }
+    } catch { alert(t("saveIngredientError")); }
     finally { setFetching(false); }
   };
 
@@ -212,7 +175,7 @@ export default function IngredientsPage() {
     const res = await fetch(apiUrl("/api/ingredients"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: msg("newIngredientName"), cost: 0, transport_cost: 0, dm: 88, inventory_limit_tons: 99999, nutrients: {}, is_active: true }),
+      body: JSON.stringify({ name: t("newIngredientName"), cost: 0, transport_cost: 0, dm: 88, inventory_limit_tons: 99999, nutrients: {}, is_active: true }),
     });
     if (res.ok) {
       const row: LiteIngredient = await res.json();
@@ -222,7 +185,7 @@ export default function IngredientsPage() {
 
   const rmIng = async (id: number) => {
     if (!canManage) return;
-    if (!confirm(msg("deleteConfirm"))) return;
+    if (!confirm(t("deleteIngredientConfirm"))) return;
     await fetch(apiUrl(`/api/ingredients/${id}`), { method: "DELETE" });
     setIngredients(prev => prev.filter(i => i.id !== id));
     if (panel?.id === id) setPanel(null);
@@ -289,9 +252,9 @@ export default function IngredientsPage() {
           is_active: updated.is_active,
           nutrients: proteinKey ? { [proteinKey]: updated.nutrients[proteinKey] } : {},
         }));
-        alert(msg("sheetSaved"));
+        alert(t("technicalSheetSaved"));
       }
-    } catch { alert(msg("sheetSaveError")); }
+    } catch { alert(t("technicalSheetSaveError")); }
     finally { setPanelSaving(false); }
   };
 
@@ -311,6 +274,28 @@ export default function IngredientsPage() {
   ) : {};
 
   const totalNutrients = panel ? Object.keys(panel.nutrients).length : 0;
+  const selectedFilterLabel = (() => {
+    if (filterStatus === "Stock Actif") return t("activeStock");
+    if (filterStatus === "Base Inactive") return t("inactiveBase");
+    return t("allIngredients");
+  })();
+  const ingredientCountLabel = filteredIngredients.length > 1 ? t("rawMaterialPlural") : t("rawMaterialSingular");
+  const tableHeaders = [
+    { label: t("name"), className: "text-left min-w-[220px]" },
+    { label: t("status"), className: "text-center" },
+    { label: t("costTndKg"), className: "text-right" },
+    { label: t("dryMatterShort"), className: "text-right" },
+    { label: t("proteinPercent"), className: "text-right" },
+    { label: t("stockTons"), className: "text-right" },
+    { label: t("technicalSheet"), className: "text-center" },
+    { label: "", className: "text-center" },
+  ];
+
+  const proteinPreview = (ing: LiteIngredient) =>
+    ing.nutrients?.["Crude protein (%)"] ??
+    ing.nutrients?.["Crude protein"] ??
+    ing.nutrients?.["Protéine %"] ??
+    "—";
 
   // Strip trailing unit from a nutrient key for display (unit is shown separately)
   // e.g. "Dry matter (%)" → "Dry matter", "Lysine (g/kg)" → "Lysine", "Protéine %" → "Protéine"
@@ -324,78 +309,136 @@ export default function IngredientsPage() {
   // ─────────────────────────────────────────────────────────────────────────
 
   if (fetching && ingredients.length === 0) {
-    return <PageLoader label="Chargement des donnees ERP..." />;
+    return <PageLoader label={t("loadingErpData")} />;
   }
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50 text-gray-900">
 
       {/* ══════════════ MAIN CONTENT ══════════════ */}
-      <div className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${panel ? "mr-[480px]" : ""}`}>
+      <div className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${panel ? "lg:mr-[480px]" : ""}`}>
 
         {/* Header */}
-        <div className="flex-shrink-0 px-8 pt-8 pb-4">
-          <div className="flex items-start justify-between mb-6">
+        <div className="flex-shrink-0 px-4 pt-5 pb-4 md:px-8 md:pt-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6">
             <div>
-              <h1 className="text-2xl font-black text-gray-900 tracking-tight">Gestion des Stocks</h1>
+              <h1 className="text-2xl font-black text-gray-900 tracking-tight">{t("ingredientsPageTitle")}</h1>
               <p className="text-gray-500 mt-1 text-sm">
-                {filteredIngredients.length} matière{filteredIngredients.length > 1 ? "s" : ""} première{filteredIngredients.length > 1 ? "s" : ""}
-                {filterStatus !== "Tous" ? ` · ${filterStatus}` : ""}
+                {filteredIngredients.length} {ingredientCountLabel}
+                {filterStatus !== "Tous" ? ` · ${selectedFilterLabel}` : ""}
               </p>
               {!canManage && (
                 <p className="mt-2 inline-flex rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-black text-slate-500">
-                  Lecture seule
+                  {t("readOnlyBadge")}
                 </p>
               )}
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto sm:justify-end">
               {hasRowEdits && (
                 <button onClick={saveRowEdits} disabled={!canManage}
-                  className="bg-emerald-600 text-white hover:bg-emerald-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-md flex items-center gap-2 animate-pulse">
-                  <Save className="w-4 h-4" /> Sauvegarder
+                  className="flex-1 bg-emerald-600 text-white hover:bg-emerald-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-md flex items-center justify-center gap-2 animate-pulse sm:flex-none">
+                  <Save className="w-4 h-4" /> {t("save")}
                 </button>
               )}
               <button onClick={addIng} disabled={!canManage}
-                className="bg-blue-600 text-white hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none disabled:cursor-not-allowed px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-md shadow-blue-600/20 flex items-center gap-1">
-                <Plus className="w-4 h-4" /> Ajouter
+                className="flex-1 bg-blue-600 text-white hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none disabled:cursor-not-allowed px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-md shadow-blue-600/20 flex items-center justify-center gap-1 sm:flex-none">
+                <Plus className="w-4 h-4" /> {t("add")}
               </button>
             </div>
           </div>
 
           {/* Toolbar */}
-          <div className="flex items-center gap-3">
-            <div className="relative flex-1 max-w-sm">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="relative flex-1 sm:max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input type="text" placeholder="Rechercher une matière première..."
+              <input type="text" placeholder={t("ingredientsSearchPlaceholder")}
                 value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
                 className="pl-9 pr-4 py-2.5 w-full bg-white border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm" />
             </div>
             <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
               className="bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm cursor-pointer">
-              <option value="Tous">Tous les ingrédients</option>
-              <option value="Stock Actif">Stock Actif</option>
-              <option value="Base Inactive">Base Inactive</option>
+              <option value="Tous">{t("allIngredients")}</option>
+              <option value="Stock Actif">{t("activeStock")}</option>
+              <option value="Base Inactive">{t("inactiveBase")}</option>
             </select>
           </div>
         </div>
 
-        {/* Table */}
-        <div className="flex-1 overflow-auto px-8 pb-8">
+        {/* Mobile cards */}
+        <div className="flex-1 overflow-auto px-4 pb-6 md:hidden">
+          <div className="space-y-3">
+            {filteredIngredients.length === 0 && (
+              <div className="rounded-xl border border-gray-200 bg-white p-8 text-center text-sm italic text-gray-400 shadow-sm">
+                {t("noIngredientMatch")}
+              </div>
+            )}
+            {filteredIngredients.map(ing => (
+              <article key={ing.id}
+                className={`rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-all ${!ing.is_active ? "opacity-70 grayscale" : ""} ${panel?.id === ing.id ? "border-blue-300 ring-2 ring-blue-100" : ""}`}>
+                <div className="flex items-start gap-3">
+                  <input type="text" value={ing.name} onChange={e => editRow(ing.id, "name", e.target.value)} disabled={!canManage}
+                    className="min-w-0 flex-1 bg-transparent text-base font-black leading-tight text-gray-900 outline-none focus:ring-2 focus:ring-blue-500 rounded-lg px-1 py-0.5 disabled:text-slate-500 disabled:cursor-not-allowed" />
+                  <button onClick={() => toggleActive(ing.id)} disabled={!canManage}
+                    className={`flex-shrink-0 rounded-full border px-3 py-1 text-xs font-bold transition-all disabled:cursor-not-allowed ${ing.is_active ? "border-emerald-200 bg-emerald-100 text-emerald-700" : "border-gray-200 bg-gray-100 text-gray-500"}`}>
+                    {ing.is_active ? t("active") : t("inactive")}
+                  </button>
+                </div>
+
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  <label className="min-w-0">
+                    <span className="mb-1 block text-[10px] font-black uppercase tracking-wide text-slate-400">{t("costTndKg")}</span>
+                    <input type="number" step="0.01" value={ing.cost} onChange={e => editRow(ing.id, "cost", e.target.value)} disabled={!canManage}
+                      className={`${cell} w-full text-right font-semibold text-blue-700 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed`} />
+                  </label>
+                  <label className="min-w-0">
+                    <span className="mb-1 block text-[10px] font-black uppercase tracking-wide text-slate-400">{t("dryMatterShort")}</span>
+                    <input type="number" step="0.1" value={ing.dm} onChange={e => editRow(ing.id, "dm", e.target.value)} disabled={!canManage}
+                      className={`${cell} w-full text-right font-semibold text-gray-700 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed`} />
+                  </label>
+                  <div className="min-w-0 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
+                    <span className="mb-1 block text-[10px] font-black uppercase tracking-wide text-slate-400">{t("proteinPercent")}</span>
+                    <span className="block text-right font-mono text-sm font-bold text-slate-700">{proteinPreview(ing)}</span>
+                  </div>
+                  <label className="min-w-0">
+                    <span className="mb-1 block text-[10px] font-black uppercase tracking-wide text-slate-400">{t("stockTons")}</span>
+                    <input type="number" step="1" value={ing.inventory_limit_tons} onChange={e => editRow(ing.id, "inventory_limit_tons", e.target.value)} disabled={!canManage}
+                      className={`${cell} w-full text-right font-bold text-purple-700 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed`} />
+                  </label>
+                </div>
+
+                <div className="mt-4 flex items-center gap-2">
+                  <button onClick={() => openPanel(ing.id)}
+                    className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-bold transition-all ${panel?.id === ing.id
+                      ? "border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-500/25"
+                      : "border-blue-200 bg-white text-blue-600 shadow-sm hover:border-blue-600 hover:bg-blue-600 hover:text-white"
+                      }`}>
+                    <FlaskConical className="w-3.5 h-3.5" /> {t("details")}
+                  </button>
+                  <button onClick={() => rmIng(ing.id)} disabled={!canManage}
+                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-red-100 bg-red-50 text-red-500 transition-all hover:bg-red-500 hover:text-white disabled:pointer-events-none disabled:opacity-40">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+
+        {/* Desktop table */}
+        <div className="hidden flex-1 overflow-auto px-8 pb-8 md:block">
           <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-visible">
             <table className="w-full min-w-[1180px] text-sm border-collapse">
               <thead className="sticky top-0 z-10">
                 <tr className="border-y border-gray-200 bg-slate-100">
-                  {["Nom", "Statut", "Coût TND/kg", "MS %", "Protéine %", "Stock (t)", "Fiche Technique", ""].map((h, i) => (
-                    <th key={i} className={`py-3.5 px-5 text-xs font-black tracking-wide uppercase text-slate-600 ${h === "Nom" ? "text-left min-w-[220px]" :
-                      h === "Statut" || h === "Fiche Technique" || h === "" ? "text-center" : "text-right"
-                      }`}>{h}</th>
+                  {tableHeaders.map((h, i) => (
+                    <th key={i} className={`py-3.5 px-5 text-xs font-black tracking-wide uppercase text-slate-600 ${h.className}`}>{h.label}</th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 text-gray-900">
                 {filteredIngredients.length === 0 && (
                   <tr><td colSpan={8} className="py-16 text-center text-gray-400 italic">
-                    Aucun ingrédient ne correspond à votre recherche.
+                    {t("noIngredientMatch")}
                   </td></tr>
                 )}
                 {filteredIngredients.map(ing => (
@@ -413,7 +456,7 @@ export default function IngredientsPage() {
                       <button onClick={() => toggleActive(ing.id)} disabled={!canManage}
                         className={`px-3 py-1 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1.5 mx-auto disabled:cursor-not-allowed ${ing.is_active ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-200" : "bg-gray-100 text-gray-500 hover:bg-gray-200 border border-gray-200"}`}>
                         <div className={`w-2 h-2 rounded-full ${ing.is_active ? "bg-emerald-500" : "bg-gray-400"}`} />
-                        {ing.is_active ? "Actif" : "Inactif"}
+                        {ing.is_active ? t("active") : t("inactive")}
                       </button>
                     </td>
 
@@ -432,10 +475,7 @@ export default function IngredientsPage() {
                     {/* Protéine % — display only from lite data */}
                     <td className="py-3 px-5 text-right">
                       <span className="font-mono text-gray-600 font-semibold">
-                        {ing.nutrients?.["Crude protein (%)"] ??
-                          ing.nutrients?.["Crude protein"] ??
-                          ing.nutrients?.["Protéine %"] ??
-                          "—"}
+                        {proteinPreview(ing)}
                       </span>
                     </td>
 
@@ -452,7 +492,7 @@ export default function IngredientsPage() {
                           ? "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/25"
                           : "bg-white text-blue-600 border-blue-200 hover:bg-blue-600 hover:text-white hover:border-blue-600 shadow-sm"
                           }`}>
-                        <FlaskConical className="w-3.5 h-3.5" /> Détails
+                        <FlaskConical className="w-3.5 h-3.5" /> {t("details")}
                       </button>
                     </td>
 
@@ -478,14 +518,14 @@ export default function IngredientsPage() {
           <div className="fixed inset-0 bg-black/10 z-30" onClick={() => setPanel(null)} />
 
           {/* Panel */}
-          <div className="fixed top-0 right-0 h-full w-[480px] bg-white shadow-2xl z-40 flex flex-col border-l border-gray-200 animate-in slide-in-from-right duration-300 text-gray-900">
+          <div className="fixed top-0 right-0 h-full w-full bg-white shadow-2xl z-40 flex flex-col border-l border-gray-200 animate-in slide-in-from-right duration-300 text-gray-900 sm:w-[480px]">
 
             {/* Panel Header */}
             <div className="flex-shrink-0 p-6 border-b border-gray-100 bg-gradient-to-r from-slate-900 to-blue-900">
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-bold text-blue-300 uppercase tracking-widest">Fiche Technique</span>
+                    <span className="text-xs font-bold text-blue-300 uppercase tracking-widest">{t("technicalSheet")}</span>
                   </div>
                   <h2 className="text-lg font-black text-white leading-tight truncate">{panel.name}</h2>
                   <div className="flex items-center gap-4 mt-2">
@@ -495,14 +535,14 @@ export default function IngredientsPage() {
                         disabled={!canManage}
                         className="w-16 bg-white/10 border-none outline-none text-white font-bold ml-1 rounded px-1 disabled:text-slate-400 disabled:cursor-not-allowed" />
                       %</span>
-                    <span className="text-xs text-slate-400 font-mono">Coût:
+                    <span className="text-xs text-slate-400 font-mono">{t("costLabel")}:
                       <input type="number" step="0.01" value={panel.cost}
                         onChange={e => setPanel(prev => prev ? { ...prev, cost: parseFloat(e.target.value) || 0 } : null)}
                         disabled={!canManage}
                         className="w-20 bg-white/10 border-none outline-none text-white font-bold ml-1 rounded px-1 disabled:text-slate-400 disabled:cursor-not-allowed" />
                       TND/kg</span>
                     <span className="text-xs bg-blue-800/60 text-blue-200 px-2 py-0.5 rounded-full font-bold border border-blue-700">
-                      {totalNutrients} paramètres
+                      {totalNutrients} {t("parameters")}
                     </span>
                   </div>
                 </div>
@@ -515,7 +555,7 @@ export default function IngredientsPage() {
               {/* Panel Search */}
               <div className="relative mt-4">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-                <input type="text" placeholder="Filtrer les paramètres..."
+                <input type="text" placeholder={t("filterParameters")}
                   value={panelSearch} onChange={e => setPanelSearch(e.target.value)}
                   className="pl-9 pr-4 py-2.5 w-full bg-white/10 border border-white/20 rounded-lg text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all" />
               </div>
@@ -531,7 +571,7 @@ export default function IngredientsPage() {
                     <div className="flex items-center gap-2 mb-3">
                       <span className={`w-2 h-2 rounded-full ${cat.dot}`} />
                       <span className="text-xs font-black uppercase tracking-widest text-gray-500">{group}</span>
-                      <span className="text-xs text-gray-400 font-mono ml-auto">{items.length} valeurs</span>
+                      <span className="text-xs text-gray-400 font-mono ml-auto">{items.length} {t("values")}</span>
                     </div>
                     <div className="grid grid-cols-1 gap-1.5">
                       {items.map(({ key, value }) => (
@@ -567,8 +607,8 @@ export default function IngredientsPage() {
               {Object.values(panelNutrientGroups).every(g => g.length === 0) && (
                 <div className="py-12 text-center text-gray-400 italic text-sm">
                   {panelSearch
-                    ? `Aucun paramètre ne correspond à « ${panelSearch} »`
-                    : "Aucun nutriment enregistré. Ajoutez-en via le menu ci-dessous."}
+                    ? `${t("noParameterMatchPrefix")} « ${panelSearch} »`
+                    : t("noNutrientSaved")}
                 </div>
               )}
             </div>
@@ -582,7 +622,7 @@ export default function IngredientsPage() {
                   disabled={!canManage}
                   onChange={e => { if (e.target.value && e.target.value !== "NEW_PROMPT") { addPanelNutrient(e.target.value); e.target.value = ""; } }}
                   defaultValue="">
-                  <option value="" disabled>+ Ajouter un nutriment...</option>
+                  <option value="" disabled>{t("addNutrientOption")}</option>
                   {(() => {
                     const allKeys = new Set(COMMON_NUTRIENTS);
                     ingredients.forEach(i => { if (i.nutrients) Object.keys(i.nutrients).forEach(k => allKeys.add(k)); });
@@ -595,7 +635,7 @@ export default function IngredientsPage() {
                   })()}
                 </select>
                 <button
-                  onClick={() => { const custom = prompt(msg("newNutrientPrompt")); if (custom) addPanelNutrient(custom); }}
+                  onClick={() => { const custom = prompt(t("newNutrientPrompt")); if (custom) addPanelNutrient(custom); }}
                   disabled={!canManage}
                   className="bg-blue-50 text-blue-600 border border-blue-100 hover:bg-blue-100 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed px-3 py-2 rounded-lg text-xs font-black transition-all">
                   <Edit3 className="w-4 h-4" />
@@ -605,17 +645,17 @@ export default function IngredientsPage() {
               {/* Save / Close */}
               <div className="flex justify-between items-center">
                 <div className="text-xs text-gray-400 font-mono">
-                  {Object.values(panelNutrientGroups).reduce((acc, g) => acc + g.length, 0)} / {totalNutrients} paramètres affichés
+                  {Object.values(panelNutrientGroups).reduce((acc, g) => acc + g.length, 0)} / {totalNutrients} {t("displayedParameters")}
                 </div>
                 <div className="flex gap-2">
                   <button onClick={() => setPanel(null)}
                     className="bg-gray-100 text-gray-600 hover:bg-gray-200 px-4 py-2 rounded-xl text-sm font-bold transition-all">
-                    Fermer
+                    {t("close")}
                   </button>
                   <button onClick={savePanel} disabled={panelSaving || !canManage}
                     className="bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 px-5 py-2 rounded-xl text-sm font-bold transition-all shadow-sm flex items-center gap-2">
                     {panelSaving ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
-                    Sauvegarder la fiche
+                    {t("saveTechnicalSheet")}
                   </button>
                 </div>
               </div>
