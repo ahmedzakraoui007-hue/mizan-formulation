@@ -75,20 +75,31 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
 
   const [sharing, setSharing] = useState(false);
 
-  const shareToWhatsApp = async () => {
-    setSharing(true);
-    const whatsappTab = window.open("about:blank", "_blank");
+  const pdfFileName = `Fiche_${report.name.replace(/[^a-zA-Z0-9_-]/g, "_")}_${now.toISOString().slice(0, 10)}.pdf`;
+
+  const generatePdfBlob = async () => {
     try {
       const el = document.getElementById(`modal-pdf-template`);
       if (!el) {
-        whatsappTab?.close();
-        return;
+        throw new Error("PDF template not found");
       }
 
       const { default: html2canvas } = await import("html2canvas");
       const { default: jsPDF } = await import("jspdf");
+      await document.fonts?.ready;
 
-      const canvas = await html2canvas(el, { scale: 2, useCORS: true });
+      const canvas = await html2canvas(el, {
+        scale: Math.min(window.devicePixelRatio || 2, 2),
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: 800,
+      });
+      if (!canvas.width || !canvas.height) {
+        throw new Error("PDF canvas is empty");
+      }
       const imgData = canvas.toDataURL("image/png");
 
       const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
@@ -102,32 +113,58 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
       pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
       heightLeft -= pdfHeight;
 
-      while (heightLeft >= 0) {
+      while (heightLeft > 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
         pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
         heightLeft -= pdfHeight;
       }
 
-      const pdfBlob = pdf.output("blob");
-      const file = new File([pdfBlob], `Fiche_${report.name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`, { type: "application/pdf" });
-      const fileName = `Fiche_${report.name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
-      const whatsappUrl = buildWhatsAppUrl(buildWhatsAppMessage(report, dateStr));
+      return pdf.output("blob");
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  };
 
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: `Fiche de Fabrication - ${report.name}`,
-          text: `Voici la fiche de fabrication pour ${report.name}`,
-        });
-        whatsappTab?.close();
-      } else {
-        pdf.save(fileName);
-        if (whatsappTab) {
-          whatsappTab.location.href = whatsappUrl;
-        } else {
-          window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+  const shareToWhatsApp = async () => {
+    setSharing(true);
+    const whatsappTab = window.open("about:blank", "_blank");
+    if (whatsappTab) {
+      whatsappTab.document.write("<p style=\"font-family:sans-serif;padding:24px\">Preparation du PDF Mizan...</p>");
+    }
+    try {
+      const pdfBlob = await generatePdfBlob();
+      const message = buildWhatsAppMessage(report, dateStr);
+      const whatsappUrl = buildWhatsAppUrl(message);
+      const file = typeof File !== "undefined"
+        ? new File([pdfBlob], pdfFileName, { type: "application/pdf" })
+        : null;
+
+      saveAs(pdfBlob, pdfFileName);
+
+      if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: `Fiche de Fabrication - ${report.name}`,
+            text: message,
+          });
+          whatsappTab?.close();
+          return;
+        } catch (shareErr) {
+          if (shareErr instanceof DOMException && shareErr.name === "AbortError") {
+            whatsappTab?.close();
+            return;
+          }
+          console.warn("Native share failed, falling back to WhatsApp link.", shareErr);
         }
+      }
+
+      if (whatsappTab) {
+        whatsappTab.location.replace(whatsappUrl);
+      } else {
+        window.location.assign(whatsappUrl);
       }
     } catch (err) {
       console.error(err);
@@ -284,7 +321,7 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
         </div>
 
         {/* Hidden PDF Template for WhatsApp PDF generation */}
-        <div style={{ position: 'absolute', top: '-9999px', left: '-9999px' }}>
+        <div aria-hidden="true" style={{ position: 'fixed', top: 0, left: 0, zIndex: -1, pointerEvents: 'none' }}>
           <div id="modal-pdf-template" style={{ width: '800px', backgroundColor: 'white', padding: '40px', color: 'black', fontFamily: 'sans-serif' }}>
             <div style={{ borderBottom: '2px solid #111', paddingBottom: '15px', marginBottom: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
               <div>

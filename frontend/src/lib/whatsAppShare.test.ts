@@ -14,8 +14,8 @@ describe("WhatsApp sharing workflow", () => {
     expect(message).toContain("PDF");
   });
 
-  it("encodes the message in a wa.me URL", () => {
+  it("encodes the message in a WhatsApp URL", () => {
     const url = buildWhatsAppUrl("Bonjour Mizan");
-    expect(url).toBe("https://wa.me/?text=Bonjour%20Mizan");
+    expect(url).toBe("https://api.whatsapp.com/send?text=Bonjour%20Mizan");
   });
 });

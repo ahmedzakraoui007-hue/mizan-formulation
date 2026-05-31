@@ -18,5 +18,5 @@ export function buildWhatsAppMessage(report: WhatsAppReport, dateStr: string) {
 }
 
 export function buildWhatsAppUrl(message: string) {
-  return `https://wa.me/?text=${encodeURIComponent(message)}`;
+  return `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
 }
