@@ -12,6 +12,7 @@ from db_models import IngredientDB, RecipeDB, TenantDB, AuditLogDB, Optimization
 from auth import TenantContext, get_tenant_context, require_role
 from solver import solve_least_cost_formulation, solve_multi_blend
 from ai_service import generate_financial_insights, generate_formulator_audit, suggest_best_practice_bounds
+from business_review import generate_business_review
 from migration_utils import run_migrations
 
 # Schema migrations are managed by Alembic.
@@ -204,6 +205,10 @@ class RecipeDemand(BaseModel):
 class MultiBlendRequest(BaseModel):
     ingredient_ids: List[int]
     recipes: List[RecipeDemand]
+
+class BusinessReviewRequest(MultiBlendRequest):
+    result: Dict
+    locale: str = "fr"
 
 # -- CRUD response schemas (include DB id) --
 class IngredientOut(MultiBlendIngredient):
@@ -959,6 +964,37 @@ def optimize_multi_blend(
         _save_optimization_run(db, tenant, request_payload, "infeasible", duration_ms, error=str(e))
         db.commit()
         raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/api/ai-business-review")
+def get_ai_business_review(
+    request: BusinessReviewRequest,
+    db: Session = Depends(get_db),
+    tenant: TenantContext = Depends(require_role("formulator", "purchasing")),
+):
+    ingredients_to_use = db.query(IngredientDB).filter(
+        IngredientDB.tenant_id == tenant.tenant_id,
+        IngredientDB.is_active == True,
+        IngredientDB.id.in_(request.ingredient_ids),
+    ).all()
+
+    ing_list = [
+        MultiBlendIngredient(
+            code=row.code,
+            name=row.name,
+            cost=row.cost,
+            transport_cost=row.transport_cost,
+            dm=row.dm,
+            nutrients=row.nutrients or {},
+            inventory_limit_tons=row.inventory_limit_tons,
+            is_active=row.is_active,
+        )
+        for row in ingredients_to_use
+    ]
+
+    if not ing_list or not request.recipes:
+        raise HTTPException(status_code=400, detail="No ingredients or recipes available for business review.")
+
+    return generate_business_review(ing_list, request.recipes, request.result)
 
 @app.post("/api/ai-insights")
 async def get_ai_insights(

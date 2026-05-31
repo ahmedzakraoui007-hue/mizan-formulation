@@ -1,6 +1,6 @@
 "use client";
 
-import { Zap, Target, AlertTriangle, Bot, BrainCircuit, LineChart as LucideLineChart, FileText, Printer, Search, Eye, X, History } from "lucide-react";
+import { Zap, Target, AlertTriangle, Bot, BrainCircuit, LineChart as LucideLineChart, FileText, Printer, Search, Eye, X, History, ShieldCheck, CheckCircle2, Lightbulb, ClipboardCheck } from "lucide-react";
 import React, { useState, useEffect, useCallback } from "react";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, LineChart, Line } from "recharts";
 import ReactMarkdown from "react-markdown";
@@ -63,6 +63,7 @@ interface RecipeResult {
   cost_per_bag_tnd: number;
   ingredients: ResultIngredient[];
   nutrients: Record<string, number>;
+  shadow_prices?: unknown[];
 }
 
 interface MultiBlendResult {
@@ -81,6 +82,44 @@ interface OptimizationRun {
   created_at: string | null;
 }
 
+interface BusinessScore {
+  label: string;
+  score: number;
+  status: "good" | "watch" | "risk";
+  detail: string;
+}
+
+interface BusinessAlert {
+  severity: "success" | "info" | "warning" | "critical";
+  title: string;
+  detail: string;
+  evidence?: string;
+}
+
+interface BusinessRecommendation {
+  type: string;
+  priority: "high" | "medium" | "low";
+  title: string;
+  action: string;
+  impact: string;
+  estimated_savings_tnd?: number | null;
+  validation: {
+    status: "validated" | "simulation_only" | "data_check";
+    label: string;
+    method: string;
+  };
+}
+
+interface BusinessReview {
+  is_grounded: boolean;
+  global_score: number;
+  summary: string;
+  scores: Record<string, BusinessScore>;
+  alerts: BusinessAlert[];
+  recommendations: BusinessRecommendation[];
+  guardrails: string[];
+}
+
 const isActiveIngredient = (ingredient: IngredientLite) => ingredient.is_active === true || ingredient.is_active == null;
 
 const formatRunDate = (value: string | null) => {
@@ -88,8 +127,27 @@ const formatRunDate = (value: string | null) => {
   return new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "short" }).format(new Date(value));
 };
 
+const scoreTone = (status: BusinessScore["status"]) => {
+  if (status === "good") return "border-emerald-100 bg-emerald-50 text-emerald-800";
+  if (status === "watch") return "border-amber-100 bg-amber-50 text-amber-800";
+  return "border-red-100 bg-red-50 text-red-800";
+};
+
+const alertTone = (severity: BusinessAlert["severity"]) => {
+  if (severity === "success") return "border-emerald-100 bg-emerald-50 text-emerald-900";
+  if (severity === "info") return "border-blue-100 bg-blue-50 text-blue-900";
+  if (severity === "warning") return "border-amber-100 bg-amber-50 text-amber-900";
+  return "border-red-100 bg-red-50 text-red-900";
+};
+
+const validationTone = (status: BusinessRecommendation["validation"]["status"]) => {
+  if (status === "validated") return "bg-emerald-100 text-emerald-800 ring-emerald-200";
+  if (status === "simulation_only") return "bg-amber-100 text-amber-800 ring-amber-200";
+  return "bg-slate-100 text-slate-700 ring-slate-200";
+};
+
 export default function OptimizationPage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const tenantRole = useTenantRole();
   const canOptimize = canRunOptimization(tenantRole);
 
@@ -105,6 +163,11 @@ export default function OptimizationPage() {
   // Veterinary Auditor AI State
   const [auditResult, setAuditResult] = useState<string | null>(null);
   const [auditLoading, setAuditLoading] = useState(false);
+
+  // Solver-grounded AI business review
+  const [businessReview, setBusinessReview] = useState<BusinessReview | null>(null);
+  const [businessLoading, setBusinessLoading] = useState(false);
+  const [businessError, setBusinessError] = useState<string | null>(null);
 
   // Diagnosis AI State
   const [diagnoseLoading, setDiagnoseLoading] = useState(false);
@@ -231,7 +294,7 @@ export default function OptimizationPage() {
       setError(t("roleReadOnlyOptimization"));
       return;
     }
-    setLoading(true); setError(null); setResult(null); setDiagnoseResult(null);
+    setLoading(true); setError(null); setResult(null); setDiagnoseResult(null); setAuditResult(null); setBusinessReview(null); setBusinessError(null);
     try {
       // Send ALL active ingredients to the solver.
       const ingredientIds = ingredients
@@ -260,6 +323,28 @@ export default function OptimizationPage() {
       if (!res.ok) { const e = await res.json(); throw new Error(e.detail || "Échec de l'optimisation"); }
       const json = await res.json();
       setResult(json);
+      setBusinessLoading(true);
+      fetch(apiUrl("/api/ai-business-review"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ingredient_ids: ingredientIds,
+          recipes: flatRecipes,
+          result: json,
+          locale,
+        }),
+      })
+        .then(async (reviewRes) => {
+          if (!reviewRes.ok) {
+            const payload = await reviewRes.json().catch(() => ({}));
+            throw new Error(payload.detail || t("aiBusinessReviewError"));
+          }
+          setBusinessReview(await reviewRes.json());
+        })
+        .catch((reviewErr: unknown) => {
+          setBusinessError(reviewErr instanceof Error ? reviewErr.message : t("aiBusinessReviewError"));
+        })
+        .finally(() => setBusinessLoading(false));
       fetchRecentRuns();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");
@@ -592,6 +677,115 @@ export default function OptimizationPage() {
                     {result.total_factory_cost_tnd.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} <span className="text-3xl text-slate-500">TND</span>
                   </p>
                 </div>
+              </div>
+
+              <div className="rounded-[2rem] border border-indigo-100 bg-white/90 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] md:p-8">
+                <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-700 ring-1 ring-indigo-100">
+                        <ShieldCheck className="h-6 w-6" />
+                      </span>
+                      <div>
+                        <h2 className="text-2xl font-black tracking-tight text-slate-950">{t("aiBusinessReviewTitle")}</h2>
+                        <p className="mt-1 text-sm font-semibold text-slate-500">{t("aiBusinessReviewSubtitle")}</p>
+                      </div>
+                    </div>
+                    {businessReview?.summary && (
+                      <p className="mt-5 max-w-3xl text-sm font-bold leading-6 text-slate-700">{businessReview.summary}</p>
+                    )}
+                  </div>
+
+                  <div className="rounded-2xl border border-slate-100 bg-slate-950 px-6 py-5 text-white shadow-lg lg:min-w-52">
+                    <p className="text-xs font-black uppercase tracking-widest text-indigo-200">{t("aiGlobalScore")}</p>
+                    <p className="mt-1 text-5xl font-black tracking-tight">{businessReview ? businessReview.global_score : "--"}<span className="text-2xl text-slate-500">/100</span></p>
+                    <p className="mt-2 text-xs font-bold text-slate-400">{businessReview?.is_grounded ? t("aiGuardedBySolver") : t("aiReviewLoading")}</p>
+                  </div>
+                </div>
+
+                {businessLoading && (
+                  <div className="mt-6 rounded-2xl border border-indigo-100 bg-indigo-50 px-5 py-4 text-sm font-bold text-indigo-800">
+                    <span className="mr-2 inline-block h-3 w-3 animate-spin rounded-full border-2 border-indigo-200 border-r-indigo-700" />
+                    {t("aiReviewLoading")}
+                  </div>
+                )}
+
+                {businessError && (
+                  <div className="mt-6 rounded-2xl border border-amber-100 bg-amber-50 px-5 py-4 text-sm font-bold text-amber-800">
+                    {businessError}
+                  </div>
+                )}
+
+                {businessReview && (
+                  <div className="mt-8 space-y-8">
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
+                      {Object.entries(businessReview.scores).map(([key, score]) => (
+                        <div key={key} className={`rounded-2xl border p-4 ${scoreTone(score.status)}`}>
+                          <p className="text-[10px] font-black uppercase tracking-widest opacity-70">{score.label}</p>
+                          <p className="mt-2 text-3xl font-black">{score.score}<span className="text-base opacity-60">/100</span></p>
+                          <p className="mt-2 text-xs font-semibold leading-5 opacity-80">{score.detail}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+                      <div>
+                        <h3 className="mb-3 flex items-center gap-2 text-sm font-black uppercase tracking-widest text-slate-500">
+                          <ClipboardCheck className="h-4 w-4 text-indigo-600" /> {t("aiBusinessAlerts")}
+                        </h3>
+                        <div className="space-y-3">
+                          {businessReview.alerts.map((alert, index) => (
+                            <div key={`${alert.title}-${index}`} className={`rounded-2xl border p-4 ${alertTone(alert.severity)}`}>
+                              <p className="flex items-center gap-2 text-sm font-black">
+                                {alert.severity === "success" ? <CheckCircle2 className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}
+                                {alert.title}
+                              </p>
+                              <p className="mt-2 text-sm font-semibold leading-6 opacity-90">{alert.detail}</p>
+                              {alert.evidence && <p className="mt-2 text-xs font-bold opacity-70">{alert.evidence}</p>}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <h3 className="mb-3 flex items-center gap-2 text-sm font-black uppercase tracking-widest text-slate-500">
+                          <Lightbulb className="h-4 w-4 text-amber-500" /> {t("aiBusinessActions")}
+                        </h3>
+                        <div className="space-y-3">
+                          {businessReview.recommendations.length === 0 && (
+                            <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm font-bold text-slate-500">
+                              {t("aiNoRecommendation")}
+                            </div>
+                          )}
+                          {businessReview.recommendations.map((rec, index) => (
+                            <div key={`${rec.title}-${index}`} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+                              <div className="flex flex-wrap items-start justify-between gap-3">
+                                <p className="text-sm font-black text-slate-950">{rec.title}</p>
+                                <span className={`rounded-full px-2.5 py-1 text-[10px] font-black uppercase ring-1 ${validationTone(rec.validation.status)}`}>
+                                  {rec.validation.label}
+                                </span>
+                              </div>
+                              <p className="mt-3 text-sm font-bold leading-6 text-slate-700">{rec.action}</p>
+                              <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">{rec.impact}</p>
+                              <p className="mt-3 text-xs font-bold text-slate-400">{t("aiValidationMethod")}: {rec.validation.method}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                      <p className="mb-3 flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-500">
+                        <ShieldCheck className="h-4 w-4 text-emerald-600" /> {t("aiGuardrails")}
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {businessReview.guardrails.map((item) => (
+                          <span key={item} className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-slate-600 ring-1 ring-slate-200">{item}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-end">

@@ -94,6 +94,31 @@ def test_optimize_multi_persists_history_and_audit(client):
     assert any(row["action"] == "optimization.run" for row in audit)
 
 
+def test_ai_business_review_is_grounded_in_active_solver_context(client):
+    corn = client.post("/api/ingredients", json=_ingredient("Corn", protein=14, stock=10), headers={"X-Test-Tenant": "tenant-a"}).json()
+    soy_payload = _ingredient("Soy 46", protein=46, stock=10)
+    soy_payload["cost"] = 2.0
+    soy = client.post("/api/ingredients", json=soy_payload, headers={"X-Test-Tenant": "tenant-a"}).json()
+    payload = {"ingredient_ids": [corn["id"], soy["id"]], "recipes": [_recipe("Grounded Grower")]}
+
+    optimized = client.post("/api/optimize-multi", json=payload, headers={"X-Test-Tenant": "tenant-a"})
+    assert optimized.status_code == 200
+
+    review = client.post(
+        "/api/ai-business-review",
+        json={**payload, "result": optimized.json()},
+        headers={"X-Test-Tenant": "tenant-a"},
+    )
+
+    assert review.status_code == 200
+    body = review.json()
+    assert body["is_grounded"] is True
+    assert 0 <= body["global_score"] <= 100
+    assert body["guardrails"]
+    assert set(body["scores"].keys()) == {"feasibility", "nutrition", "purchasing", "process", "data"}
+    assert all("validation" in rec for rec in body["recommendations"])
+
+
 def test_monitoring_counts_infeasible_optimization(client):
     ing = client.post("/api/ingredients", json=_ingredient("Weak", protein=2), headers={"X-Test-Tenant": "tenant-a"}).json()
     impossible = _recipe("Impossible")
