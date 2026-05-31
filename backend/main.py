@@ -308,22 +308,25 @@ def _ensure_tenant(db: Session, tenant: TenantContext, name: str | None = None, 
 def _clone_public_seed_data(db: Session, tenant_id: str) -> None:
     if tenant_id == "public":
         return
-    if db.query(IngredientDB).filter(IngredientDB.tenant_id == tenant_id).count() > 0:
-        return
 
     import copy
 
-    for ing in db.query(IngredientDB).filter(IngredientDB.tenant_id == "public").all():
-        db.add(IngredientDB(
-            tenant_id=tenant_id,
-            name=ing.name,
-            cost=ing.cost,
-            transport_cost=ing.transport_cost,
-            dm=ing.dm,
-            nutrients=copy.deepcopy(ing.nutrients or {}),
-            inventory_limit_tons=ing.inventory_limit_tons,
-            is_active=ing.is_active,
-        ))
+    if db.query(IngredientDB).filter(IngredientDB.tenant_id == tenant_id).count() == 0:
+        for ing in db.query(IngredientDB).filter(IngredientDB.tenant_id == "public").all():
+            db.add(IngredientDB(
+                tenant_id=tenant_id,
+                name=ing.name,
+                cost=ing.cost,
+                transport_cost=ing.transport_cost,
+                dm=ing.dm,
+                nutrients=copy.deepcopy(ing.nutrients or {}),
+                inventory_limit_tons=ing.inventory_limit_tons,
+                is_active=ing.is_active,
+            ))
+
+    if db.query(RecipeDB).filter(RecipeDB.tenant_id == tenant_id).count() > 0:
+        db.commit()
+        return
 
     parent_map: dict[int, RecipeDB] = {}
     public_masters = db.query(RecipeDB).filter(

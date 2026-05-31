@@ -14,6 +14,7 @@ export default function OnboardingPage() {
   const [companyName, setCompanyName] = useState("");
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const defaultName = user?.fullName || "Mizan Workspace";
@@ -43,13 +44,17 @@ export default function OnboardingPage() {
 
   const bootstrap = async (complete = false) => {
     setSaving(true);
+    setError(null);
     try {
       const bootstrapRes = await fetch(apiUrl("/api/tenant/bootstrap"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: companyName || "Mizan Workspace", locale }),
       });
-      if (!bootstrapRes.ok) throw new Error("bootstrap failed");
+      if (!bootstrapRes.ok) {
+        const payload = await bootstrapRes.json().catch(() => ({}));
+        throw new Error(payload.detail || "Impossible d'initialiser votre espace.");
+      }
 
       if (complete) {
         const doneRes = await fetch(apiUrl("/api/tenant/me"), {
@@ -57,9 +62,14 @@ export default function OnboardingPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ onboarding_completed: true, locale, name: companyName || "Mizan Workspace" }),
         });
-        if (!doneRes.ok) throw new Error("completion failed");
+        if (!doneRes.ok) {
+          const payload = await doneRes.json().catch(() => ({}));
+          throw new Error(payload.detail || "Impossible de terminer l'onboarding.");
+        }
         router.replace("/");
       }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Erreur inconnue.");
     } finally {
       setSaving(false);
     }
@@ -118,6 +128,11 @@ export default function OnboardingPage() {
               <Database className="h-4 w-4" />
               {t("startTutorial")}
             </button>
+            {error && (
+              <p className="mt-4 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">
+                {error}
+              </p>
+            )}
           </section>
 
           <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
