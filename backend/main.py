@@ -21,7 +21,7 @@ import time
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    if os.getenv("RUN_MIGRATIONS_ON_STARTUP", "false").lower() == "true":
+    if os.getenv("RUN_MIGRATIONS_ON_STARTUP", "true").lower() == "true":
         run_migrations()
     seed_database()
     yield
@@ -166,6 +166,7 @@ class OptimizeRequest(BaseModel):
     constraints: Constraints
 
 class MultiBlendIngredient(BaseModel):
+    code: Optional[str] = None
     name: str
     cost: float = Field(ge=0)
     transport_cost: float = Field(default=0.0, ge=0)
@@ -175,6 +176,7 @@ class MultiBlendIngredient(BaseModel):
     is_active: bool = True
 
 class MultiBlendIngredientUpdate(BaseModel):
+    code: Optional[str] = None
     name: Optional[str] = None
     cost: Optional[float] = Field(default=None, ge=0)
     transport_cost: Optional[float] = Field(default=None, ge=0)
@@ -189,6 +191,7 @@ class ConstraintConfig(BaseModel):
     exact: Optional[float] = Field(default=None, ge=0)
 
 class RecipeDemand(BaseModel):
+    code: Optional[str] = None
     name: str
     demand_tons: float = Field(gt=0)
     process_yield_percent: float = Field(default=100.0, gt=0, le=100)
@@ -218,11 +221,11 @@ class RecipeOutGrouped(RecipeOut):
 
 class TenantBootstrapRequest(BaseModel):
     name: str = "Mizan Workspace"
-    locale: str = Field(default="fr", pattern="^(fr|en|ar)$")
+    locale: str = Field(default="fr", pattern="^(fr|en|es|ar)$")
 
 class TenantUpdateRequest(BaseModel):
     name: Optional[str] = None
-    locale: Optional[str] = Field(default=None, pattern="^(fr|en|ar)$")
+    locale: Optional[str] = Field(default=None, pattern="^(fr|en|es|ar)$")
     onboarding_completed: Optional[bool] = None
 
 class TenantOut(BaseModel):
@@ -267,17 +270,66 @@ class MonitoringSummary(BaseModel):
 # ═══════════════════  SEED DATA  ══════════════════════════════════════
 
 DEFAULT_INGREDIENTS = [
-    {"name": "Maïs (Imported Corn)",              "cost": 1.05, "transport_cost": 0.0, "dm": 88, "inventory_limit_tons": 50, "nutrients": {"Protéine %": 8.5,  "Fibre %": 2.2,  "Énergie": 3300}},
-    {"name": "Tourteau de Soja (Imported Soy 46%)", "cost": 1.95, "transport_cost": 0.0, "dm": 89, "inventory_limit_tons": 20, "nutrients": {"Protéine %": 46.0, "Fibre %": 6.0,  "Énergie": 2240}},
-    {"name": "Son de Blé / Sédari (Local Bran)",  "cost": 0.45, "transport_cost": 0.0, "dm": 88, "inventory_limit_tons": 30, "nutrients": {"Protéine %": 15.0, "Fibre %": 11.0, "Énergie": 1300}},
-    {"name": "Orge Locale (Local Barley)",         "cost": 0.90, "transport_cost": 0.0, "dm": 89, "inventory_limit_tons": 40, "nutrients": {"Protéine %": 11.0, "Fibre %": 5.0,  "Énergie": 2900}},
-    {"name": "Tourteau d'Olive (Olive Cake)",      "cost": 0.15, "transport_cost": 0.0, "dm": 85, "inventory_limit_tons": 10, "nutrients": {"Protéine %": 7.0,  "Fibre %": 38.0, "Énergie": 1100}},
+    {"code": "ING-CORN",   "name": "Maïs (Imported Corn)",                "cost": 1.05, "transport_cost": 0.0, "dm": 88, "inventory_limit_tons": 50, "nutrients": {"Protéine %": 8.5,  "Fibre %": 2.2,  "Énergie": 3300}},
+    {"code": "ING-SOY46",  "name": "Tourteau de Soja (Imported Soy 46%)", "cost": 1.95, "transport_cost": 0.0, "dm": 89, "inventory_limit_tons": 20, "nutrients": {"Protéine %": 46.0, "Fibre %": 6.0,  "Énergie": 2240}},
+    {"code": "ING-BRAN",   "name": "Son de Blé / Sédari (Local Bran)",    "cost": 0.45, "transport_cost": 0.0, "dm": 88, "inventory_limit_tons": 30, "nutrients": {"Protéine %": 15.0, "Fibre %": 11.0, "Énergie": 1300}},
+    {"code": "ING-BARLEY", "name": "Orge Locale (Local Barley)",          "cost": 0.90, "transport_cost": 0.0, "dm": 89, "inventory_limit_tons": 40, "nutrients": {"Protéine %": 11.0, "Fibre %": 5.0,  "Énergie": 2900}},
+    {"code": "ING-OLIVE",  "name": "Tourteau d'Olive (Olive Cake)",       "cost": 0.15, "transport_cost": 0.0, "dm": 85, "inventory_limit_tons": 10, "nutrients": {"Protéine %": 7.0,  "Fibre %": 38.0, "Énergie": 1100}},
 ]
 
 DEFAULT_RECIPES = [
-    {"name": "Poultry Grower", "demand_tons": 25, "process_yield_percent": 100.0, "bag_size_kg": 50.0, "constraints": {"Protéine %": {"min": 17, "max": 22}, "Fibre %": {"min": 3, "max": 7},  "Énergie": {"min": 2600}}},
-    {"name": "Dairy Cow",      "demand_tons": 30, "process_yield_percent": 100.0, "bag_size_kg": 50.0, "constraints": {"Protéine %": {"min": 14, "max": 18}, "Fibre %": {"min": 5, "max": 10}, "Énergie": {"min": 2200}}},
+    {"code": "FOR-POULTRY-GROWER", "name": "Poultry Grower", "demand_tons": 25, "process_yield_percent": 100.0, "bag_size_kg": 50.0, "constraints": {"Protéine %": {"min": 17, "max": 22}, "Fibre %": {"min": 3, "max": 7},  "Énergie": {"min": 2600}}},
+    {"code": "FOR-DAIRY-COW",      "name": "Dairy Cow",      "demand_tons": 30, "process_yield_percent": 100.0, "bag_size_kg": 50.0, "constraints": {"Protéine %": {"min": 14, "max": 18}, "Fibre %": {"min": 5, "max": 10}, "Énergie": {"min": 2200}}},
 ]
+
+
+def _normalize_code(value: str | None) -> str | None:
+    if value is None:
+        return None
+    code = value.strip().upper()
+    return code or None
+
+
+def _default_catalog_code(prefix: str, row_id: int | None) -> str | None:
+    return f"{prefix}-{row_id:04d}" if row_id else None
+
+
+def _ensure_ingredient_code(row: IngredientDB) -> bool:
+    if row.code:
+        normalized = _normalize_code(row.code)
+        if normalized != row.code:
+            row.code = normalized
+            return True
+        return False
+    row.code = _default_catalog_code("ING", row.id)
+    return bool(row.code)
+
+
+def _ensure_recipe_code(row: RecipeDB) -> bool:
+    if row.code:
+        normalized = _normalize_code(row.code)
+        if normalized != row.code:
+            row.code = normalized
+            return True
+        return False
+    row.code = _default_catalog_code("FOR", row.id)
+    return bool(row.code)
+
+
+def _ensure_catalog_codes(db: Session, tenant_id: str | None = None) -> None:
+    ing_query = db.query(IngredientDB)
+    rec_query = db.query(RecipeDB)
+    if tenant_id:
+        ing_query = ing_query.filter(IngredientDB.tenant_id == tenant_id)
+        rec_query = rec_query.filter(RecipeDB.tenant_id == tenant_id)
+
+    changed = False
+    for row in ing_query.all():
+        changed = _ensure_ingredient_code(row) or changed
+    for row in rec_query.all():
+        changed = _ensure_recipe_code(row) or changed
+    if changed:
+        db.commit()
 def _tenant_out(row: TenantDB, tenant_id: str, role: str = "admin") -> TenantOut:
     return TenantOut(
         tenant_id=tenant_id,
@@ -315,6 +367,7 @@ def _clone_public_seed_data(db: Session, tenant_id: str) -> None:
         for ing in db.query(IngredientDB).filter(IngredientDB.tenant_id == "public").all():
             db.add(IngredientDB(
                 tenant_id=tenant_id,
+                code=ing.code,
                 name=ing.name,
                 cost=ing.cost,
                 transport_cost=ing.transport_cost,
@@ -336,6 +389,7 @@ def _clone_public_seed_data(db: Session, tenant_id: str) -> None:
     for rec in public_masters:
         clone = RecipeDB(
             tenant_id=tenant_id,
+            code=rec.code,
             name=rec.name,
             demand_tons=rec.demand_tons,
             constraints=copy.deepcopy(rec.constraints or {}),
@@ -359,6 +413,7 @@ def _clone_public_seed_data(db: Session, tenant_id: str) -> None:
             continue
         db.add(RecipeDB(
             tenant_id=tenant_id,
+            code=rec.code,
             name=rec.name,
             demand_tons=rec.demand_tons,
             constraints=copy.deepcopy(rec.constraints or {}),
@@ -396,6 +451,8 @@ def seed_database():
             for row in DEFAULT_RECIPES:
                 db.add(RecipeDB(tenant_id="public", **row))
             db.commit()
+
+        _ensure_catalog_codes(db)
 
         # ── Auto-restore missing nutrients from INRAE JSON ─────────────────
         # If the JSON is on disk and some ingredients have < 5 nutrients,
@@ -475,11 +532,17 @@ def list_ingredients(
 ):
     _ensure_tenant(db, tenant)
     rows = db.query(IngredientDB).filter(IngredientDB.tenant_id == tenant.tenant_id).all()
+    changed = False
+    for row in rows:
+        changed = _ensure_ingredient_code(row) or changed
+    if changed:
+        db.commit()
     if lite:
         result = []
         for row in rows:
             data = {
                 "id": row.id,
+                "code": row.code,
                 "name": row.name,
                 "cost": row.cost,
                 "transport_cost": row.transport_cost,
@@ -510,6 +573,9 @@ def get_ingredient(
     ).first()
     if not row:
         raise HTTPException(status_code=404, detail="Ingredient not found")
+    if _ensure_ingredient_code(row):
+        db.commit()
+        db.refresh(row)
     return row
 
 
@@ -537,10 +603,12 @@ def create_ingredient(
     tenant: TenantContext = Depends(require_role("formulator")),
 ):
     _ensure_tenant(db, tenant)
+    data.code = _normalize_code(data.code)
     row = IngredientDB(tenant_id=tenant.tenant_id, **data.model_dump())
     db.add(row)
     db.flush()
-    _record_audit(db, tenant, "ingredient.create", "ingredient", row.id, {"name": row.name})
+    _ensure_ingredient_code(row)
+    _record_audit(db, tenant, "ingredient.create", "ingredient", row.id, {"name": row.name, "code": row.code})
     db.commit()
     db.refresh(row)
     return row
@@ -561,8 +629,11 @@ def update_ingredient(
         raise HTTPException(status_code=404, detail="Ingredient not found")
     
     update_data = data.model_dump(exclude_unset=True)
+    if "code" in update_data:
+        update_data["code"] = _normalize_code(update_data["code"])
     for key, value in update_data.items():
         setattr(row, key, value)
+    _ensure_ingredient_code(row)
     _record_audit(db, tenant, "ingredient.update", "ingredient", ingredient_id, update_data)
     db.commit()
     db.refresh(row)
@@ -636,6 +707,11 @@ def list_recipes(
 ):
     _ensure_tenant(db, tenant)
     all_recipes = db.query(RecipeDB).filter(RecipeDB.tenant_id == tenant.tenant_id).all()
+    changed = False
+    for row in all_recipes:
+        changed = _ensure_recipe_code(row) or changed
+    if changed:
+        db.commit()
     
     # Group by parent_id
     masters = []
@@ -653,7 +729,7 @@ def list_recipes(
     result = []
     for m in masters:
         m_dict = {
-            "id": m.id, "name": m.name, "demand_tons": m.demand_tons,
+            "id": m.id, "code": m.code, "name": m.name, "demand_tons": m.demand_tons,
             "process_yield_percent": m.process_yield_percent, "bag_size_kg": m.bag_size_kg,
             "constraints": m.constraints, "parent_id": m.parent_id, "version_tag": m.version_tag,
             "species": m.species or "General",
@@ -686,10 +762,12 @@ def create_recipe(
     tenant: TenantContext = Depends(require_role("formulator")),
 ):
     _ensure_tenant(db, tenant)
+    data.code = _normalize_code(data.code)
     row = RecipeDB(tenant_id=tenant.tenant_id, **data.model_dump())
     db.add(row)
     db.flush()
-    _record_audit(db, tenant, "recipe.create", "recipe", row.id, {"name": row.name})
+    _ensure_recipe_code(row)
+    _record_audit(db, tenant, "recipe.create", "recipe", row.id, {"name": row.name, "code": row.code})
     db.commit()
     db.refresh(row)
     return row
@@ -757,17 +835,20 @@ def create_recipe_revision(
     import copy
     new_row = RecipeDB(
         tenant_id=tenant.tenant_id,
+        code=None,
         name=parent.name,
         demand_tons=parent.demand_tons,
         process_yield_percent=parent.process_yield_percent,
         bag_size_kg=parent.bag_size_kg,
         constraints=copy.deepcopy(parent.constraints),
         parent_id=actual_parent_id,
-        version_tag=request.version_tag
+        version_tag=request.version_tag,
+        species=parent.species or "General",
     )
     db.add(new_row)
     db.flush()
-    _record_audit(db, tenant, "recipe.revision", "recipe", new_row.id, {"source_id": recipe_id, "version_tag": request.version_tag})
+    _ensure_recipe_code(new_row)
+    _record_audit(db, tenant, "recipe.revision", "recipe", new_row.id, {"source_id": recipe_id, "version_tag": request.version_tag, "code": new_row.code})
     db.commit()
     db.refresh(new_row)
     return new_row
@@ -788,8 +869,10 @@ def update_recipe(
         raise HTTPException(status_code=404, detail="Recipe not found")
         
     update_data = data.model_dump()
+    update_data["code"] = _normalize_code(update_data.get("code"))
     for key, value in update_data.items():
         setattr(row, key, value)
+    _ensure_recipe_code(row)
     _record_audit(db, tenant, "recipe.update", "recipe", recipe_id, {"name": row.name})
     db.commit()
     db.refresh(row)
@@ -855,6 +938,7 @@ def optimize_multi_blend(
         ing_list = []
         for row in ingredients_to_use:
             ing_list.append(MultiBlendIngredient(
+                code=row.code,
                 name=row.name,
                 cost=row.cost,
                 transport_cost=row.transport_cost,
@@ -956,6 +1040,7 @@ def run_parametric_analysis(
         ).all()
         source_recipes = [
             RecipeDemand(
+                code=row.code,
                 name=row.name,
                 demand_tons=row.demand_tons,
                 process_yield_percent=row.process_yield_percent or 100.0,
@@ -975,6 +1060,7 @@ def run_parametric_analysis(
     ing_list = []
     for row in db_ingredients:
         ing_list.append(MultiBlendIngredient(
+            code=row.code,
             name=row.name,
             cost=row.cost,
             transport_cost=row.transport_cost or 0.0,
@@ -1010,6 +1096,7 @@ def run_parametric_analysis(
                 constraints[request.nutrient_key] = constraint
 
             modified_recipes.append(RecipeDemand(
+                code=recipe.code,
                 name=recipe.name,
                 demand_tons=recipe.demand_tons,
                 process_yield_percent=recipe.process_yield_percent or 100.0,

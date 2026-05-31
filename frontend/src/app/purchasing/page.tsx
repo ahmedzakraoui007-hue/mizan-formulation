@@ -9,6 +9,7 @@ import { canRunOptimization, canUsePurchasing, useTenantRole } from "@/lib/tenan
 import { apiUrl } from "@/lib/api";
 
 interface ShadowPrice {
+  ingredient_code?: string | null;
   ingredient_name: string;
   current_price: number;
   target_price: number;
@@ -16,6 +17,7 @@ interface ShadowPrice {
 }
 
 interface RecipeResult {
+  code?: string | null;
   name: string;
   demand_tons: number;
   raw_tons: number;
@@ -115,11 +117,11 @@ export default function PurchasingPage() {
   };
 
   // Collect all shadow prices across recipes
-  const allShadowPrices: (ShadowPrice & { recipe: string })[] = [];
+  const allShadowPrices: (ShadowPrice & { recipe: string; recipe_code?: string | null })[] = [];
   if (result) {
     result.recipes.forEach(rec => {
       (rec.shadow_prices || []).forEach(sp => {
-        allShadowPrices.push({ ...sp, recipe: rec.name });
+        allShadowPrices.push({ ...sp, recipe: rec.name, recipe_code: rec.code });
       });
     });
   }
@@ -175,7 +177,7 @@ export default function PurchasingPage() {
               <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Plus Proche de Rentabilité</p>
               {allShadowPrices.length > 0 ? (
                 <>
-                  <p className="text-xl font-black text-emerald-600 truncate">{allShadowPrices[0].ingredient_name}</p>
+                  <p className="text-xl font-black text-emerald-600 truncate">{allShadowPrices[0].ingredient_code ? `${allShadowPrices[0].ingredient_code} · ` : ""}{allShadowPrices[0].ingredient_name}</p>
                   <p className="text-sm text-gray-500 mt-1">écart de seulement <b className="text-emerald-700">{allShadowPrices[0].difference.toFixed(3)} TND</b></p>
                 </>
               ) : (
@@ -199,7 +201,9 @@ export default function PurchasingPage() {
                   <thead>
                     <tr className="bg-gray-50 text-gray-500 text-xs font-bold tracking-wider uppercase border-b border-gray-200">
                       <th className="py-4 px-6 text-left">Matière Première</th>
+                      <th className="py-4 px-6 text-left">Code MP</th>
                       <th className="py-4 px-6 text-left">Formule</th>
+                      <th className="py-4 px-6 text-left">Code Formule</th>
                       <th className="py-4 px-6 text-right">Coût Actuel (TND/kg)</th>
                       <th className="py-4 px-6 text-right">Prix Cible (TND/kg)</th>
                       <th className="py-4 px-6 text-right">Effort Requis</th>
@@ -213,7 +217,9 @@ export default function PurchasingPage() {
                       return (
                         <tr key={idx} className="hover:bg-blue-50/50 transition-colors">
                           <td className="py-4 px-6 font-bold text-gray-900">{sp.ingredient_name}</td>
+                          <td className="py-4 px-6 font-mono text-xs font-black text-indigo-700">{sp.ingredient_code || "—"}</td>
                           <td className="py-4 px-6 text-gray-500">{sp.recipe}</td>
+                          <td className="py-4 px-6 font-mono text-xs font-black text-indigo-700">{sp.recipe_code || "—"}</td>
                           <td className="py-4 px-6 text-right font-mono text-red-600 font-bold">{sp.current_price.toFixed(3)}</td>
                           <td className="py-4 px-6 text-right font-mono text-emerald-600 font-bold">{sp.target_price.toFixed(3)}</td>
                           <td className="py-4 px-6 text-right font-mono font-bold text-gray-700">-{sp.difference.toFixed(3)} TND</td>

@@ -335,6 +335,7 @@ def solve_multi_blend(ingredients, recipes):
                 item_cost = tons * (base_cost + t_cost) * 1000
                 recipe_cost += item_cost
                 ing_list.append({
+                    "code": getattr(ing, "code", None),
                     "name": ing.name,
                     "tons": round(tons, 4),
                     "percentage": round((tons / raw_tons) * 100, 2),
@@ -350,6 +351,7 @@ def solve_multi_blend(ingredients, recipes):
                     
                     if target_price > 0:
                         shadow_prices.append({
+                            "ingredient_code": getattr(ing, "code", None),
                             "ingredient_name": ing.name,
                             "current_price": round(current_price, 3),
                             "target_price": round(target_price, 3),
@@ -376,6 +378,7 @@ def solve_multi_blend(ingredients, recipes):
         cost_per_bag = recipe_cost / bags_produced
 
         result_recipes.append({
+            "code": getattr(rec, "code", None),
             "name": rec.name,
             "demand_tons": D,
             "raw_tons": round(raw_tons, 4),

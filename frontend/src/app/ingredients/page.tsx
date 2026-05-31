@@ -15,6 +15,7 @@ import { apiUrl } from "@/lib/api";
 
 interface LiteIngredient {
   id: number;
+  code?: string | null;
   name: string;
   cost: number;
   transport_cost: number;
@@ -108,9 +109,9 @@ export default function IngredientsPage() {
 
   // ── Inline row edit helpers ────────────────────────────────────────────────
   // Only fields that are safe to edit from lite data — NEVER nutrients
-  const editRow = (id: number, field: "name" | "cost" | "transport_cost" | "dm" | "inventory_limit_tons", val: string) => {
+  const editRow = (id: number, field: "code" | "name" | "cost" | "transport_cost" | "dm" | "inventory_limit_tons", val: string) => {
     if (!canManage) return;
-    const parsed = field === "name" ? val : parseFloat(val) || 0;
+    const parsed = field === "name" || field === "code" ? val : parseFloat(val) || 0;
     setIngredients(prev => prev.map(i => i.id !== id ? i : { ...i, [field]: parsed }));
     setPendingRowEdits(prev => ({
       ...prev,
@@ -139,6 +140,7 @@ export default function IngredientsPage() {
             setIngredients(prev => prev.map(i => i.id !== updated.id ? i : {
               ...i,
               name: updated.name,
+              code: updated.code,
               cost: updated.cost,
               transport_cost: updated.transport_cost,
               dm: updated.dm,
@@ -229,6 +231,7 @@ export default function IngredientsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: panel.name,
+          code: panel.code,
           cost: panel.cost,
           transport_cost: panel.transport_cost,
           dm: panel.dm,
@@ -245,6 +248,7 @@ export default function IngredientsPage() {
         setIngredients(prev => prev.map(i => i.id !== updated.id ? i : {
           ...i,
           name: updated.name,
+          code: updated.code,
           cost: updated.cost,
           transport_cost: updated.transport_cost,
           dm: updated.dm,
@@ -261,8 +265,9 @@ export default function IngredientsPage() {
   // ── Derived ───────────────────────────────────────────────────────────────
   const filteredIngredients = ingredients.filter(ing => {
     const matchesSearch = ing.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCode = (ing.code || "").toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = ingredientMatchesStatus(ing, filterStatus);
-    return matchesSearch && matchesStatus;
+    return (matchesSearch || matchesCode) && matchesStatus;
   });
 
   const panelNutrientGroups = panel ? groupNutrients(
@@ -282,6 +287,7 @@ export default function IngredientsPage() {
   const ingredientCountLabel = filteredIngredients.length > 1 ? t("rawMaterialPlural") : t("rawMaterialSingular");
   const tableHeaders = [
     { label: t("name"), className: "text-left min-w-[220px]" },
+    { label: t("ingredientCode"), className: "text-left min-w-[140px]" },
     { label: t("status"), className: "text-center" },
     { label: t("costTndKg"), className: "text-right" },
     { label: t("dryMatterShort"), className: "text-right" },
@@ -376,8 +382,15 @@ export default function IngredientsPage() {
               <article key={ing.id}
                 className={`rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-all ${!ing.is_active ? "opacity-70 grayscale" : ""} ${panel?.id === ing.id ? "border-blue-300 ring-2 ring-blue-100" : ""}`}>
                 <div className="flex items-start gap-3">
-                  <input type="text" value={ing.name} onChange={e => editRow(ing.id, "name", e.target.value)} disabled={!canManage}
-                    className="min-w-0 flex-1 bg-transparent text-base font-black leading-tight text-gray-900 outline-none focus:ring-2 focus:ring-blue-500 rounded-lg px-1 py-0.5 disabled:text-slate-500 disabled:cursor-not-allowed" />
+                  <div className="min-w-0 flex-1">
+                    <input type="text" value={ing.name} onChange={e => editRow(ing.id, "name", e.target.value)} disabled={!canManage}
+                      className="w-full min-w-0 bg-transparent text-base font-black leading-tight text-gray-900 outline-none focus:ring-2 focus:ring-blue-500 rounded-lg px-1 py-0.5 disabled:text-slate-500 disabled:cursor-not-allowed" />
+                    <label className="mt-2 block">
+                      <span className="mb-1 block text-[10px] font-black uppercase tracking-wide text-slate-400">{t("ingredientCode")}</span>
+                      <input type="text" value={ing.code || ""} onChange={e => editRow(ing.id, "code", e.target.value)} disabled={!canManage}
+                        className="w-full rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 font-mono text-xs font-black uppercase text-slate-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed" />
+                    </label>
+                  </div>
                   <button onClick={() => toggleActive(ing.id)} disabled={!canManage}
                     className={`flex-shrink-0 rounded-full border px-3 py-1 text-xs font-bold transition-all disabled:cursor-not-allowed ${ing.is_active ? "border-emerald-200 bg-emerald-100 text-emerald-700" : "border-gray-200 bg-gray-100 text-gray-500"}`}>
                     {ing.is_active ? t("active") : t("inactive")}
@@ -427,7 +440,7 @@ export default function IngredientsPage() {
         {/* Desktop table */}
         <div className="hidden flex-1 overflow-auto px-8 pb-8 md:block">
           <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-visible">
-            <table className="w-full min-w-[1180px] text-sm border-collapse">
+            <table className="w-full min-w-[1280px] text-sm border-collapse">
               <thead className="sticky top-0 z-10">
                 <tr className="border-y border-gray-200 bg-slate-100">
                   {tableHeaders.map((h, i) => (
@@ -437,7 +450,7 @@ export default function IngredientsPage() {
               </thead>
               <tbody className="divide-y divide-gray-50 text-gray-900">
                 {filteredIngredients.length === 0 && (
-                  <tr><td colSpan={8} className="py-16 text-center text-gray-400 italic">
+                  <tr><td colSpan={9} className="py-16 text-center text-gray-400 italic">
                     {t("noIngredientMatch")}
                   </td></tr>
                 )}
@@ -449,6 +462,12 @@ export default function IngredientsPage() {
                     <td className="py-3 px-5">
                       <input type="text" value={ing.name} onChange={e => editRow(ing.id, "name", e.target.value)} disabled={!canManage}
                         className="w-full min-w-[180px] bg-transparent outline-none text-gray-900 font-semibold focus:ring-2 focus:ring-blue-500 rounded-lg px-2 py-1 transition-all disabled:text-slate-500 disabled:cursor-not-allowed" />
+                    </td>
+
+                    {/* Code */}
+                    <td className="py-3 px-5">
+                      <input type="text" value={ing.code || ""} onChange={e => editRow(ing.id, "code", e.target.value)} disabled={!canManage}
+                        className="w-32 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 font-mono text-xs font-black uppercase text-slate-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed" />
                     </td>
 
                     {/* Statut */}
@@ -528,7 +547,14 @@ export default function IngredientsPage() {
                     <span className="text-xs font-bold text-blue-300 uppercase tracking-widest">{t("technicalSheet")}</span>
                   </div>
                   <h2 className="text-lg font-black text-white leading-tight truncate">{panel.name}</h2>
-                  <div className="flex items-center gap-4 mt-2">
+                  <label className="mt-3 block">
+                    <span className="mb-1 block text-[10px] font-black uppercase tracking-widest text-blue-200">{t("ingredientCode")}</span>
+                    <input type="text" value={panel.code || ""}
+                      onChange={e => setPanel(prev => prev ? { ...prev, code: e.target.value } : null)}
+                      disabled={!canManage}
+                      className="w-full rounded-lg border border-white/10 bg-white/10 px-2 py-1.5 font-mono text-xs font-black uppercase text-white outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-300 disabled:text-slate-400 disabled:cursor-not-allowed" />
+                  </label>
+                  <div className="flex flex-wrap items-center gap-4 mt-3">
                     <span className="text-xs text-slate-400 font-mono">MS:
                       <input type="number" step="0.1" value={panel.dm}
                         onChange={e => setPanel(prev => prev ? { ...prev, dm: parseFloat(e.target.value) || 0 } : null)}

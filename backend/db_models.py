@@ -18,6 +18,7 @@ class IngredientDB(Base):
 
     id                   = Column(Integer, primary_key=True, index=True)
     tenant_id            = Column(String,  nullable=False, index=True, default="public")
+    code                 = Column(String,  nullable=True,  index=True)
     name                 = Column(String,  nullable=False)
     cost                 = Column(Float,   nullable=False)
     transport_cost       = Column(Float,   nullable=False, default=0.0)
@@ -32,6 +33,7 @@ class RecipeDB(Base):
 
     id                    = Column(Integer, primary_key=True, index=True)
     tenant_id             = Column(String,  nullable=False, index=True, default="public")
+    code                  = Column(String,  nullable=True,  index=True)
     name                  = Column(String,  nullable=False)
     demand_tons           = Column(Float,   nullable=False)
     constraints           = Column(JSON,    default=dict)

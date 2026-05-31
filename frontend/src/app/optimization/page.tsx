@@ -24,6 +24,7 @@ interface ConstraintConfig {
 
 interface IngredientLite {
   id: number;
+  code?: string | null;
   name: string;
   inventory_limit_tons?: number;
   is_active?: boolean | null;
@@ -31,6 +32,7 @@ interface IngredientLite {
 
 interface RecipeItem {
   id: number;
+  code?: string | null;
   name: string;
   demand_tons: number;
   constraints?: Record<string, ConstraintConfig>;
@@ -44,12 +46,14 @@ interface RecipeItem {
 }
 
 interface ResultIngredient {
+  code?: string | null;
   name: string;
   tons: number;
   percentage: number;
 }
 
 interface RecipeResult {
+  code?: string | null;
   name: string;
   demand_tons: number;
   raw_tons: number;
@@ -338,11 +342,11 @@ export default function OptimizationPage() {
     const filteredNutrients = getKeysToPrint(rec.nutrients, constraintKeys, species);
 
     let csv = '\uFEFF'; // UTF-8 BOM for Excel
-    csv += `Recette;${rec.name};Espèce;${originalRec?.species || 'Générale'};Date;${new Date().toLocaleDateString('fr-FR')}\n`;
+    csv += `Code;${rec.code || ""};Recette;${rec.name};Espèce;${originalRec?.species || 'Générale'};Date;${new Date().toLocaleDateString('fr-FR')}\n`;
     csv += `\n`;
-    csv += `Matière Première;Inclusion (%);Quantité (kg/T)\n`;
+    csv += `Code;Matière Première;Inclusion (%);Quantité (kg/T)\n`;
     for (const ing of rec.ingredients) {
-      csv += `${ing.name};${Math.round(ing.percentage)}%;${Math.round(ing.percentage * 10)}\n`;
+      csv += `${ing.code || ""};${ing.name};${Math.round(ing.percentage)}%;${Math.round(ing.percentage * 10)}\n`;
     }
     csv += `\n`;
     csv += `Paramètre Nutritionnel;Valeur Calculée;Cible Min/Max\n`;
@@ -623,7 +627,10 @@ export default function OptimizationPage() {
                     <div key={idx} className="bg-white/80 backdrop-blur-3xl border border-white rounded-[2.5rem] p-8 md:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_40px_rgb(0,0,0,0.08)] flex flex-col transition-all duration-500 hover:-translate-y-1">
                       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
                         <div>
-                          <h3 className="text-slate-900 font-black text-3xl tracking-tight">{rec.name}</h3>
+                          <div className="flex flex-wrap items-center gap-3">
+                            {rec.code && <span className="rounded-lg bg-indigo-50 px-2.5 py-1 font-mono text-xs font-black text-indigo-700 ring-1 ring-indigo-100">{rec.code}</span>}
+                            <h3 className="text-slate-900 font-black text-3xl tracking-tight">{rec.name}</h3>
+                          </div>
                           <p className="text-slate-500 font-medium mt-2 bg-slate-100/50 px-3 py-1 rounded-lg inline-block">{rec.demand_tons} t finales · {rec.raw_tons} t chargées</p>
                         </div>
                         <div className="md:text-right">
@@ -728,7 +735,7 @@ export default function OptimizationPage() {
                           </div>
 
                           <div style={{ backgroundColor: '#f3f4f6', padding: '15px', borderRadius: '8px', marginBottom: '30px' }}>
-                            <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold', color: '#1f2937' }}>Recette : {rec.name}</h3>
+                            <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold', color: '#1f2937' }}>Recette : {rec.code ? `${rec.code} - ` : ""}{rec.name}</h3>
                           </div>
 
                           {/* Section 1: Composition */}
@@ -737,6 +744,7 @@ export default function OptimizationPage() {
                             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
                               <thead>
                                 <tr style={{ backgroundColor: '#f9fafb' }}>
+                                  <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '2px solid #e5e7eb', color: '#4b5563' }}>Code</th>
                                   <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '2px solid #e5e7eb', color: '#4b5563' }}>Ingrédient</th>
                                   <th style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '2px solid #e5e7eb', color: '#4b5563' }}>Inclusion (%)</th>
                                   <th style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '2px solid #e5e7eb', color: '#4b5563' }}>Quantité (kg/T)</th>
@@ -745,6 +753,7 @@ export default function OptimizationPage() {
                               <tbody>
                                 {rec.ingredients.map((ing, i) => (
                                   <tr key={ing.name} style={{ backgroundColor: i % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
+                                    <td style={{ padding: '10px 12px', borderBottom: '1px solid #e5e7eb', fontWeight: '700', color: '#4338ca' }}>{ing.code || "—"}</td>
                                     <td style={{ padding: '10px 12px', borderBottom: '1px solid #e5e7eb', fontWeight: '600', color: '#1f2937' }}>{ing.name}</td>
                                     <td style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '1px solid #e5e7eb', color: '#374151' }}>{Math.round(ing.percentage)} %</td>
                                     <td style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '1px solid #e5e7eb', fontWeight: 'bold', color: '#059669' }}>{Math.round(ing.percentage * 10)} kg</td>

@@ -4,7 +4,7 @@ import { useUser } from "@clerk/nextjs";
 import { ArrowLeft, ArrowRight, Building2, CheckCircle2, Database, Languages, ShieldCheck, Sparkles, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { useI18n, type Locale } from "@/lib/i18n";
+import { localeOptions, useI18n, type Locale } from "@/lib/i18n";
 import { apiUrl } from "@/lib/api";
 
 export default function OnboardingPage() {
@@ -114,9 +114,9 @@ export default function OnboardingPage() {
                 onChange={(event) => setLocale(event.target.value as Locale)}
                 className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900 outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
               >
-                <option value="fr">Français</option>
-                <option value="en">English</option>
-                <option value="ar">العربية</option>
+                {localeOptions.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
               </select>
             </label>
 

@@ -7,12 +7,14 @@ import { buildWhatsAppMessage, buildWhatsAppUrl } from "@/lib/whatsAppShare";
 import { getNutrientUnit, getTopNutrients } from "@/utils/nutrientUtils";
 
 interface ResultIngredient {
+  code?: string | null;
   name: string;
   tons: number;
   percentage: number;
 }
 
 interface RecipeResult {
+  code?: string | null;
   name: string;
   demand_tons: number;
   raw_tons: number;
@@ -41,6 +43,7 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
   const generateCSV = () => {
     let csv = `MIZAN FORMULATION - Fiche de Fabrication\n`;
     csv += `Date,${dateStr}\n\n`;
+    csv += `Code Formule,${report.code || ""}\n`;
     csv += `Formule,${report.name}\n`;
     csv += `Tonnage final (t),${report.demand_tons}\n`;
     csv += `Matieres chargees (t),${report.raw_tons}\n`;
@@ -49,9 +52,9 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
     csv += `Taille du sac (kg),${report.bag_size_kg}\n`;
     csv += `Cout par sac (TND),${report.cost_per_bag_tnd.toFixed(3)}\n\n`;
 
-    csv += `Matiere Premiere,Quantite (kg),Quantite (t),Proportion (%)\n`;
+    csv += `Code,Matiere Premiere,Quantite (kg),Quantite (t),Proportion (%)\n`;
     sortedIngredients.forEach(ing => {
-      csv += `"${ing.name}",${Math.round(ing.percentage * 10)},${ing.tons.toFixed(2)},${Math.round(ing.percentage)}\n`;
+      csv += `"${ing.code || ""}","${ing.name}",${Math.round(ing.percentage * 10)},${ing.tons.toFixed(2)},${Math.round(ing.percentage)}\n`;
     });
 
     csv += `\nValeurs Nutritionnelles,Atteint,Unité\n`;
@@ -178,7 +181,11 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
 
         {/* Global Stats Grid */}
         <div className="bg-gray-50/80 border border-gray-200 rounded-xl p-6 mb-8 print:bg-transparent print:border-gray-800 print:rounded-none">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
+            <div>
+              <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Code Formule</p>
+              <p className="text-xl font-black text-indigo-700 mt-1 font-mono">{report.code || "—"}</p>
+            </div>
             <div>
               <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Formule</p>
               <p className="text-xl font-black text-gray-900 mt-1">{report.name}</p>
@@ -204,6 +211,7 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
         <table className="w-full text-left text-sm mb-8 border border-gray-200">
           <thead className="bg-gray-100 border-b border-gray-200 print:bg-gray-200">
             <tr className="text-gray-700 text-xs font-bold uppercase tracking-wider">
+              <th className="py-3 px-4">Code</th>
               <th className="py-3 px-4">Matière Première</th>
               <th className="py-3 px-4 text-right">Quantité (kg)</th>
               <th className="py-3 px-4 text-right">Quantité (tonnes)</th>
@@ -213,6 +221,7 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
           <tbody className="divide-y divide-gray-100 mix-blend-multiply">
             {sortedIngredients.map((ing, idx) => (
               <tr key={idx} className={idx % 2 !== 0 ? "bg-gray-50/50 print:bg-transparent" : "print:bg-transparent"}>
+                <td className="py-2.5 px-4 font-mono text-xs font-black text-indigo-700">{ing.code || "—"}</td>
                 <td className="py-2.5 px-4 font-bold text-gray-900">{ing.name}</td>
                 <td className="py-2.5 px-4 text-right font-medium">{Math.round(ing.percentage * 10).toLocaleString("fr-FR")} kg</td>
                 <td className="py-2.5 px-4 text-right text-gray-600 font-medium">{ing.tons.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} t</td>
@@ -220,7 +229,7 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
               </tr>
             ))}
             <tr className="bg-gray-100 font-black text-gray-900 border-t-2 border-gray-300 print:bg-gray-200">
-              <td className="py-3 px-4 uppercase text-xs tracking-wider">Total Charges</td>
+              <td className="py-3 px-4 uppercase text-xs tracking-wider" colSpan={2}>Total Charges</td>
               <td className="py-3 px-4 text-right">{(report.raw_tons * 1000).toLocaleString("fr-FR", { maximumFractionDigits: 0 })} kg</td>
               <td className="py-3 px-4 text-right">{report.raw_tons.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} t</td>
               <td className="py-3 px-4 text-right">100.0 %</td>
@@ -289,7 +298,7 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
             </div>
 
             <div style={{ backgroundColor: '#f3f4f6', padding: '15px', borderRadius: '8px', marginBottom: '30px' }}>
-              <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold', color: '#1f2937' }}>Recette : {report.name}</h3>
+              <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold', color: '#1f2937' }}>Recette : {report.code ? `${report.code} - ` : ""}{report.name}</h3>
             </div>
 
             <div style={{ marginBottom: '35px' }}>
@@ -297,6 +306,7 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
                 <thead>
                   <tr style={{ backgroundColor: '#f9fafb' }}>
+                    <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '2px solid #e5e7eb', color: '#4b5563' }}>Code</th>
                     <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '2px solid #e5e7eb', color: '#4b5563' }}>Ingrédient</th>
                     <th style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '2px solid #e5e7eb', color: '#4b5563' }}>Inclusion (%)</th>
                     <th style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '2px solid #e5e7eb', color: '#4b5563' }}>Quantité (kg/T)</th>
@@ -305,6 +315,7 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
                 <tbody>
                   {sortedIngredients.map((ing, i) => (
                     <tr key={ing.name} style={{ backgroundColor: i % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
+                      <td style={{ padding: '10px 12px', borderBottom: '1px solid #e5e7eb', fontWeight: '700', color: '#4338ca' }}>{ing.code || "—"}</td>
                       <td style={{ padding: '10px 12px', borderBottom: '1px solid #e5e7eb', fontWeight: '600', color: '#1f2937' }}>{ing.name}</td>
                       <td style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '1px solid #e5e7eb', color: '#374151' }}>{Math.round(ing.percentage)} %</td>
                       <td style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '1px solid #e5e7eb', fontWeight: 'bold', color: '#059669' }}>{Math.round(ing.percentage * 10)} kg</td>

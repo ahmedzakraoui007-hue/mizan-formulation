@@ -1,5 +1,6 @@
 def _ingredient(name="Corn", protein=12, stock=20):
     return {
+        "code": "ING-TEST",
         "name": name,
         "cost": 1.0,
         "transport_cost": 0.0,
@@ -12,6 +13,7 @@ def _ingredient(name="Corn", protein=12, stock=20):
 
 def _recipe(name="Grower"):
     return {
+        "code": "FOR-TEST",
         "name": name,
         "demand_tons": 5,
         "process_yield_percent": 100,
@@ -33,6 +35,25 @@ def test_tenant_isolation_for_ingredients(client):
 
     assert [row["name"] for row in list_a] == ["Tenant A Corn"]
     assert [row["name"] for row in list_b] == ["Tenant B Soy"]
+
+
+def test_catalog_codes_can_be_created_and_updated(client):
+    ing_payload = _ingredient("Coded Corn", protein=13)
+    ing_payload["code"] = " corn-01 "
+    ing = client.post("/api/ingredients", json=ing_payload, headers={"X-Test-Tenant": "tenant-a"}).json()
+    assert ing["code"] == "CORN-01"
+
+    updated = client.put(
+        f"/api/ingredients/{ing['id']}",
+        json={**ing_payload, "code": "maize-local", "cost": 1.2},
+        headers={"X-Test-Tenant": "tenant-a"},
+    ).json()
+    assert updated["code"] == "MAIZE-LOCAL"
+
+    recipe_payload = _recipe("Coded Grower")
+    recipe_payload["code"] = " grower-01 "
+    recipe = client.post("/api/recipes", json=recipe_payload, headers={"X-Test-Tenant": "tenant-a"}).json()
+    assert recipe["code"] == "GROWER-01"
 
 
 def test_viewer_role_cannot_mutate_but_can_read(client):
