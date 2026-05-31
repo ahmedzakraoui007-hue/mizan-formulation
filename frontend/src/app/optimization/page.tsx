@@ -10,10 +10,9 @@ import { buildSolverRecipes, countSelectedRecipes, getRecipeIds } from "@/lib/op
 import { useI18n } from "@/lib/i18n";
 import { canRunOptimization, useTenantRole } from "@/lib/tenantRole";
 import { getNutrientUnit, getTopNutrients } from "@/utils/nutrientUtils";
+import { apiUrl } from "@/lib/api";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 const COLORS = ['#2563eb', '#16a34a', '#d97706', '#dc2626', '#7c3aed', '#0891b2', '#059669', '#ea580c'];
 
@@ -155,7 +154,7 @@ export default function OptimizationPage() {
 
   const fetchRecentRuns = useCallback(async () => {
     try {
-      const res = await fetch(`${API}/api/optimization-runs?limit=5`);
+      const res = await fetch(apiUrl("/api/optimization-runs?limit=5"));
       if (res.ok) setRecentRuns(await res.json());
     } catch { /* non-critical */ }
   }, []);
@@ -165,8 +164,8 @@ export default function OptimizationPage() {
     try {
       const [ingRes, recRes] = await Promise.all([
         // Use lite=true: optimization page only needs ingredient IDs and is_active
-        fetch(`${API}/api/ingredients?lite=true`),
-        fetch(`${API}/api/recipes`),
+        fetch(apiUrl("/api/ingredients?lite=true")),
+        fetch(apiUrl("/api/recipes")),
       ]);
       if (ingRes.ok && recRes.ok) {
         const ings = await ingRes.json();
@@ -246,7 +245,7 @@ export default function OptimizationPage() {
         throw new Error(t("selectAtLeastOneRecipe"));
       }
 
-      const res = await fetch(`${API}/api/optimize-multi`, {
+      const res = await fetch(apiUrl("/api/optimize-multi"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -376,7 +375,7 @@ export default function OptimizationPage() {
     setAuditLoading(true);
     setAuditResult(null);
     try {
-      const res = await fetch(`${API}/api/ai-audit`, {
+      const res = await fetch(apiUrl("/api/ai-audit"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(result),
@@ -400,7 +399,7 @@ export default function OptimizationPage() {
     const failedRec = recipes.find(r => r.name === failedName) || recipes[0];
 
     try {
-      const res = await fetch(`${API}/api/recipes/diagnose-infeasible`, {
+      const res = await fetch(apiUrl("/api/recipes/diagnose-infeasible"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -893,7 +892,7 @@ export default function OptimizationPage() {
                 setParamLoading(true); setParamData([]); setParamError(null);
                 try {
                   const { ingredientIds, flatRecipes } = buildOptimizationPayload();
-                  const res = await fetch(`${API}/api/parametric-analysis`, {
+                  const res = await fetch(apiUrl("/api/parametric-analysis"), {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({

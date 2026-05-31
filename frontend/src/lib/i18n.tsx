@@ -1,8 +1,19 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 export type Locale = "fr" | "en" | "ar";
+type Direction = "ltr" | "rtl";
+
+export const localeOptions: { value: Locale; label: string }[] = [
+  { value: "fr", label: "Français" },
+  { value: "en", label: "English" },
+  { value: "ar", label: "العربية" },
+];
+
+export function getLocaleDirection(locale: Locale): Direction {
+  return locale === "ar" ? "rtl" : "ltr";
+}
 
 const dictionaries = {
   fr: {
@@ -11,12 +22,13 @@ const dictionaries = {
     recipes: "Formules",
     optimization: "Optimisation",
     purchasing: "Achats & stratégie",
-    onboarding: "Onboarding",
+    onboarding: "Configuration initiale",
+    admin: "Administration",
     workspace: "Espace de travail",
     language: "Langue",
     signOut: "Compte",
     welcomeTitle: "Configurez votre espace Mizan",
-    welcomeSubtitle: "Choisissez votre langue, nommez votre entreprise et lancez le tutoriel de formulation.",
+    welcomeSubtitle: "Choisissez la langue de travail, nommez votre entreprise et préparez votre environnement de formulation.",
     companyName: "Nom de l'entreprise",
     startTutorial: "Démarrer le tutoriel",
     completeOnboarding: "Terminer l'onboarding",
@@ -25,9 +37,9 @@ const dictionaries = {
     stepTenant: "Votre espace est isolé",
     stepTenantText: "Chaque utilisateur ou organisation Clerk possède ses propres ingrédients, formules et résultats.",
     stepData: "Données de départ prêtes",
-    stepDataText: "Mizan copie une base INRAE de démarrage dans votre tenant, puis vos modifications restent privées.",
+    stepDataText: "Mizan initialise un catalogue INRAE de référence dans votre espace, puis conserve vos modifications séparément.",
     stepSolver: "Solveur multi-blend",
-    stepSolverText: "Activez les ingrédients, fixez les contraintes, puis laissez le solveur répartir les stocks au moindre coût.",
+    stepSolverText: "Activez les matières premières, définissez les contraintes, puis laissez le solveur répartir les stocks au meilleur coût.",
     dashboardGreeting: "Bonjour",
     dashboardFallbackName: "Directeur",
     dashboardSubtitle: "Voici l'état opérationnel de votre usine aujourd'hui.",
@@ -89,12 +101,13 @@ const dictionaries = {
     recipes: "Recipes",
     optimization: "Optimization",
     purchasing: "Purchasing & strategy",
-    onboarding: "Onboarding",
+    onboarding: "Initial setup",
+    admin: "Administration",
     workspace: "Workspace",
     language: "Language",
     signOut: "Account",
     welcomeTitle: "Set up your Mizan workspace",
-    welcomeSubtitle: "Pick a language, name your company, and start the formulation tutorial.",
+    welcomeSubtitle: "Choose your working language, name your company, and prepare your formulation workspace.",
     companyName: "Company name",
     startTutorial: "Start tutorial",
     completeOnboarding: "Finish onboarding",
@@ -103,9 +116,9 @@ const dictionaries = {
     stepTenant: "Your workspace is isolated",
     stepTenantText: "Each Clerk user or organization gets separate ingredients, recipes, and results.",
     stepData: "Starter data is ready",
-    stepDataText: "Mizan copies an INRAE starter catalog into your tenant, then your edits stay private.",
+    stepDataText: "Mizan initializes a reference INRAE catalog in your workspace while keeping your edits isolated.",
     stepSolver: "Multi-blend solver",
-    stepSolverText: "Activate ingredients, define constraints, then let the solver allocate stock at least cost.",
+    stepSolverText: "Activate raw materials, define constraints, then let the solver allocate inventory at the best cost.",
     dashboardGreeting: "Hello",
     dashboardFallbackName: "Director",
     dashboardSubtitle: "Here is your factory's operational state today.",
@@ -167,12 +180,13 @@ const dictionaries = {
     recipes: "التركيبات",
     optimization: "التحسين",
     purchasing: "المشتريات والاستراتيجية",
-    onboarding: "التهيئة",
+    onboarding: "الإعداد الأولي",
+    admin: "الإدارة",
     workspace: "مساحة العمل",
     language: "اللغة",
     signOut: "الحساب",
     welcomeTitle: "قم بإعداد مساحة Mizan",
-    welcomeSubtitle: "اختر اللغة، واسم الشركة، ثم ابدأ دليل التركيب.",
+    welcomeSubtitle: "اختر لغة العمل، واسم الشركة، ثم جهّز مساحة التركيب الخاصة بك.",
     companyName: "اسم الشركة",
     startTutorial: "بدء الدليل",
     completeOnboarding: "إنهاء التهيئة",
@@ -181,9 +195,9 @@ const dictionaries = {
     stepTenant: "مساحتك معزولة",
     stepTenantText: "كل مستخدم أو منظمة في Clerk لديها مواد وتركيبات ونتائج منفصلة.",
     stepData: "بيانات البداية جاهزة",
-    stepDataText: "ينسخ Mizan كتالوج INRAE كبداية داخل tenant الخاص بك، ثم تبقى تعديلاتك خاصة.",
+    stepDataText: "يقوم Mizan بتهيئة كتالوج INRAE مرجعي داخل مساحة عملك مع إبقاء تعديلاتك معزولة.",
     stepSolver: "محرك multi-blend",
-    stepSolverText: "فعّل المواد، حدد القيود، ثم اترك المحرك يوزع المخزون بأقل تكلفة.",
+    stepSolverText: "فعّل المواد الأولية، وحدد القيود، ثم دع المحرك يوزع المخزون بأفضل تكلفة.",
     dashboardGreeting: "مرحبا",
     dashboardFallbackName: "المدير",
     dashboardSubtitle: "هذه هي الحالة التشغيلية لمصنعك اليوم.",
@@ -249,6 +263,12 @@ type I18nContextValue = {
 
 const I18nContext = createContext<I18nContextValue | null>(null);
 
+function applyDocumentLocale(locale: Locale) {
+  document.documentElement.lang = locale;
+  document.documentElement.dir = getLocaleDirection(locale);
+  document.documentElement.dataset.locale = locale;
+}
+
 export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(() => {
     if (typeof window === "undefined") return "fr";
@@ -256,18 +276,14 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     return saved && saved in dictionaries ? saved : "fr";
   });
 
-  const setLocale = (nextLocale: Locale) => {
+  const setLocale = useCallback((nextLocale: Locale) => {
     setLocaleState(nextLocale);
     window.localStorage.setItem("mizan-locale", nextLocale);
-    document.documentElement.lang = nextLocale;
-    document.documentElement.dir = "ltr";
-    document.documentElement.dataset.locale = nextLocale;
-  };
+    applyDocumentLocale(nextLocale);
+  }, []);
 
   useEffect(() => {
-    document.documentElement.lang = locale;
-    document.documentElement.dir = "ltr";
-    document.documentElement.dataset.locale = locale;
+    applyDocumentLocale(locale);
   }, [locale]);
 
   useEffect(() => {
@@ -287,7 +303,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     locale,
     setLocale,
     t: (key) => dictionaries[locale][key] ?? dictionaries.fr[key] ?? key,
-  }), [locale]);
+  }), [locale, setLocale]);
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }

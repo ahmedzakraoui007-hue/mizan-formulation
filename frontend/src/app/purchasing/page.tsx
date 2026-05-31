@@ -6,8 +6,7 @@ import ReactMarkdown from "react-markdown";
 import { toSolverRecipe } from "@/lib/optimizationSelection";
 import PageLoader from "@/components/PageLoader";
 import { canRunOptimization, canUsePurchasing, useTenantRole } from "@/lib/tenantRole";
-
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { apiUrl } from "@/lib/api";
 
 interface ShadowPrice {
   ingredient_name: string;
@@ -52,8 +51,8 @@ export default function PurchasingPage() {
     setFetching(true);
     try {
       const [ingRes, recRes] = await Promise.all([
-        fetch(`${API}/api/ingredients`),
-        fetch(`${API}/api/recipes`),
+        fetch(apiUrl("/api/ingredients")),
+        fetch(apiUrl("/api/recipes")),
       ]);
       if (ingRes.ok && recRes.ok) {
         setIngredients(await ingRes.json());
@@ -76,7 +75,7 @@ export default function PurchasingPage() {
       recipes.forEach(r => Object.keys(r.constraints || {}).forEach(k => allowedNames.add(k)));
       const ingredientIds = ingredients.filter(i => allowedNames.has(i.name)).map(i => i.id);
 
-      const res = await fetch(`${API}/api/optimize-multi`, {
+      const res = await fetch(apiUrl("/api/optimize-multi"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -100,7 +99,7 @@ export default function PurchasingPage() {
     setAiLoading(true);
     setAiInsights(null);
     try {
-      const res = await fetch(`${API}/api/ai-insights`, {
+      const res = await fetch(apiUrl("/api/ai-insights"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(result),

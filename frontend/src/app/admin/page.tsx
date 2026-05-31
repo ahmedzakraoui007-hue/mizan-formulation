@@ -4,8 +4,7 @@ import { Activity, AlertTriangle, Clock3, ListChecks, ServerCrash, ShieldCheck }
 import React, { useCallback, useEffect, useState } from "react";
 import PageLoader from "@/components/PageLoader";
 import { canViewAdmin, useTenantRole } from "@/lib/tenantRole";
-
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { apiUrl } from "@/lib/api";
 
 interface MonitoringSummary {
   total_optimization_runs: number;
@@ -67,9 +66,9 @@ export default function AdminPage() {
     setError(null);
     try {
       const [summaryRes, runsRes, auditRes] = await Promise.all([
-        fetch(`${API}/api/monitoring/summary`),
-        fetch(`${API}/api/optimization-runs?limit=8`),
-        fetch(`${API}/api/audit-logs?limit=12`),
+        fetch(apiUrl("/api/monitoring/summary")),
+        fetch(apiUrl("/api/optimization-runs?limit=8")),
+        fetch(apiUrl("/api/audit-logs?limit=12")),
       ]);
 
       if (!summaryRes.ok || !runsRes.ok || !auditRes.ok) {

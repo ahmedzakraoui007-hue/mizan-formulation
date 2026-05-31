@@ -185,6 +185,21 @@ const translations: TranslationMap = {
   "Précédent": { en: "Previous", ar: "السابق" },
   "Suivant": { en: "Next", ar: "التالي" },
   "Terminer l'onboarding": { en: "Finish onboarding", ar: "إنهاء التهيئة" },
+  "Chargement...": { en: "Loading...", ar: "جار التحميل..." },
+  "Moteur d'optimisation multi-tenant": {
+    en: "Multi-tenant optimization engine",
+    ar: "محرك تحسين متعدد المساحات",
+  },
+  "Administration": { en: "Administration", ar: "الإدارة" },
+  "Centre admin": { en: "Admin center", ar: "مركز الإدارة" },
+  "Acces admin requis": { en: "Admin access required", ar: "يتطلب صلاحية الإدارة" },
+  "Accès admin requis": { en: "Admin access required", ar: "يتطلب صلاحية الإدارة" },
+  "Monitoring production, historique solveur et audit trail tenant.": {
+    en: "Production monitoring, solver history and tenant audit trail.",
+    ar: "مراقبة الإنتاج، وسجل المحرك، ومسار تدقيق مساحة العمل.",
+  },
+  "Actualiser": { en: "Refresh", ar: "تحديث" },
+  "Chargement du monitoring...": { en: "Loading monitoring...", ar: "جار تحميل المراقبة..." },
 };
 
 const reverseLookup = new Map<string, string>();
@@ -243,6 +258,8 @@ function walk(node: Node, locale: Locale) {
 
   if (node.nodeType !== Node.ELEMENT_NODE) return;
   const element = node as Element;
+  if (element.hasAttribute("data-no-translate") || element.closest("[data-no-translate]")) return;
+  if (element.getAttribute("contenteditable") === "true") return;
   if (["SCRIPT", "STYLE", "TEXTAREA", "INPUT"].includes(element.tagName)) {
     translateElementAttributes(element, locale);
     return;
@@ -264,11 +281,23 @@ export default function PlatformTranslator() {
     const apply = () => walk(document.body, locale);
     apply();
 
+    let frame = 0;
+    const scheduleApply = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        apply();
+      });
+    };
+
     const observer = new MutationObserver(() => {
-      window.requestAnimationFrame(apply);
+      scheduleApply();
     });
     observer.observe(document.body, { childList: true, subtree: true, characterData: true });
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      if (frame) window.cancelAnimationFrame(frame);
+    };
   }, [locale]);
 
   return null;

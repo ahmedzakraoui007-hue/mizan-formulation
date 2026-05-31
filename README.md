@@ -45,6 +45,7 @@ CLERK_JWKS_URL=https://votre-domaine-clerk/.well-known/jwks.json
 CLERK_ISSUER=https://votre-domaine-clerk
 FRONTEND_URL=https://votre-frontend.example
 ALLOW_DEV_TENANT=false
+RUN_MIGRATIONS_ON_STARTUP=false
 ```
 
 En local, `ALLOW_DEV_TENANT=true` permet de tester avec `X-Tenant-ID: dev` si Clerk/JWKS n'est pas encore configure.
@@ -58,7 +59,7 @@ cd backend
 alembic upgrade head
 ```
 
-Sur Render, la commande de demarrage lance aussi `alembic upgrade head` avant Uvicorn.
+Sur Render, la commande de demarrage lance `alembic upgrade head` avant Uvicorn. Gardez `RUN_MIGRATIONS_ON_STARTUP=false` pour eviter de lancer les migrations deux fois.
 
 ## Tests et qualite
 

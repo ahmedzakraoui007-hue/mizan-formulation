@@ -19,3 +19,5 @@ services:
         sync: false
       - key: ALLOW_DEV_TENANT
         value: "false"
+      - key: RUN_MIGRATIONS_ON_STARTUP
+        value: "false"

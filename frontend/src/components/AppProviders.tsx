@@ -7,8 +7,7 @@ import { I18nProvider } from "@/lib/i18n";
 import PlatformTranslator from "@/lib/platformTranslations";
 import PageLoader from "@/components/PageLoader";
 import { persistTenantRole } from "@/lib/tenantRole";
-
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { API_BASE_URL, apiUrl } from "@/lib/api";
 
 function ApiAuthBridge({ children }: { children: React.ReactNode }) {
   const { getToken, isLoaded, isSignedIn } = useAuth();
@@ -21,7 +20,7 @@ function ApiAuthBridge({ children }: { children: React.ReactNode }) {
 
     window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
       const rawUrl = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
-      if (!rawUrl.startsWith(API)) return originalFetch(input, init);
+      if (!rawUrl.startsWith(API_BASE_URL)) return originalFetch(input, init);
 
       const headers = new Headers(init?.headers || (input instanceof Request ? input.headers : undefined));
       if (!headers.has("Authorization") && isLoaded && isSignedIn) {
@@ -47,7 +46,7 @@ function ApiAuthBridge({ children }: { children: React.ReactNode }) {
     const checkTenant = async () => {
       try {
         const token = await getToken();
-        const res = await fetch(`${API}/api/tenant/me`, {
+        const res = await fetch(apiUrl("/api/tenant/me"), {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         if (!res.ok) return;

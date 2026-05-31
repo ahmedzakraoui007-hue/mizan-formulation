@@ -5,8 +5,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { getFilteredNutrients, SPECIES_OPTIONS, getNutrientUnit } from "@/utils/nutrientUtils";
 import PageLoader from "@/components/PageLoader";
 import { canManageRecipes, useTenantRole } from "@/lib/tenantRole";
-
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { apiUrl } from "@/lib/api";
 
 interface ConstraintConfig {
   min?: number;
@@ -51,12 +50,10 @@ export default function RecipesPage() {
     setFetching(true);
     try {
       const [recRes, ingRes, stdRes] = await Promise.all([
-        fetch(`${API}/api/recipes`),
-        // Use lite=true: only need name & is_active, NOT the full 2MB nutrients payload.
-        // The nutrient keys come from the DB nutrients but we only need them for the dropdown.
-        // We fetch lite now and separately trigger a full nutrient-keys call.
-        fetch(`${API}/api/ingredients?lite=true`),
-        fetch(`${API}/api/standards`)
+        fetch(apiUrl("/api/recipes")),
+        // Use lite=true for ingredient names, then load nutrient keys through a compact API.
+        fetch(apiUrl("/api/ingredients?lite=true")),
+        fetch(apiUrl("/api/standards"))
       ]);
 
       if (stdRes.ok) {
@@ -90,19 +87,12 @@ export default function RecipesPage() {
         setGlobalIngredientNames(Array.from(itemNames).sort());
       }
 
-      // Fetch available nutrient keys from a dedicated lightweight backend endpoint.
-      // The backend already returns full nutrients per ingredient — we query one ingredient
-      // to get all possible key names for the recipe dropdown.
-      // We do this in a background fetch so the page is usable immediately.
+      // Fetch available nutrient keys through a dedicated lightweight endpoint.
+      // This keeps the recipe editor responsive even with a large INRAE catalog.
       try {
-        // We only need key names. Fetch the first ingredient with full nutrients to build the key list,
-        // or better: fetch all ingredients and collect unique keys (cache-friendly with browser).
-        const fullRes = await fetch(`${API}/api/ingredients`);
-        if (fullRes.ok) {
-          const fullIngs = await fullRes.json();
-          const keys = new Set<string>();
-          fullIngs.forEach((ing: any) => Object.keys(ing.nutrients || {}).forEach((k: string) => keys.add(k)));
-          setAvailableKeys(Array.from(keys).sort());
+        const keysRes = await fetch(apiUrl("/api/nutrient-keys"));
+        if (keysRes.ok) {
+          setAvailableKeys(await keysRes.json());
         }
       } catch { /* non-critical */ }
 
@@ -117,7 +107,7 @@ export default function RecipesPage() {
   const saveToBackend = async (rec: Recipe) => {
     if (!canManage) return;
     try {
-      await fetch(`${API}/api/recipes/${rec.id}`, {
+      await fetch(apiUrl(`/api/recipes/${rec.id}`), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -243,7 +233,7 @@ export default function RecipesPage() {
   const addRec = async () => {
     if (!canManage) return;
     try {
-      const res = await fetch(`${API}/api/recipes`, {
+      const res = await fetch(apiUrl("/api/recipes"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -264,7 +254,7 @@ export default function RecipesPage() {
   const rmRec = async (masterId: number, targetId: number) => {
     if (!canManage) return;
     try {
-      const res = await fetch(`${API}/api/recipes/${targetId}`, { method: "DELETE" });
+      const res = await fetch(apiUrl(`/api/recipes/${targetId}`), { method: "DELETE" });
       if (!res.ok) {
         const errorText = await res.text();
         alert(`Erreur du serveur lors de la suppression : ${errorText}`);
@@ -305,7 +295,7 @@ export default function RecipesPage() {
         });
       }
 
-      const res = await fetch(`${API}/api/recipes/suggest-bounds`, {
+      const res = await fetch(apiUrl("/api/recipes/suggest-bounds"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ recipe_name: recipeName, elements: elementsToAsk, species: activeRecipe?.species ?? "Standard" })
@@ -418,7 +408,7 @@ export default function RecipesPage() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await fetch(`${API}/api/recipes/extract-bounds?species=${encodeURIComponent(species)}`, {
+      const res = await fetch(apiUrl(`/api/recipes/extract-bounds?species=${encodeURIComponent(species)}`), {
         method: "POST",
         body: formData,
       });
@@ -486,7 +476,7 @@ export default function RecipesPage() {
     if (!tagName) return;
 
     try {
-      const res = await fetch(`${API}/api/recipes/${sourceId}/revision`, {
+      const res = await fetch(apiUrl(`/api/recipes/${sourceId}/revision`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ version_tag: tagName }),

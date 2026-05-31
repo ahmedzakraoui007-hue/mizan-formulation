@@ -5,8 +5,7 @@ import { ArrowLeft, ArrowRight, Building2, CheckCircle2, Database, Languages, Sh
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useI18n, type Locale } from "@/lib/i18n";
-
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { apiUrl } from "@/lib/api";
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -45,7 +44,7 @@ export default function OnboardingPage() {
   const bootstrap = async (complete = false) => {
     setSaving(true);
     try {
-      const bootstrapRes = await fetch(`${API}/api/tenant/bootstrap`, {
+      const bootstrapRes = await fetch(apiUrl("/api/tenant/bootstrap"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: companyName || "Mizan Workspace", locale }),
@@ -53,7 +52,7 @@ export default function OnboardingPage() {
       if (!bootstrapRes.ok) throw new Error("bootstrap failed");
 
       if (complete) {
-        const doneRes = await fetch(`${API}/api/tenant/me`, {
+        const doneRes = await fetch(apiUrl("/api/tenant/me"), {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ onboarding_completed: true, locale, name: companyName || "Mizan Workspace" }),

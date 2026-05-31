@@ -5,8 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Boxes, FileText, Activity, Hand, Factory, Zap, ChevronRight, BarChart3 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
-
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { apiUrl } from "@/lib/api";
 
 interface DashboardStats {
   total_ingredients: number;
@@ -20,7 +19,7 @@ export default function HomePage() {
   const [loadingStats, setLoadingStats] = useState(true);
 
   useEffect(() => {
-    fetch(`${API}/api/dashboard/stats`)
+    fetch(apiUrl("/api/dashboard/stats"))
       .then((r) => r.json())
       .then((d) => setStats(d))
       .catch(() => setStats({ total_ingredients: 0, total_recipes: 0 }))

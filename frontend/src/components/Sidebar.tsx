@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { Activity, Boxes, FileText, LayoutDashboard, ShieldCheck, TrendingUp } from "lucide-react";
-import { useI18n, type Locale } from "@/lib/i18n";
+import { localeOptions, useI18n, type Locale } from "@/lib/i18n";
 import { canViewAdmin, useTenantRole } from "@/lib/tenantRole";
 
 export default function Sidebar() {
@@ -19,7 +19,7 @@ export default function Sidebar() {
     { href: "/recipes", label: t("recipes"), icon: FileText },
     { href: "/optimization", label: t("optimization"), icon: Activity },
     { href: "/purchasing", label: t("purchasing"), icon: TrendingUp },
-    ...(canViewAdmin(tenantRole) ? [{ href: "/admin", label: "Admin", icon: ShieldCheck }] : []),
+    ...(canViewAdmin(tenantRole) ? [{ href: "/admin", label: t("admin"), icon: ShieldCheck }] : []),
   ];
 
   return (
@@ -60,9 +60,9 @@ export default function Sidebar() {
             onChange={(event) => setLocale(event.target.value as Locale)}
             className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-slate-100 outline-none focus:border-emerald-500"
           >
-            <option value="fr">Français</option>
-            <option value="en">English</option>
-            <option value="ar">العربية</option>
+            {localeOptions.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
           </select>
         </label>
 
@@ -86,7 +86,7 @@ export default function Sidebar() {
 
         <div className="bg-gray-800 rounded-xl p-4 text-xs text-gray-400 font-medium">
           Mizan ERP v2.1 <br />
-          <span className="text-gray-500">Multi-Tenant Optimization Engine</span>
+          <span className="text-gray-500">Moteur d'optimisation multi-tenant</span>
         </div>
       </div>
     </aside>

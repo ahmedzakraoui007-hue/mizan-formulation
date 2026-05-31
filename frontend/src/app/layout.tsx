@@ -1,19 +1,8 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import Sidebar from "@/components/Sidebar";
 import AppProviders from "@/components/AppProviders";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Mizan Formulation SaaS",
@@ -28,7 +17,7 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="fr">
-        <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 flex min-h-screen print:bg-white`}>
+        <body className="antialiased bg-gray-50 flex min-h-screen print:bg-white">
           <AppProviders>
             <div className="print:hidden">
               <Sidebar />

@@ -18,7 +18,7 @@ class TenantContext:
 
 CLERK_JWKS_URL = os.getenv("CLERK_JWKS_URL")
 CLERK_ISSUER = os.getenv("CLERK_ISSUER")
-ALLOW_DEV_TENANT = os.getenv("ALLOW_DEV_TENANT", "true").lower() == "true"
+ALLOW_DEV_TENANT = os.getenv("ALLOW_DEV_TENANT", "false").lower() == "true"
 
 ROLE_ALIASES = {
     "org:admin": "admin",

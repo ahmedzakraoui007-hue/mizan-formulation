@@ -7,8 +7,7 @@ import { DEFAULT_INGREDIENT_FILTER_STATUS, ingredientMatchesStatus } from "@/lib
 import { getNutrientUnit } from "@/utils/nutrientUtils";
 import PageLoader from "@/components/PageLoader";
 import { canManageIngredients, useTenantRole } from "@/lib/tenantRole";
-
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { apiUrl } from "@/lib/api";
 
 const ingredientMessages = {
   saveError: {
@@ -136,7 +135,7 @@ export default function IngredientsPage() {
   const fetchIngredients = useCallback(async () => {
     setFetching(true);
     try {
-      const res = await fetch(`${API}/api/ingredients?lite=true`);
+      const res = await fetch(apiUrl("/api/ingredients?lite=true"));
       if (res.ok) setIngredients(await res.json());
     } catch { /* backend not ready */ }
     setFetching(false);
@@ -165,7 +164,7 @@ export default function IngredientsPage() {
       await Promise.all(
         Object.entries(pendingRowEdits).map(async ([idStr, changes]) => {
           const id = Number(idStr);
-          const res = await fetch(`${API}/api/ingredients/${id}`, {
+          const res = await fetch(apiUrl(`/api/ingredients/${id}`), {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             // We deliberately exclude nutrients — the backend uses exclude_unset=True
@@ -199,7 +198,7 @@ export default function IngredientsPage() {
     const newActive = !ing.is_active;
     setIngredients(prev => prev.map(i => i.id === id ? { ...i, is_active: newActive } : i));
     try {
-      await fetch(`${API}/api/ingredients/${id}`, {
+      await fetch(apiUrl(`/api/ingredients/${id}`), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ is_active: newActive }),
@@ -210,7 +209,7 @@ export default function IngredientsPage() {
   // ── Add / Delete ingredient ───────────────────────────────────────────────
   const addIng = async () => {
     if (!canManage) return;
-    const res = await fetch(`${API}/api/ingredients`, {
+    const res = await fetch(apiUrl("/api/ingredients"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: msg("newIngredientName"), cost: 0, transport_cost: 0, dm: 88, inventory_limit_tons: 99999, nutrients: {}, is_active: true }),
@@ -224,7 +223,7 @@ export default function IngredientsPage() {
   const rmIng = async (id: number) => {
     if (!canManage) return;
     if (!confirm(msg("deleteConfirm"))) return;
-    await fetch(`${API}/api/ingredients/${id}`, { method: "DELETE" });
+    await fetch(apiUrl(`/api/ingredients/${id}`), { method: "DELETE" });
     setIngredients(prev => prev.filter(i => i.id !== id));
     if (panel?.id === id) setPanel(null);
   };
@@ -234,7 +233,7 @@ export default function IngredientsPage() {
   const openPanel = async (id: number) => {
     setPanelSearch("");
     try {
-      const res = await fetch(`${API}/api/ingredients/${id}`);
+      const res = await fetch(apiUrl(`/api/ingredients/${id}`));
       if (res.ok) setPanel(await res.json());
     } catch (e) { console.error("Could not fetch full ingredient", e); }
   };
@@ -262,7 +261,7 @@ export default function IngredientsPage() {
     if (!panel || !canManage) return;
     setPanelSaving(true);
     try {
-      const res = await fetch(`${API}/api/ingredients/${panel.id}`, {
+      const res = await fetch(apiUrl(`/api/ingredients/${panel.id}`), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

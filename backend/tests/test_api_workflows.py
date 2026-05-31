@@ -47,6 +47,15 @@ def test_viewer_role_cannot_mutate_but_can_read(client):
     assert allowed.status_code == 200
 
 
+def test_nutrient_keys_endpoint_returns_lightweight_catalog(client):
+    client.post("/api/ingredients", json=_ingredient("Corn", protein=14), headers={"X-Test-Tenant": "tenant-a"})
+
+    res = client.get("/api/nutrient-keys", headers={"X-Test-Tenant": "tenant-a"})
+
+    assert res.status_code == 200
+    assert res.json() == ["Energy", "Protein %"]
+
+
 def test_optimize_multi_persists_history_and_audit(client):
     ing = client.post("/api/ingredients", json=_ingredient("Corn", protein=14), headers={"X-Test-Tenant": "tenant-a"}).json()
     payload = {"ingredient_ids": [ing["id"]], "recipes": [_recipe()]}

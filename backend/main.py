@@ -21,7 +21,8 @@ import time
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    run_migrations()
+    if os.getenv("RUN_MIGRATIONS_ON_STARTUP", "false").lower() == "true":
+        run_migrations()
     seed_database()
     yield
 
@@ -507,6 +508,23 @@ def get_ingredient(
     if not row:
         raise HTTPException(status_code=404, detail="Ingredient not found")
     return row
+
+
+@app.get("/api/nutrient-keys", response_model=List[str])
+def list_nutrient_keys(
+    active_only: bool = False,
+    db: Session = Depends(get_db),
+    tenant: TenantContext = Depends(get_tenant_context),
+):
+    _ensure_tenant(db, tenant)
+    query = db.query(IngredientDB.nutrients).filter(IngredientDB.tenant_id == tenant.tenant_id)
+    if active_only:
+        query = query.filter(IngredientDB.is_active == True)
+
+    keys: set[str] = set()
+    for (nutrients,) in query.all():
+        keys.update((nutrients or {}).keys())
+    return sorted(keys)
 
 
 @app.post("/api/ingredients", response_model=IngredientOut)
