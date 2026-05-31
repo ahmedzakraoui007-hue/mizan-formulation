@@ -70,7 +70,11 @@ function ApiAuthBridge({ children }: { children: React.ReactNode }) {
     };
   }, [getToken, isLoaded, isSignedIn, pathname, router]);
 
-  if (isLoaded && isSignedIn && !checkedTenant && pathname !== "/onboarding") {
+  if (!isLoaded) {
+    return <PageLoader fullscreen />;
+  }
+
+  if (isSignedIn && !checkedTenant && pathname !== "/onboarding") {
     return <PageLoader fullscreen />;
   }
 
