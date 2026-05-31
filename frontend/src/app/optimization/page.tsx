@@ -168,6 +168,13 @@ export default function OptimizationPage() {
   const [businessReview, setBusinessReview] = useState<BusinessReview | null>(null);
   const [businessLoading, setBusinessLoading] = useState(false);
   const [businessError, setBusinessError] = useState<string | null>(null);
+  const businessStatusLabel = businessReview?.is_grounded
+    ? t("aiGuardedBySolver")
+    : businessError
+      ? t("aiReviewUnavailable")
+      : businessLoading
+        ? t("aiReviewLoading")
+        : t("aiReviewWaiting");
 
   // Diagnosis AI State
   const [diagnoseLoading, setDiagnoseLoading] = useState(false);
@@ -337,7 +344,11 @@ export default function OptimizationPage() {
         .then(async (reviewRes) => {
           if (!reviewRes.ok) {
             const payload = await reviewRes.json().catch(() => ({}));
-            throw new Error(payload.detail || t("aiBusinessReviewError"));
+            const detail = String(payload.detail || "");
+            if (reviewRes.status === 404 || detail.toLowerCase() === "not found") {
+              throw new Error(t("aiBusinessReviewBackendPending"));
+            }
+            throw new Error(detail || t("aiBusinessReviewError"));
           }
           setBusinessReview(await reviewRes.json());
         })
@@ -699,7 +710,7 @@ export default function OptimizationPage() {
                   <div className="rounded-2xl border border-slate-100 bg-slate-950 px-6 py-5 text-white shadow-lg lg:min-w-52">
                     <p className="text-xs font-black uppercase tracking-widest text-indigo-200">{t("aiGlobalScore")}</p>
                     <p className="mt-1 text-5xl font-black tracking-tight">{businessReview ? businessReview.global_score : "--"}<span className="text-2xl text-slate-500">/100</span></p>
-                    <p className="mt-2 text-xs font-bold text-slate-400">{businessReview?.is_grounded ? t("aiGuardedBySolver") : t("aiReviewLoading")}</p>
+                    <p className="mt-2 text-xs font-bold text-slate-400">{businessStatusLabel}</p>
                   </div>
                 </div>
 
