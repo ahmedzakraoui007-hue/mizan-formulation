@@ -11,8 +11,7 @@ import { useI18n } from "@/lib/i18n";
 import { canRunOptimization, useTenantRole } from "@/lib/tenantRole";
 import { getNutrientUnit, getTopNutrients } from "@/utils/nutrientUtils";
 import { apiUrl } from "@/lib/api";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
+import { saveRecipePdf } from "@/lib/recipePdf";
 
 const COLORS = ['#2563eb', '#16a34a', '#d97706', '#dc2626', '#7c3aed', '#0891b2', '#059669', '#ea580c'];
 
@@ -450,38 +449,12 @@ export default function OptimizationPage() {
   const exportPDF = async (rec: RecipeResult) => {
     setExportingPdf(rec.name);
     try {
-      const el = document.getElementById(`pdf-template-${rec.name}`);
-      if (!el) return;
-
-      const canvas = await html2canvas(el, { scale: 2, useCORS: true });
-      const imgData = canvas.toDataURL("image/png");
-
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4"
+      const originalRec = getOriginalRecipe(rec.name);
+      saveRecipePdf(rec, {
+        originalConstraints: originalRec?.constraints,
+        species: originalRec?.species,
+        date: new Date(),
       });
-
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-
-      const imgWidth = pdfWidth;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pdfHeight;
-
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pdfHeight;
-      }
-
-      pdf.save(`Fiche_Technique_${rec.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`);
     } catch (err) {
       console.error(err);
     } finally {

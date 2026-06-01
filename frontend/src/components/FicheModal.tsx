@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { saveAs } from "file-saver";
 import { X, FileSpreadsheet, Share2, Printer } from "lucide-react";
 import { buildWhatsAppMessage, buildWhatsAppUrl } from "@/lib/whatsAppShare";
+import { buildRecipePdfBlob, recipePdfFileName } from "@/lib/recipePdf";
 import { getNutrientUnit, getTopNutrients } from "@/utils/nutrientUtils";
 
 interface ResultIngredient {
@@ -75,52 +76,12 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
 
   const [sharing, setSharing] = useState(false);
 
-  const pdfFileName = `Fiche_${report.name.replace(/[^a-zA-Z0-9_-]/g, "_")}_${now.toISOString().slice(0, 10)}.pdf`;
+  const pdfFileName = recipePdfFileName(report, now);
 
   const generatePdfBlob = async () => {
     try {
-      const el = document.getElementById(`modal-pdf-template`);
-      if (!el) {
-        throw new Error("PDF template not found");
-      }
-
-      const { default: html2canvas } = await import("html2canvas");
-      const { default: jsPDF } = await import("jspdf");
       await document.fonts?.ready;
-
-      const canvas = await html2canvas(el, {
-        scale: Math.min(window.devicePixelRatio || 2, 2),
-        useCORS: true,
-        backgroundColor: "#ffffff",
-        logging: false,
-        scrollX: 0,
-        scrollY: 0,
-        windowWidth: 800,
-      });
-      if (!canvas.width || !canvas.height) {
-        throw new Error("PDF canvas is empty");
-      }
-      const imgData = canvas.toDataURL("image/png");
-
-      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
-
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-      heightLeft -= pdfHeight;
-
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-        heightLeft -= pdfHeight;
-      }
-
-      return pdf.output("blob");
+      return buildRecipePdfBlob(report, { originalConstraints, species, date: now });
     } catch (err) {
       console.error(err);
       throw err;
@@ -135,16 +96,13 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
     }
     try {
       const pdfBlob = await generatePdfBlob();
-      const message = buildWhatsAppMessage(report, dateStr);
-      const whatsappUrl = buildWhatsAppUrl(message);
       const file = typeof File !== "undefined"
         ? new File([pdfBlob], pdfFileName, { type: "application/pdf" })
         : null;
 
-      saveAs(pdfBlob, pdfFileName);
-
       if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
+          const message = buildWhatsAppMessage(report, dateStr, { pdfFileName, pdfAttached: true });
           await navigator.share({
             files: [file],
             title: `Fiche de Fabrication - ${report.name}`,
@@ -161,6 +119,9 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
         }
       }
 
+      saveAs(pdfBlob, pdfFileName);
+      const message = buildWhatsAppMessage(report, dateStr, { pdfFileName });
+      const whatsappUrl = buildWhatsAppUrl(message);
       if (whatsappTab) {
         whatsappTab.location.replace(whatsappUrl);
       } else {
