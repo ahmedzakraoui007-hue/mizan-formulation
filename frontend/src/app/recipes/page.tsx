@@ -1,6 +1,6 @@
 "use client";
 
-import { Sparkles, Save, Scan, Edit3, Trash2, AlertTriangle, BookMarked, Layers, X, FlaskConical, Wheat, ChevronRight } from "lucide-react";
+import { Sparkles, Save, Scan, Edit3, Trash2, AlertTriangle, BookMarked, Layers, X, FlaskConical, Wheat, ChevronRight, History } from "lucide-react";
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { getFilteredNutrients, SPECIES_OPTIONS, getNutrientUnit } from "@/utils/nutrientUtils";
 import PageLoader from "@/components/PageLoader";
@@ -714,10 +714,6 @@ export default function RecipesPage() {
                           />
                         </div>
 
-                        <button onClick={() => createRevision(masterRec.id, activeItem.id)} disabled={!canManage} title={t("newVersion")}
-                          className="text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold flex items-center gap-1 shadow-sm">
-                          <Save className="w-3.5 h-3.5" /> {t("revision")}
-                        </button>
                         {!isMasterActive && (
                           <button onClick={() => { editRec(masterRec.id, activeItem.id, "version_tag", prompt(t("renameVersionPrompt"), activeItem.version_tag) || activeItem.version_tag); }} disabled={!canManage}
                             className="text-gray-500 hover:text-gray-800 bg-gray-50 hover:bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-lg cursor-pointer text-xs font-bold flex items-center shadow-sm">
@@ -738,6 +734,41 @@ export default function RecipesPage() {
                         )}
 
                       </div>
+                    </div>
+                  </div>
+
+                  <div className="mb-6 border-y border-slate-100 py-4">
+                    <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <h3 className="flex items-center gap-2 text-sm font-black uppercase tracking-[0.14em] text-slate-500">
+                          <History className="h-4 w-4 text-indigo-500" /> {t("formulaHistory")}
+                        </h3>
+                        <p className="mt-1 text-xs font-semibold text-slate-400">
+                          {masterRec.versions.length + 1} {t("formulaVersionsCount")}
+                        </p>
+                      </div>
+                      <button onClick={() => createRevision(masterRec.id, activeItem.id)} disabled={!canManage}
+                        className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-black text-indigo-700 transition-colors hover:bg-indigo-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400">
+                        <Save className="h-3.5 w-3.5" /> {t("newVersion")}
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {[masterRec, ...masterRec.versions].map((versionItem) => {
+                        const isActiveVersion = activeId === versionItem.id;
+                        return (
+                          <button
+                            key={versionItem.id}
+                            type="button"
+                            onClick={() => setActiveVersions(prev => ({ ...prev, [masterRec.id]: versionItem.id }))}
+                            className={`rounded-xl border px-3 py-2 text-left text-xs transition-all ${isActiveVersion ? "border-indigo-300 bg-indigo-600 text-white shadow-sm" : "border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:bg-indigo-50"}`}
+                          >
+                            <span className="block font-black">{versionItem.version_tag || t("masterVersion")}</span>
+                            <span className={`mt-0.5 block font-mono text-[10px] ${isActiveVersion ? "text-indigo-100" : "text-slate-400"}`}>
+                              {versionItem.code || t("noCode")}
+                            </span>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 

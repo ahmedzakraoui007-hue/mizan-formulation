@@ -16,6 +16,7 @@ interface ResultIngredient {
 
 interface RecipeResult {
   code?: string | null;
+  version_tag?: string | null;
   name: string;
   demand_tons: number;
   raw_tons: number;
@@ -183,6 +184,7 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
             <div>
               <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Code Formule</p>
               <p className="text-xl font-black text-indigo-700 mt-1 font-mono">{report.code || "—"}</p>
+              {report.version_tag && <p className="mt-1 text-xs font-black text-emerald-600">{report.version_tag}</p>}
             </div>
             <div>
               <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Formule</p>
@@ -282,7 +284,7 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
         </div>
 
         {/* Hidden PDF Template for WhatsApp PDF generation */}
-        <div aria-hidden="true" style={{ position: 'fixed', top: 0, left: 0, zIndex: -1, pointerEvents: 'none' }}>
+        <div aria-hidden="true" style={{ display: 'none' }}>
           <div id="modal-pdf-template" style={{ width: '800px', backgroundColor: 'white', padding: '40px', color: 'black', fontFamily: 'sans-serif' }}>
             <div style={{ borderBottom: '2px solid #111', paddingBottom: '15px', marginBottom: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
               <div>

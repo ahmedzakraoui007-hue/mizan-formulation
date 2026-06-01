@@ -10,6 +10,7 @@ export interface RecipePdfIngredient {
 
 export interface RecipePdfReport {
   code?: string | null;
+  version_tag?: string | null;
   name: string;
   demand_tons: number;
   raw_tons: number;
@@ -154,7 +155,8 @@ function drawSummary(doc: jsPDF, report: RecipePdfReport, options: RecipePdfOpti
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   doc.setTextColor(51, 65, 85);
-  drawText(doc, `Espece: ${species}    Date: ${dateStr}`, PAGE.marginX + 4, y + 15);
+  const versionLabel = report.version_tag ? `    Version: ${report.version_tag}` : "";
+  drawText(doc, `Espece: ${species}    Date: ${dateStr}${versionLabel}`, PAGE.marginX + 4, y + 15);
   y += 28;
 
   const gap = 4;

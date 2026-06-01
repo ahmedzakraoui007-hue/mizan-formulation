@@ -92,6 +92,7 @@ def test_optimize_multi_persists_history_and_audit(client):
 
     detail = client.get(f"/api/optimization-runs/{runs[0]['id']}", headers={"X-Test-Tenant": "tenant-a"}).json()
     assert detail["result_payload"]["status"] == "Optimal"
+    assert detail["result_payload"]["recipes"][0]["version_tag"] == "V1"
     assert detail["request_payload"]["ingredient_ids"] == [ing["id"]]
 
     audit = client.get("/api/audit-logs", headers={"X-Test-Tenant": "tenant-a"}).json()

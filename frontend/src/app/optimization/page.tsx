@@ -53,6 +53,7 @@ interface ResultIngredient {
 
 interface RecipeResult {
   code?: string | null;
+  version_tag?: string | null;
   name: string;
   demand_tons: number;
   raw_tons: number;
@@ -295,9 +296,28 @@ export default function OptimizationPage() {
   const selectAllRecipes = () => setUnselectedRecipeIds([]);
   const deselectAllRecipes = () => setUnselectedRecipeIds(allRecipeIds);
 
-  const getOriginalRecipe = (name: string) => {
+  const withRecipeMetadata = (optimizationResult: MultiBlendResult, sourceRecipes: Record<string, unknown>[] = []): MultiBlendResult => ({
+    ...optimizationResult,
+    recipes: optimizationResult.recipes.map((recipe, index) => {
+      const source = sourceRecipes[index];
+      return {
+        ...recipe,
+        code: recipe.code ?? (typeof source?.code === "string" ? source.code : null),
+        version_tag: recipe.version_tag ?? (typeof source?.version_tag === "string" ? source.version_tag : null),
+      };
+    }),
+  });
+
+  const getOriginalRecipe = (reportOrName: RecipeResult | string) => {
+    const name = typeof reportOrName === "string" ? reportOrName : reportOrName.name;
+    const versionTag = typeof reportOrName === "string" ? undefined : reportOrName.version_tag;
     // Search in masters and versions
     for (const master of recipes) {
+      if (versionTag && master.name === name) {
+        if (master.version_tag === versionTag) return master;
+        const taggedVersion = master.versions?.find((version) => version.version_tag === versionTag);
+        if (taggedVersion) return taggedVersion;
+      }
       if (master.name === name) return master;
       if (master.versions) {
         const v = master.versions.find((version) => version.version_tag === name || `${master.name} (${version.version_tag})` === name || version.name === name);
@@ -375,9 +395,12 @@ export default function OptimizationPage() {
       });
       if (!res.ok) { const e = await res.json(); throw new Error(e.detail || "Échec de l'optimisation"); }
       const json = await res.json();
-      setResult(json);
+      const resultWithMetadata = withRecipeMetadata(json, flatRecipes);
+      setResult(resultWithMetadata);
       setActiveRunId(null);
-      runBusinessReview(ingredientIds, flatRecipes, json);
+      setSelectedReport(null);
+      setParamModalOpen(false);
+      runBusinessReview(ingredientIds, flatRecipes, resultWithMetadata);
       fetchRecentRuns();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");
@@ -401,6 +424,8 @@ export default function OptimizationPage() {
     setAuditResult(null);
     setBusinessReview(null);
     setBusinessError(null);
+    setSelectedReport(null);
+    setParamModalOpen(false);
     try {
       const res = await fetch(apiUrl(`/api/optimization-runs/${runId}`));
       if (!res.ok) {
@@ -416,13 +441,14 @@ export default function OptimizationPage() {
         return;
       }
 
-      setResult(detail.result_payload);
-      setActiveRunId(runId);
-
       const ingredientIds = detail.request_payload?.ingredient_ids ?? [];
       const flatRecipes = detail.request_payload?.recipes ?? [];
+      const resultWithMetadata = withRecipeMetadata(detail.result_payload, flatRecipes);
+      setResult(resultWithMetadata);
+      setActiveRunId(runId);
+
       if (ingredientIds.length > 0 && flatRecipes.length > 0) {
-        runBusinessReview(ingredientIds, flatRecipes, detail.result_payload);
+        runBusinessReview(ingredientIds, flatRecipes, resultWithMetadata);
       }
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err: unknown) {
@@ -449,7 +475,7 @@ export default function OptimizationPage() {
   const exportPDF = async (rec: RecipeResult) => {
     setExportingPdf(rec.name);
     try {
-      const originalRec = getOriginalRecipe(rec.name);
+      const originalRec = getOriginalRecipe(rec);
       saveRecipePdf(rec, {
         originalConstraints: originalRec?.constraints,
         species: originalRec?.species,
@@ -900,11 +926,12 @@ export default function OptimizationPage() {
                   const chartData = getChartData(rec, originalRec);
 
                   return (
-                    <div key={idx} className="bg-white/80 backdrop-blur-3xl border border-white rounded-[2.5rem] p-8 md:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_40px_rgb(0,0,0,0.08)] flex flex-col transition-all duration-500 hover:-translate-y-1">
+                    <div key={`${rec.name}-${rec.version_tag || rec.code || idx}-${idx}`} className="bg-white/80 backdrop-blur-3xl border border-white rounded-[2.5rem] p-8 md:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_40px_rgb(0,0,0,0.08)] flex flex-col transition-all duration-500 hover:-translate-y-1">
                       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
                         <div>
                           <div className="flex flex-wrap items-center gap-3">
                             {rec.code && <span className="rounded-lg bg-indigo-50 px-2.5 py-1 font-mono text-xs font-black text-indigo-700 ring-1 ring-indigo-100">{rec.code}</span>}
+                            {rec.version_tag && <span className="rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-black text-emerald-700 ring-1 ring-emerald-100">{rec.version_tag}</span>}
                             <h3 className="text-slate-900 font-black text-3xl tracking-tight">{rec.name}</h3>
                           </div>
                           <p className="text-slate-500 font-medium mt-2 bg-slate-100/50 px-3 py-1 rounded-lg inline-block">{rec.demand_tons} t finales · {rec.raw_tons} t chargées</p>
@@ -965,7 +992,7 @@ export default function OptimizationPage() {
                         </button>
                         <div className="flex gap-3">
                           <button onClick={() => {
-                            const originalRec2 = getOriginalRecipe(rec.name);
+                            const originalRec2 = getOriginalRecipe(rec);
                             const keys = originalRec2?.constraints ? Object.keys(originalRec2.constraints) : [];
                             setParamNutrient(keys[0] || "");
                             const existing = originalRec2?.constraints?.[keys[0]];
@@ -996,8 +1023,8 @@ export default function OptimizationPage() {
                       </div>
 
                       {/* Hidden PDF Template */}
-                      <div style={{ position: 'absolute', top: '-9999px', left: '-9999px' }}>
-                        <div id={`pdf-template-${rec.name}`} style={{ width: '800px', backgroundColor: 'white', padding: '40px', color: 'black', fontFamily: 'sans-serif' }}>
+                      <div style={{ display: 'none' }}>
+                        <div id={`pdf-template-${rec.name}-${rec.version_tag || idx}`} style={{ width: '800px', backgroundColor: 'white', padding: '40px', color: 'black', fontFamily: 'sans-serif' }}>
                           {/* Header */}
                           <div style={{ borderBottom: '2px solid #111', paddingBottom: '15px', marginBottom: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                             <div>
@@ -1093,7 +1120,7 @@ export default function OptimizationPage() {
         </div>
 
         {selectedReport && (() => {
-          const original = getOriginalRecipe(selectedReport.name);
+          const original = getOriginalRecipe(selectedReport);
           return (
             <FicheModal
               report={selectedReport}

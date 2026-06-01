@@ -379,6 +379,7 @@ def solve_multi_blend(ingredients, recipes):
 
         result_recipes.append({
             "code": getattr(rec, "code", None),
+            "version_tag": getattr(rec, "version_tag", None),
             "name": rec.name,
             "demand_tons": D,
             "raw_tons": round(raw_tons, 4),
