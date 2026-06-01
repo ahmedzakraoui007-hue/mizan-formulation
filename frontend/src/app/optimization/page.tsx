@@ -12,14 +12,9 @@ import { canRunOptimization, useTenantRole } from "@/lib/tenantRole";
 import { getNutrientUnit, getTopNutrients } from "@/utils/nutrientUtils";
 import { apiUrl } from "@/lib/api";
 import { saveRecipePdf } from "@/lib/recipePdf";
+import type { ConstraintConfig, MultiBlendResult, RecipeResult } from "@/lib/formulationTypes";
 
 const COLORS = ['#2563eb', '#16a34a', '#d97706', '#dc2626', '#7c3aed', '#0891b2', '#059669', '#ea580c'];
-
-interface ConstraintConfig {
-  min?: number;
-  max?: number;
-  exact?: number;
-}
 
 interface IngredientLite {
   id: number;
@@ -42,34 +37,6 @@ interface RecipeItem {
   species?: string;
   versions?: RecipeItem[];
   [key: string]: unknown;
-}
-
-interface ResultIngredient {
-  code?: string | null;
-  name: string;
-  tons: number;
-  percentage: number;
-}
-
-interface RecipeResult {
-  code?: string | null;
-  version_tag?: string | null;
-  name: string;
-  demand_tons: number;
-  raw_tons: number;
-  process_yield_percent: number;
-  cost_tnd: number;
-  bag_size_kg: number;
-  cost_per_bag_tnd: number;
-  ingredients: ResultIngredient[];
-  nutrients: Record<string, number>;
-  shadow_prices?: unknown[];
-}
-
-interface MultiBlendResult {
-  status: string;
-  total_factory_cost_tnd: number;
-  recipes: RecipeResult[];
 }
 
 interface OptimizationRun {
@@ -488,14 +455,10 @@ export default function OptimizationPage() {
     }
   };
 
-  const getKeysToPrint = (nutrients: Record<string, number>, constraints: Record<string, any> | undefined, species: string = "General"): [string, number][] => {
-    return getTopNutrients(nutrients, constraints, species);
-  };
-
   const exportCSV = (rec: RecipeResult, originalRec?: RecipeItem) => {
     const constraintKeys = originalRec?.constraints ?? {};
     const species = originalRec?.species || "General";
-    const filteredNutrients = getKeysToPrint(rec.nutrients, constraintKeys, species);
+    const filteredNutrients = getTopNutrients(rec.nutrients, constraintKeys, species);
 
     let csv = '\uFEFF'; // UTF-8 BOM for Excel
     csv += `Code;${rec.code || ""};Recette;${rec.name};Espèce;${originalRec?.species || 'Générale'};Date;${new Date().toLocaleDateString('fr-FR')}\n`;
@@ -1022,95 +985,7 @@ export default function OptimizationPage() {
                         </div>
                       </div>
 
-                      {/* Hidden PDF Template */}
-                      <div style={{ display: 'none' }}>
-                        <div id={`pdf-template-${rec.name}-${rec.version_tag || idx}`} style={{ width: '800px', backgroundColor: 'white', padding: '40px', color: 'black', fontFamily: 'sans-serif' }}>
-                          {/* Header */}
-                          <div style={{ borderBottom: '2px solid #111', paddingBottom: '15px', marginBottom: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                            <div>
-                              <h1 style={{ fontSize: '28px', fontWeight: '900', margin: '0 0 10px 0', color: '#111827' }}>Mizan Formulation</h1>
-                              <h2 style={{ fontSize: '18px', fontWeight: '600', margin: 0, color: '#4b5563' }}>Fiche Technique Officielle</h2>
-                            </div>
-                            <div style={{ textAlign: 'right', fontSize: '14px', color: '#374151' }}>
-                              <p style={{ margin: '0 0 4px 0' }}><strong>Espèce :</strong> {originalRec?.species || "Générale"}</p>
-                              <p style={{ margin: 0 }}><strong>Date :</strong> {new Date().toLocaleDateString('fr-FR')}</p>
-                            </div>
-                          </div>
 
-                          <div style={{ backgroundColor: '#f3f4f6', padding: '15px', borderRadius: '8px', marginBottom: '30px' }}>
-                            <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold', color: '#1f2937' }}>Recette : {rec.code ? `${rec.code} - ` : ""}{rec.name}</h3>
-                          </div>
-
-                          {/* Section 1: Composition */}
-                          <div style={{ marginBottom: '35px' }}>
-                            <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '15px', borderBottom: '1px solid #e5e7eb', paddingBottom: '8px', color: '#111827' }}>1. Composition (Matières Premières)</h2>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
-                              <thead>
-                                <tr style={{ backgroundColor: '#f9fafb' }}>
-                                  <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '2px solid #e5e7eb', color: '#4b5563' }}>Code</th>
-                                  <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '2px solid #e5e7eb', color: '#4b5563' }}>Ingrédient</th>
-                                  <th style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '2px solid #e5e7eb', color: '#4b5563' }}>Inclusion (%)</th>
-                                  <th style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '2px solid #e5e7eb', color: '#4b5563' }}>Quantité (kg/T)</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {rec.ingredients.map((ing, i) => (
-                                  <tr key={ing.name} style={{ backgroundColor: i % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
-                                    <td style={{ padding: '10px 12px', borderBottom: '1px solid #e5e7eb', fontWeight: '700', color: '#4338ca' }}>{ing.code || "—"}</td>
-                                    <td style={{ padding: '10px 12px', borderBottom: '1px solid #e5e7eb', fontWeight: '600', color: '#1f2937' }}>{ing.name}</td>
-                                    <td style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '1px solid #e5e7eb', color: '#374151' }}>{Math.round(ing.percentage)} %</td>
-                                    <td style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '1px solid #e5e7eb', fontWeight: 'bold', color: '#059669' }}>{Math.round(ing.percentage * 10)} kg</td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-
-                          {/* Section 2: Nutrition */}
-                          <div style={{ marginBottom: '40px' }}>
-                            <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '15px', borderBottom: '1px solid #e5e7eb', paddingBottom: '8px', color: '#111827' }}>2. Valeurs Nutritionnelles Garanties</h2>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
-                              <thead>
-                                <tr style={{ backgroundColor: '#f9fafb' }}>
-                                  <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '2px solid #e5e7eb', color: '#4b5563' }}>Paramètre / Nutriment</th>
-                                  <th style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '2px solid #e5e7eb', color: '#4b5563' }}>Valeur Calculée</th>
-                                  <th style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '2px solid #e5e7eb', color: '#4b5563' }}>Cible Min/Max</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {getKeysToPrint(rec.nutrients, originalRec?.constraints, originalRec?.species || "General")
-                                  .map(([key, val], i) => {
-                                    const cons = originalRec?.constraints?.[key];
-                                    let cibleStr = "—";
-                                    if (cons) {
-                                      if (cons.exact !== undefined) cibleStr = `Exact: ${cons.exact}`;
-                                      else if (cons.min !== undefined && cons.max !== undefined) cibleStr = `${cons.min} - ${cons.max}`;
-                                      else if (cons.min !== undefined) cibleStr = `Min: ${cons.min}`;
-                                      else if (cons.max !== undefined) cibleStr = `Max: ${cons.max}`;
-                                    }
-                                    return (
-                                      <tr key={key} style={{ backgroundColor: i % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
-                                        <td style={{ padding: '10px 12px', borderBottom: '1px solid #e5e7eb', fontWeight: '500', color: '#1f2937' }}>{key}</td>
-                                        <td style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '1px solid #e5e7eb', fontWeight: 'bold', color: '#2563eb' }}>
-                                          {val.toFixed(2)} <span style={{ fontSize: '9px', color: '#9ca3af' }}>{getNutrientUnit(key)}</span>
-                                        </td>
-                                        <td style={{ textAlign: 'right', padding: '10px 12px', borderBottom: '1px solid #e5e7eb', color: '#6b7280' }}>
-                                          {cibleStr} {cons ? <span style={{ fontSize: '9px' }}>{getNutrientUnit(key)}</span> : ""}
-                                        </td>
-                                      </tr>
-                                    );
-                                  })}
-                              </tbody>
-                            </table>
-                          </div>
-
-                          {/* Footer */}
-                          <div style={{ paddingTop: '20px', borderTop: '2px solid #111', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <p style={{ margin: 0, fontSize: '12px', color: '#9ca3af' }}>Document généré automatiquement par Mizan Formulation Engine.</p>
-                            <p style={{ margin: 0, fontSize: '18px', fontWeight: '900', color: '#111827' }}>Coût Total : <span style={{ color: '#2563eb' }}>{rec.cost_tnd.toFixed(2)} TND</span> · <span style={{ color: '#059669' }}>{(rec.cost_tnd / rec.demand_tons).toFixed(2)} TND/T</span></p>
-                          </div>
-                        </div>
-                      </div>
                     </div>
                   );
                 })}

@@ -7,39 +7,27 @@ import { toSolverRecipe } from "@/lib/optimizationSelection";
 import PageLoader from "@/components/PageLoader";
 import { canRunOptimization, canUsePurchasing, useTenantRole } from "@/lib/tenantRole";
 import { apiUrl } from "@/lib/api";
+import type { MultiBlendResult, ShadowPrice } from "@/lib/formulationTypes";
 
-interface ShadowPrice {
-  ingredient_code?: string | null;
-  ingredient_name: string;
-  current_price: number;
-  target_price: number;
-  difference: number;
-}
-
-interface RecipeResult {
-  code?: string | null;
+interface PurchasingIngredient {
+  id: number;
   name: string;
-  demand_tons: number;
-  raw_tons: number;
-  cost_tnd: number;
-  cost_per_bag_tnd: number;
-  ingredients: { name: string; tons: number; percentage: number }[];
-  nutrients: Record<string, number>;
-  shadow_prices?: ShadowPrice[];
+  [key: string]: unknown;
 }
 
-interface MultiBlendResult {
-  status: string;
-  total_factory_cost_tnd: number;
-  recipes: RecipeResult[];
+interface PurchasingRecipe {
+  id: number;
+  name: string;
+  constraints?: Record<string, unknown>;
+  [key: string]: unknown;
 }
 
 export default function PurchasingPage() {
   const tenantRole = useTenantRole();
   const canOptimize = canRunOptimization(tenantRole);
   const canAnalyzePurchasing = canUsePurchasing(tenantRole);
-  const [ingredients, setIngredients] = useState<any[]>([]);
-  const [recipes, setRecipes] = useState<any[]>([]);
+  const [ingredients, setIngredients] = useState<PurchasingIngredient[]>([]);
+  const [recipes, setRecipes] = useState<PurchasingRecipe[]>([]);
   const [result, setResult] = useState<MultiBlendResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

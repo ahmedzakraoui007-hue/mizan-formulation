@@ -1,29 +1,11 @@
 import jsPDF from "jspdf";
+import type { ConstraintConfig, RecipeResult } from "@/lib/formulationTypes";
 import { getNutrientUnit, getTopNutrients } from "@/utils/nutrientUtils";
 
-export interface RecipePdfIngredient {
-  code?: string | null;
-  name: string;
-  tons: number;
-  percentage: number;
-}
-
-export interface RecipePdfReport {
-  code?: string | null;
-  version_tag?: string | null;
-  name: string;
-  demand_tons: number;
-  raw_tons: number;
-  process_yield_percent: number;
-  cost_tnd: number;
-  bag_size_kg: number;
-  cost_per_bag_tnd: number;
-  ingredients: RecipePdfIngredient[];
-  nutrients: Record<string, number>;
-}
+export type RecipePdfReport = RecipeResult;
 
 export interface RecipePdfOptions {
-  originalConstraints?: Record<string, { min?: number; max?: number; exact?: number }>;
+  originalConstraints?: Record<string, ConstraintConfig>;
   species?: string;
   date?: Date;
 }

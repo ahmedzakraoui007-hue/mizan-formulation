@@ -36,6 +36,13 @@ interface IngredientOption {
   code?: string | null;
 }
 
+interface StandardOption {
+  id: string;
+  name: string;
+  species: string;
+  constraints: Record<string, ConstraintConfig>;
+}
+
 export default function RecipesPage() {
   const { t } = useI18n();
   const tenantRole = useTenantRole();
@@ -51,7 +58,7 @@ export default function RecipesPage() {
   const [fetching, setFetching] = useState(true);
   const [aiLoadingFor, setAiLoadingFor] = useState<number | null>(null);
   const [ocrLoadingFor, setOcrLoadingFor] = useState<number | null>(null);
-  const [standards, setStandards] = useState<any[]>([]);
+  const [standards, setStandards] = useState<StandardOption[]>([]);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [expandedRecipeId, setExpandedRecipeId] = useState<number | null>(null);
 
