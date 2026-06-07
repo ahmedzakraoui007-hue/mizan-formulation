@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Depends, Query, File, UploadFile, Request
+from fastapi import FastAPI, HTTPException, Depends, Query, File, Form, UploadFile, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field
 from typing import List, Optional, Dict, Literal
@@ -18,6 +18,7 @@ from migration_utils import run_migrations
 # Schema migrations are managed by Alembic.
 import os
 import time
+import re
 
 
 @asynccontextmanager
@@ -1017,6 +1018,82 @@ async def get_ai_audit(
         return {"markdown": audit_markdown}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/whatsapp/send-document")
+async def send_whatsapp_document(
+    to: str = Form(...),
+    message: str = Form(...),
+    filename: str = Form(default="fiche-mizan.pdf"),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    tenant: TenantContext = Depends(require_role("formulator", "purchasing")),
+):
+    access_token = os.getenv("WHATSAPP_ACCESS_TOKEN")
+    phone_number_id = os.getenv("WHATSAPP_PHONE_NUMBER_ID")
+    graph_version = os.getenv("WHATSAPP_GRAPH_API_VERSION", "v23.0")
+    if not access_token or not phone_number_id:
+        raise HTTPException(
+            status_code=503,
+            detail="WhatsApp Cloud API is not configured. Set WHATSAPP_ACCESS_TOKEN and WHATSAPP_PHONE_NUMBER_ID on Render.",
+        )
+
+    phone = re.sub(r"\D", "", to)
+    if not phone:
+        raise HTTPException(status_code=400, detail="Invalid WhatsApp phone number.")
+    if file.content_type not in {"application/pdf", "application/octet-stream"}:
+        raise HTTPException(status_code=400, detail="Only PDF documents can be sent through this endpoint.")
+
+    pdf_bytes = await file.read()
+    if not pdf_bytes:
+        raise HTTPException(status_code=400, detail="PDF file is empty.")
+    if len(pdf_bytes) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="PDF file is too large. Maximum size is 10 MB.")
+
+    safe_filename = re.sub(r"[^A-Za-z0-9_.-]", "_", filename or file.filename or "fiche-mizan.pdf")
+    base_url = f"https://graph.facebook.com/{graph_version}/{phone_number_id}"
+    headers = {"Authorization": f"Bearer {access_token}"}
+
+    try:
+        import httpx
+
+        async with httpx.AsyncClient(timeout=30) as client:
+            upload_res = await client.post(
+                f"{base_url}/media",
+                headers=headers,
+                data={"messaging_product": "whatsapp", "type": "application/pdf"},
+                files={"file": (safe_filename, pdf_bytes, "application/pdf")},
+            )
+            if upload_res.status_code >= 400:
+                raise HTTPException(status_code=upload_res.status_code, detail=upload_res.text)
+            media_id = upload_res.json().get("id")
+            if not media_id:
+                raise HTTPException(status_code=502, detail="WhatsApp media upload did not return a media id.")
+
+            message_res = await client.post(
+                f"{base_url}/messages",
+                headers={**headers, "Content-Type": "application/json"},
+                json={
+                    "messaging_product": "whatsapp",
+                    "to": phone,
+                    "type": "document",
+                    "document": {
+                        "id": media_id,
+                        "filename": safe_filename,
+                        "caption": message[:1024],
+                    },
+                },
+            )
+            if message_res.status_code >= 400:
+                raise HTTPException(status_code=message_res.status_code, detail=message_res.text)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"WhatsApp send failed: {exc}") from exc
+
+    _record_audit(db, tenant, "whatsapp.document.send", "whatsapp", metadata={"to": phone, "filename": safe_filename})
+    db.commit()
+    return {"ok": True, "to": phone, "filename": safe_filename}
 
 
 class DiagnoseRequest(BaseModel):

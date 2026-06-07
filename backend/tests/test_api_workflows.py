@@ -125,6 +125,21 @@ def test_ai_business_review_is_grounded_in_active_solver_context(client):
     assert all("validation" in rec for rec in body["recommendations"])
 
 
+def test_whatsapp_document_send_requires_cloud_api_config(client, monkeypatch):
+    monkeypatch.delenv("WHATSAPP_ACCESS_TOKEN", raising=False)
+    monkeypatch.delenv("WHATSAPP_PHONE_NUMBER_ID", raising=False)
+
+    res = client.post(
+        "/api/whatsapp/send-document",
+        data={"to": "+21699111222", "message": "Fiche Mizan", "filename": "fiche.pdf"},
+        files={"file": ("fiche.pdf", b"%PDF-1.4 test", "application/pdf")},
+        headers={"X-Test-Tenant": "tenant-a"},
+    )
+
+    assert res.status_code == 503
+    assert "WHATSAPP_ACCESS_TOKEN" in res.json()["detail"]
+
+
 def test_monitoring_counts_infeasible_optimization(client):
     ing = client.post("/api/ingredients", json=_ingredient("Weak", protein=2), headers={"X-Test-Tenant": "tenant-a"}).json()
     impossible = _recipe("Impossible")

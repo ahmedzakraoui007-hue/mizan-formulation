@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { saveAs } from "file-saver";
 import { X, FileSpreadsheet, Share2, Printer } from "lucide-react";
 import { buildWhatsAppMessage, buildWhatsAppUrl } from "@/lib/whatsAppShare";
 import { buildRecipePdfBlob, recipePdfFileName } from "@/lib/recipePdf";
+import { apiUrl } from "@/lib/api";
 import type { ConstraintConfig, RecipeResult } from "@/lib/formulationTypes";
 import { getNutrientUnit, getTopNutrients } from "@/utils/nutrientUtils";
 
@@ -56,8 +57,18 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
   };
 
   const [sharing, setSharing] = useState(false);
+  const [whatsAppPhone, setWhatsAppPhone] = useState("");
 
   const pdfFileName = recipePdfFileName(report, now);
+
+  useEffect(() => {
+    setWhatsAppPhone(window.localStorage.getItem("mizan-whatsapp-phone") || "");
+  }, []);
+
+  const updateWhatsAppPhone = (value: string) => {
+    setWhatsAppPhone(value);
+    window.localStorage.setItem("mizan-whatsapp-phone", value);
+  };
 
   const generatePdfBlob = async () => {
     try {
@@ -69,17 +80,63 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
     }
   };
 
+  const sendViaWhatsAppCloud = async (pdfBlob: Blob, message: string) => {
+    const phone = whatsAppPhone.trim();
+    if (!phone) return false;
+
+    const form = new FormData();
+    form.append("to", phone);
+    form.append("message", message);
+    form.append("filename", pdfFileName);
+    form.append("file", pdfBlob, pdfFileName);
+
+    const res = await fetch(apiUrl("/api/whatsapp/send-document"), {
+      method: "POST",
+      body: form,
+    });
+    if (!res.ok) {
+      const payload = await res.json().catch(() => ({}));
+      throw new Error(payload.detail || "Envoi WhatsApp automatique indisponible.");
+    }
+    return true;
+  };
+
   const shareToWhatsApp = async () => {
     setSharing(true);
-    const whatsappTab = window.open("about:blank", "_blank");
-    if (whatsappTab) {
-      whatsappTab.document.write("<p style=\"font-family:sans-serif;padding:24px\">Preparation du PDF Mizan...</p>");
-    }
+    let whatsappTab: Window | null = null;
+    const closeWhatsAppTab = (tab: Window | null) => {
+      tab?.close();
+    };
+    const openWhatsAppTab = () => {
+      if (!whatsappTab) {
+        whatsappTab = window.open("about:blank", "_blank");
+        if (whatsappTab) {
+          whatsappTab.document.write("<p style=\"font-family:sans-serif;padding:24px\">Preparation du partage Mizan...</p>");
+        }
+      }
+      return whatsappTab;
+    };
+
     try {
+      if (!whatsAppPhone.trim()) openWhatsAppTab();
       const pdfBlob = await generatePdfBlob();
       const file = typeof File !== "undefined"
         ? new File([pdfBlob], pdfFileName, { type: "application/pdf" })
         : null;
+
+      if (whatsAppPhone.trim()) {
+        try {
+          const message = buildWhatsAppMessage(report, dateStr, { pdfFileName, pdfAttached: true });
+          const sent = await sendViaWhatsAppCloud(pdfBlob, message);
+          if (sent) {
+            alert("PDF envoyé automatiquement sur WhatsApp.");
+            return;
+          }
+        } catch (cloudErr) {
+          console.warn("WhatsApp Cloud API failed, falling back to browser share.", cloudErr);
+          alert(cloudErr instanceof Error ? `${cloudErr.message}\n\nJe lance le partage manuel.` : "Envoi WhatsApp automatique impossible. Je lance le partage manuel.");
+        }
+      }
 
       if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
@@ -89,11 +146,11 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
             title: `Fiche de Fabrication - ${report.name}`,
             text: message,
           });
-          whatsappTab?.close();
+          closeWhatsAppTab(whatsappTab);
           return;
         } catch (shareErr) {
           if (shareErr instanceof DOMException && shareErr.name === "AbortError") {
-            whatsappTab?.close();
+            closeWhatsAppTab(whatsappTab);
             return;
           }
           console.warn("Native share failed, falling back to WhatsApp link.", shareErr);
@@ -103,14 +160,15 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
       saveAs(pdfBlob, pdfFileName);
       const message = buildWhatsAppMessage(report, dateStr, { pdfFileName });
       const whatsappUrl = buildWhatsAppUrl(message);
-      if (whatsappTab) {
-        whatsappTab.location.replace(whatsappUrl);
+      const tab = openWhatsAppTab();
+      if (tab) {
+        tab.location.replace(whatsappUrl);
       } else {
         window.location.assign(whatsappUrl);
       }
     } catch (err) {
       console.error(err);
-      whatsappTab?.close();
+      closeWhatsAppTab(whatsappTab);
       alert("Erreur lors de la génération du PDF pour WhatsApp.");
     } finally {
       setSharing(false);
@@ -247,6 +305,16 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
 
         {/* Footer (Hidden in Print) */}
         <div className="mt-8 pt-6 border-t border-gray-200 flex flex-col sm:flex-row gap-4 justify-end print:hidden">
+          <label className="min-w-[230px] flex-1 sm:max-w-[280px]">
+            <span className="mb-1 block text-[10px] font-black uppercase tracking-widest text-gray-400">Envoi auto WhatsApp</span>
+            <input
+              type="tel"
+              value={whatsAppPhone}
+              onChange={(e) => updateWhatsAppPhone(e.target.value)}
+              placeholder="+216..."
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-bold text-gray-800 outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
+            />
+          </label>
           <button onClick={generateCSV} className="px-6 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-bold hover:bg-gray-200 transition-colors shadow-sm flex items-center justify-center gap-2">
             <FileSpreadsheet className="w-4 h-4" /> Exporter en CSV
           </button>
@@ -256,7 +324,7 @@ export default function FicheModal({ report, originalConstraints, species = "Gen
                 <div className="w-4 h-4 rounded-full border-2 border-white border-r-transparent animate-spin" />
                 Préparation...
               </>
-            ) : <span className="flex items-center gap-2"><Share2 className="w-4 h-4" /> WhatsApp</span>}
+            ) : <span className="flex items-center gap-2"><Share2 className="w-4 h-4" /> {whatsAppPhone.trim() ? "Envoyer PDF" : "WhatsApp"}</span>}
           </button>
           <button onClick={handlePrint} className="px-6 py-2.5 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
             <Printer className="w-4 h-4" /> Imprimer la Fiche
